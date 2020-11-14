@@ -1,0 +1,17 @@
+version: '3.3'
+services:
+
+  # Running postgres on port 5432
+  postgres:
+    image: postgres:11.1
+    container_name: postgres
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    ports:
+      - 5432:5432
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+volumes:
+  dbdata:
