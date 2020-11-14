@@ -1,0 +1,28 @@
+version: '3.3'
+services:
+
+  # Running postgres on port 5432
+  postgres:
+    image: postgres:11.1
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+  # A service container to
+  dbs-configurator:
+    build:
+      context: './dbs-configurator'
+    container_name: dbs-configurator
+    depends_on:
+      - postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+volumes:
+  dbdata:
