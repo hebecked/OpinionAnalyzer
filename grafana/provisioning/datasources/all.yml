@@ -1,0 +1,22 @@
+apiVersion: 1
+
+datasources:
+
+  - name: Postgres
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: postgres
+    user: $GF_PG_USER
+    isDefault: true
+    version: 1
+    editable: true
+    secureJsonData:
+      password: $GF_PG_PASSWORD
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 0
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+      postgresVersion: 1000   # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
+      timescaledb: false
