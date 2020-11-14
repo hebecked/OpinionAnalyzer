@@ -24,11 +24,11 @@ class database:
         """ initalize class and get connection parameters """
         self.conn = None
         self.db_params = {}
-        db_params["host"] = "localhost"
-        db_params["database"] = "postgres"
-        db_params["user"] = os.environ['POSTGRES_USER']
-        db_params["password"] = os.environ['POSTGRES_PASSWORD']
-        db_params["port"] = 5432
+        self.db_params["host"] = "172.17.0.1" #localhost"
+        self.db_params["database"] = "postgres"
+        self.db_params["user"] = os.environ['POSTGRES_USER']
+        self.db_params["password"] = os.environ['POSTGRES_PASSWORD']
+        self.db_params["port"] = 5432
 
 
     def connect(self):
