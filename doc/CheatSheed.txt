@@ -16,7 +16,7 @@ Dockers (see also https://www.docker.com/sites/default/files/d8/2019-09/docker-c
 
 .Linux (check if sudo needed):
 Files and Volumes are stored in "/var/lib/docker/"
-sudo systemctl start/stop/enable/disable Dockers 	(To start/stop/autostart Deamon)
+sudo systemctl start/stop/enable/disable docker 	(To start/stop/autostart Deamon)
 sudo ./run.shutDown 								(To run/init VMs)
 sudo ./shutDown.sh 									(To stop VMs)
 sudo docker exec -it [postgres/image name] bash 	(To attach to docker cmd)
