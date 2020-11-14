@@ -1,0 +1,22 @@
+Git (see also https://git-scm.com/docs  and https://education.github.com/git-cheat-sheet-education.pdf):
+
+git clone [rep. name] 			(To create an initial local copy)
+git pull						(To download upstream/cloud changes and include in local copy(git fetch + git merge))
+git push						(To upload local changes to upstream/cloud)
+git commit -a -m "#comment#"	(Track recent changes in git)
+git checkout [branch]			(Switch branch)
+git remote						(Change/add remote loactaion. Manage the set of repositories ("remotes") whose branches you track. https://git-scm.com/docs/git-remote.html)
+git fetch						(Download upstream changes)
+git merge						(Combine different commits)
+git different 					(Display differences between two commits)
+
+
+
+Dockers (see also https://www.docker.com/sites/default/files/d8/2019-09/docker-cheat-sheet.pdf and https://dockerlabs.collabnix.com/docker/cheatsheet/):
+
+.Linux (check if sudo needed:
+sudo systemctl start/stop/enable/disable Dockers 	(To start/stop/autostart Deamon)
+sudo ./run.shutDown 								(To run/init VMs)
+sudo ./shutDown.sh 									(To stop VMs)
+sudo docker exec -it [postgres/image name] bash 	(To attach to docker cmd)
+sudo docker volume list								(to list volumes in dockers)
