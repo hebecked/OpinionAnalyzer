@@ -1,0 +1,25 @@
+{
+  "name": "dbs-configurator",
+  "version": "1.0.0",
+  "description": "oa dbs configurator",
+  "scripts": {
+    "start": "node index.js",
+    "debug": "cross-env POSTGRES_HOST=192.168.99.100 POSTGRES_USER=postgres POSTGRES_PASSWORD=postgres npm run start",
+    "migrate:latest": "knex migrate:latest"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cron": "^1.6.0",
+    "knex": "^0.16.5",
+    "lodash": "^4.17.11",
+    "moment": "^2.24.0",
+    "tracer": "^0.9.8",
+    "pg": "^7.9.0",
+    "express": "^4.16.4"
+  },
+  "devDependencies": {
+    "cross-env": "^5.2.0",
+    "eslint": "^5.9.0"
+  }
+}
