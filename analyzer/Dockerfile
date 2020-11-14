@@ -1,16 +1,21 @@
 #Inspired by https://github.com/poteha/docker-nlp/blob/master/Dockerfile.cpu
-FROM python:3.9-slim
+FROM python:3.7-slim-buster
 
-RUN apt-get update && apt-get install -y gcc g++
+#USER root
 
-RUN pip install torch==1.7.0
+#RUN apt-get update && apt-get install -y gcc g++ 
+#apt-utils
+
+#RUN pip install torch==1.7.0  
+RUN pip install torch==1.7.0+cpu torchvision==0.8.1+cpu torchaudio==0.7.0 -f https://download.pytorch.org/whl/torch_stable.html
 RUN pip install flair==0.6.1
 #RUN pip install spacy==2.0.11
 
-RUN pip install \
-	numpy==1.19.2 \
-	matplotlib==3.3.2 \
-	psycopg2==2.8.6
+
+RUN pip install	psycopg2-binary==2.8.6
+#RUN pip install  \
+#	 numpy==1.19.2 \ #already needed for torch
+#    matplotlib==3.3.2 \ #already needed for flair
 #    dateparser==0.7.0 \
 #    pymorphy2==0.8 \
 #    yargy==0.11.0 \
@@ -27,4 +32,4 @@ RUN pip install \
 WORKDIR /usr/src/analyzer
 COPY ./src .
 
-#CMD [ "npm", "start" ]
+CMD [ "python", "connectDB.py" ]
