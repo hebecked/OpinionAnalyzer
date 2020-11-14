@@ -47,6 +47,18 @@ services:
     volumes:
       - grafana_storage:/var/lib/grafana
 
+
+  # Data analytics and NLP worker 
+  analyzer:
+    build:
+      context: './analyzer'
+    container_name: analyzer
+    depends_on:
+      - postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
 volumes:
   dbdata:
   grafana_storage:
