@@ -3,8 +3,8 @@ FROM python:3.7-slim-buster
 
 #USER root
 
-#RUN apt-get update && apt-get install -y gcc g++ 
-#apt-utils
+RUN apt-get update && apt-get install -y cron
+#apt-utils gcc g++ 
 
 #RUN pip install torch==1.7.0  
 RUN pip install torch==1.7.0+cpu torchvision==0.8.1+cpu torchaudio==0.7.0 -f https://download.pytorch.org/whl/torch_stable.html
@@ -32,4 +32,4 @@ RUN pip install	psycopg2-binary==2.8.6
 WORKDIR /usr/src/analyzer
 COPY ./src .
 
-CMD [ "python", "connectDB.py" ]
+CMD [ "cron", "-f"]
