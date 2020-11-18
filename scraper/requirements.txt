@@ -1,0 +1,13 @@
+psycopg2-binary == 2.8.6
+spiegel-scraper
+# flask
+
+#Alternative Python packages for NLP:
+#    spacy==2.0.11
+#    dateparser==0.7.0 \
+#    pymorphy2==0.8 \
+#    yargy==0.11.0 \
+#    natasha==0.10.0 \
+#    nltk==3.2.1 \
+#    yake==0.3.7 \
+#    python-dateutil==2.7.5

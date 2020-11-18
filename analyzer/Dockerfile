@@ -4,7 +4,7 @@ FROM python:3.7-slim-buster
 RUN apt-get update && apt-get install -y cron
 
 COPY requirements.txt /
-RUN pip install -r /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt
 
 # For deployment the used models should be preloaded
 #RUN python -c 'import flair; _ = flair.models.SequenceTagger.load("ner-fast")'
