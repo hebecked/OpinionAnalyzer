@@ -17,19 +17,18 @@ def __exit__(self, type, value, traceback):
     close(self.fd)
 """
 
-
 class database:
 
     def __init__(self):
         """ initalize class and get connection parameters """
         self.conn = None
-        self.db_params = {}
-        self.db_params["host"] = "172.21.0.2" #"172.17.0.1"
-        self.db_params["database"] = "postgres"
-        self.db_params["user"] = os.environ['POSTGRES_USER']
-        self.db_params["password"] = os.environ['POSTGRES_PASSWORD']
-        self.db_params["port"] = 5432
-
+        self.db_params = {
+            "host": "postgres",
+            "database": "postgres",
+            "user": os.environ['POSTGRES_USER'],
+            "password": os.environ['POSTGRES_PASSWORD'],
+            "port": 5432
+        }
 
     def connect(self):
         """ Connect to the PostgreSQL database server """
@@ -49,7 +48,7 @@ class database:
         result = cur.fetchone()
 
         # close the communication with the PostgreSQL
-        cur.close()
+        #cur.close()
 
         return result
 
@@ -59,18 +58,14 @@ class database:
         db_version = self.execute('SELECT version()') 
         print(db_version)
 
+    def getTestTableMeta(self):
+        print('test:')
+        db_version = self.execute('SELECT * FROM information_schema.tables WHERE table_name = \'test\'')
+        print(db_version)
+
     def close(self):
         if self.conn is not None:
             self.conn.close()
 
     def __del__(self):
         self.close()
-
-
-if __name__ == '__main__':
-    db = database()
-    db.connect()
-    db.getVersion()
-
-
-
