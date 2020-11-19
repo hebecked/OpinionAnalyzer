@@ -48,7 +48,7 @@ class database:
         result = cur.fetchone()
 
         # close the communication with the PostgreSQL
-        #cur.close()
+        cur.close()
 
         return result
 
