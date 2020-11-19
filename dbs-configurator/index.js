@@ -1,1 +1,1 @@
-const knex = require('./utils/connect-db');
+const knex = require('./utils/connectDb');
