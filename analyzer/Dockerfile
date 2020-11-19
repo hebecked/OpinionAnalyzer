@@ -1,15 +1,23 @@
 #Inspired by https://github.com/poteha/docker-nlp/
 FROM python:3.7-slim-buster
 
-RUN apt-get update && apt-get install -y cron
+# set the working directory in the container
+WORKDIR /usr/src/app
 
-COPY requirements.txt /
-RUN pip install --no-cache-dir -r /requirements.txt
+#Not necessary yet, maybe we can also better use a python module for that which would make it more generic
+#RUN apt-get update && apt-get install -y cron
 
-# For deployment the used models should be preloaded
+# copy the dependencies file to the working directory
+COPY requirements.txt .
+
+# install dependencies
+RUN pip install -r requirements.txt
+
+# For deployment the used models should be preloaded -- Martin: Why? Why not just load them when they are executed
 #RUN python -c 'import flair; _ = flair.models.SequenceTagger.load("ner-fast")'
 
-WORKDIR /usr/src/analyzer
-COPY ./src .
+#Just generically copy everything to avoid conflicts later when adding new moduls
+COPY . .
 
-CMD [ "cron", "-f"]
+#Run on init
+CMD [ "python", "./index.py"]
