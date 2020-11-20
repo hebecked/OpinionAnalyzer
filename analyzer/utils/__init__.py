@@ -1,2 +1,2 @@
-#Expose db connection-file
+# Expose db connection-file
 from .connectDb import database
