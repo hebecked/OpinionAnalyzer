@@ -4,11 +4,11 @@ from utils import database
 import time
 from flask import Flask
 
-app = Flask(__name__)
-
-app.run(host='0.0.0.0', port=8081)
 
 def main():
+    app = Flask(__name__)
+
+    app.run(host='0.0.0.0', port=8081)
 
     # regular test
     db = database()
