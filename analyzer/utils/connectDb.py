@@ -17,6 +17,7 @@ def __exit__(self, type, value, traceback):
     close(self.fd)
 """
 
+
 class database:
 
     def __init__(self):
@@ -54,14 +55,20 @@ class database:
 
 
     def getVersion(self):
-        print('PostgreSQL database version:')
-        db_version = self.execute('SELECT version()') 
-        print(db_version)
+        try:
+            print('PostgreSQL database version:')
+            db_version = self.execute('SELECT version()')
+            print(db_version)
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
 
     def getTestTableMeta(self):
-        print('test:')
-        db_version = self.execute('SELECT * FROM information_schema.tables WHERE table_name = \'test\'')
-        print(db_version)
+        try:
+            print('test:')
+            db_version = self.execute('SELECT * FROM information_schema.tables WHERE table_name = \'test\'')
+            print(db_version)
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
 
     def close(self):
         if self.conn is not None:
