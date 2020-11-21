@@ -15,10 +15,10 @@ class CronJobs:
 
     def cronInit(self):
         logger.info("CronJobs successfully initiated")
-        analyis_modules_path = '/usr/src/app/dataCollectors/'
+        data_collectors_path = '/usr/src/app/dataCollectors/'
         while True:
             for job in self.jobs:
                 if pycron.is_now(job["schedule"]):
                     logger.info("Firing CronJob: " + job["module"])
-                    os.system('python3 -u ' + analyis_modules_path + job["module"])
+                    os.system('python3 -u ' + data_collectors_path + job["module"])
             time.sleep(60)
