@@ -59,7 +59,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
 
-  # Data analytics and NLP worker 
+  # Data analytics and NLP worker
   scraper:
     build:
       context: './scraper'
@@ -69,17 +69,6 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-
-  # Data analytics and NLP worker 
-  #scraper:
-  #  build:
-  #    context: './scraper'
-  #  container_name: scraper
-  #  depends_on:
-  #    - postgres
-  #  environment:
-  #    - POSTGRES_USER=postgres
-  #    - POSTGRES_PASSWORD=postgres
 
 volumes:
   dbdata:
