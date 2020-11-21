@@ -12,9 +12,9 @@ services:
       - 5432:5432
     volumes:
       - dbdata:/var/lib/postgresql/data
-    networks:
-      node_net:
-        ipv4_address: 172.21.0.2
+#    networks:
+#      node_net:
+#        ipv4_address: 172.21.0.2
 
   # A service container to
   dbs-configurator:
@@ -61,9 +61,9 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-    networks:
-      node_net:
-        ipv4_address: 172.21.0.3
+#    networks:
+#      node_net:
+#        ipv4_address: 172.21.0.3
 
 
   # Data analytics and NLP worker 
@@ -76,16 +76,16 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-    networks:
-      node_net:
-        ipv4_address: 172.21.0.4
+#    networks:
+#      node_net:
+#        ipv4_address: 172.21.0.4
 
-networks:
-  node_net:
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.21.0.0/16
+#networks:
+#  node_net:
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: 172.21.0.0/16
 
 volumes:
   dbdata:
