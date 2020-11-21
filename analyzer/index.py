@@ -4,7 +4,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 logger = logging.getLogger()
 
 def main():
-    logger.info("Analyzer successfully initiated")
+    logger.info("Analyzer successfully started")
 
     cron = CronJobs()
     cron.cronInit()
