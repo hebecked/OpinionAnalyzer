@@ -1,14 +1,11 @@
-import utils
-from utils import database
-from cronJobs import CronJobs
+from cronJobs.cronJobs import CronJobs
+import logging
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger()
 
 def main():
-    print('I am here to say hi!')
+    logger.info("Analyzer successfully initiated")
 
-    db = database()
-    db.connect()
-    db.getVersion()
-    db.getTestTableMeta()
     cron = CronJobs()
     cron.cronInit()
 
