@@ -23,4 +23,4 @@ RUN pip install -r requirements.txt
 COPY . .
 
 #Run on init
-CMD ["python3", "index.py"]
+CMD ["python3","-u", "index.py"]
