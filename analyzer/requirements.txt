@@ -5,7 +5,6 @@
 #flair == 0.6.1
 psycopg2-binary == 2.8.6
 pycron
-asyncio
 
 #Alternative Python packages for NLP:
 #    spacy==2.0.11
