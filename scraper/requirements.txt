@@ -1,5 +1,6 @@
 psycopg2-binary == 2.8.6
 spiegel-scraper
+scrapy
 # flask
 
 #Alternative Python packages for NLP:
