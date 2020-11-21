@@ -24,7 +24,7 @@ class database:
         """ initalize class and get connection parameters """
         self.conn = None
         self.db_params = {}
-        self.db_params["host"] = "172.21.0.2" #"172.17.0.1"
+        self.db_params["host"] = "postgres"
         self.db_params["database"] = "postgres"
         self.db_params["user"] = os.environ['POSTGRES_USER']
         self.db_params["password"] = os.environ['POSTGRES_PASSWORD']
