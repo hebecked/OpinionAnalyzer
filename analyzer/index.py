@@ -1,21 +1,16 @@
 import utils
 from utils import database
-#from cronJobs import cronJobs
-import time
-from flask import Flask
-
+from cronJobs import CronJobs
 
 def main():
-    app = Flask(__name__)
+    print('I am here to say hi!')
 
-    app.run(host='0.0.0.0', port=8081)
-
-    # regular test
     db = database()
     db.connect()
     db.getVersion()
     db.getTestTableMeta()
-    print('I am here')
+    cron = CronJobs()
+    cron.cronInit()
 
 
 if __name__ == "__main__":

@@ -1,2 +1,2 @@
 # Expose cronjob configs
-from .cronJobs import cronJobs
+from .cronJobs import CronJobs
