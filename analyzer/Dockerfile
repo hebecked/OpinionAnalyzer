@@ -6,6 +6,8 @@ USER root
 # set the working directory in the container
 WORKDIR /usr/src/app
 
+ENV PYTHONPATH='/usr/src/app/'
+
 #RUN apt-get update && apt-get install -y nano
 #Not necessary yet, maybe we can also better use a python module for that which would make it more generic
 #RUN apt-get update && apt-get install -y cron

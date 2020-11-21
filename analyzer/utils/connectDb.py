@@ -39,7 +39,6 @@ class database:
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
 
-
     def execute(self, request):
         # create a cursor
         cur = self.conn.cursor()
@@ -52,7 +51,6 @@ class database:
         cur.close()
 
         return result
-
 
     def getVersion(self):
         try:
