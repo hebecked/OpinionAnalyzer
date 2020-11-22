@@ -23,13 +23,13 @@ class database:
     def __init__(self):
         """ initalize class and get connection parameters """
         self.conn = None
-        self.db_params = {}
-        self.db_params["host"] = "postgres"
-        self.db_params["database"] = "postgres"
-        self.db_params["user"] = os.environ['POSTGRES_USER']
-        self.db_params["password"] = os.environ['POSTGRES_PASSWORD']
-        self.db_params["port"] = 5432
-
+        self.db_params = {
+            "host": "postgres",
+            "database": "postgres",
+            "user": os.environ['POSTGRES_USER'],
+            "password": os.environ['POSTGRES_PASSWORD'],
+            "port": 5432
+        }
 
     def connect(self):
         """ Connect to the PostgreSQL database server """
@@ -38,7 +38,6 @@ class database:
             self.conn = psycopg2.connect(**self.db_params)         
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
-
 
     def execute(self, request):
         # create a cursor
@@ -53,11 +52,21 @@ class database:
 
         return result
 
-
     def getVersion(self):
-        print('PostgreSQL database version:')
-        db_version = self.execute('SELECT version()') 
-        print(db_version)
+        try:
+            print('PostgreSQL database version:')
+            db_version = self.execute('SELECT version()')
+            print(db_version)
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+    def getTestTableMeta(self):
+        try:
+            print('test:')
+            db_version = self.execute('SELECT * FROM information_schema.tables WHERE table_name = \'test\'')
+            print(db_version)
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
 
     def close(self):
         if self.conn is not None:
@@ -65,12 +74,3 @@ class database:
 
     def __del__(self):
         self.close()
-
-
-if __name__ == '__main__':
-    db = database()
-    db.connect()
-    db.getVersion()
-
-
-

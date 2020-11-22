@@ -1,7 +1,7 @@
 const knex = require('knex');
 const logger = require('tracer').console();
 
-const connection = knex({
+const connectDb = knex({
   client: 'pg',
   connection: {
     host: 'postgres',
@@ -14,7 +14,7 @@ const connection = knex({
   acquireConnectionTimeout: 200000
 });
 
-connection.migrate.latest()
+connectDb.migrate.latest()
   .then(function () {
     logger.log('Migration done.');
   }).catch(function (error) {
@@ -22,5 +22,5 @@ connection.migrate.latest()
 });
 
 module.exports = () => {
-  return connection;
+  return connectDb;
 };

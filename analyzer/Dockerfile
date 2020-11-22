@@ -1,15 +1,23 @@
-#Inspired by https://github.com/poteha/docker-nlp/
+# Inspired by https://github.com/poteha/docker-nlp/
 FROM python:3.7-slim-buster
 
-RUN apt-get update && apt-get install -y cron
+# Set root as default usr
+USER root
 
-COPY requirements.txt /
-RUN pip install --no-cache-dir -r /requirements.txt
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
-# For deployment the used models should be preloaded
-#RUN python -c 'import flair; _ = flair.models.SequenceTagger.load("ner-fast")'
+# Set pythonpath env variable for better module identification
+ENV PYTHONPATH='/usr/src/app/'
 
-WORKDIR /usr/src/analyzer
-COPY ./src .
+# Copy the dependencies file to the working directory
+COPY requirements.txt .
 
-CMD [ "cron", "-f"]
+# Install dependencies
+RUN pip install -r requirements.txt
+
+# Just generically copy everything to avoid conflicts later when adding new moduls
+COPY . .
+
+# Run on init
+CMD ["python3","-u", "index.py"]
