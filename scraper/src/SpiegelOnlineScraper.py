@@ -6,6 +6,7 @@ import TemplateScraper
 class SponScraper(TemplateScraper.Scraper):
 
     def __init__(self):
+        self.id=1 #set corresponding datasource id here
         pass
 
     def archive(self,year: int, month: int, day: int):
@@ -13,7 +14,7 @@ class SponScraper(TemplateScraper.Scraper):
         content = spon.archive.scrape_html(html)
         return {'content': content, 'html': html}
    
-    def getNewArticles(self, start:date=date(1900,1,1), end:date=date.today()):
+    def getArticlesList(self, start:date=date(1900,1,1), end:date=date.today()):
         """
         
 
@@ -44,7 +45,7 @@ class SponScraper(TemplateScraper.Scraper):
 	    content = spon.article.scrape_html(html)
 	    return {'content': content, 'html': html}
 	
-    def getCommentsForArticle(self,article_url):
+    def getCommentsForArticle(self,article_url): #todo: add start and end date and corresponding filter
         art=self.getArticle(article_url)
         return spon.comments.by_article_id(art['content']['id'])
 
@@ -58,7 +59,7 @@ if __name__ == '__main__':
     test_comments=SpS.getCommentsForArticle("https://www.spiegel.de/politik/deutschland/angela-merkel-und-ministerpraesidenten-zu-corona-jetzt-stehen-die-laender-unter-zugzwang-a-d0dcad88-ea71-4046-a914-7d7f5069e1c8")
     start=date(2020,11,1)
     end=date(2020,11,1)
-    for url in SpS.getNewArticles(start,end):
+    for url in SpS.getArticles(start,end):
        print(url,end="\n")
     print("\narticle structure:")
     print(test_article.keys())
