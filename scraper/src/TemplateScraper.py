@@ -6,12 +6,13 @@ class Scraper():
 
     def __init__(self):
         self.name = None#
+        self.id=None
         #todo add database connection as class object?
         #todo add local copy of database elements (urls) to compare with crawler results
         #todo add id of source for use in database querys (e.g Spiegel, ZEIT)
         pass
     
-    def getNewArticles(self,start:date=date(1900,1,1), end:date=date.today()):
+    def getArticlesList(self,start:date=date(1900,1,1), end:date=date.today()):
         """
         
 
@@ -33,7 +34,7 @@ class Scraper():
         pass
 
 
-    def getCommentsForArticle(self,article_url):
+    def getCommentsForArticle(self,article_url): #todo: add start and end date
         pass
 
 #switch following functionality to database object?
