@@ -14,7 +14,7 @@ ENV PYTHONPATH='/usr/src/app/'
 COPY requirements.txt .
 
 # Install dependencies
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Just generically copy everything to avoid conflicts later when adding new moduls
 COPY . .

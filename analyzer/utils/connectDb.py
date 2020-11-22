@@ -74,3 +74,10 @@ class database:
 
     def __del__(self):
         self.close()
+
+# For manual testing
+if __name__ == "__main__":
+    db = database()
+    db.connect()
+    db.getVersion()
+    db.getTestTableMeta()
