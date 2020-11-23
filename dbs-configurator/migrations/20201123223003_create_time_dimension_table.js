@@ -11,5 +11,5 @@ exports.up = function(knex) {
 };
 
 exports.down = function(knex) {
-  return knex.schema.dropTable("test")
+  return knex.schema.dropTable("general_data.date_time_dimension")
 };
