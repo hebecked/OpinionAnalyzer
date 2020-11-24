@@ -34,7 +34,7 @@ class Scraper():
         pass
 
 
-    def getCommentsForArticle(self,article_url): #todo: add start and end date
+    def getCommentsForArticle(self,article_url,start:date=date(1900,1,1),end:date=date.today()):
         pass
 
 #switch following functionality to database object?
