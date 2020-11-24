@@ -45,7 +45,7 @@ class database:
 
         cur.execute(request)
 
-        result = cur.fetchone()
+        result = cur.fetchall()
 
         # close the communication with the PostgreSQL
         cur.close()

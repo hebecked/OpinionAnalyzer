@@ -9,8 +9,8 @@ class CronJobs:
 
     def __init__(self):
         self.jobs = [
-            {"schedule": '* * * * *', "module": 'test.py'},  # Execute every minute "test.py"
-            {"schedule": '*/30 * * * *', "module": 'getSPON.py'},  # Execute every 30 minutes "getSPON.py"
+            #{"schedule": '* * * * *', "module": 'test.py'},  # Execute every minute "test.py"
+            {"schedule": '* */24 * * *', "module": 'getSPON.py'},  # Execute every 30 minutes "getSPON.py"
         ]
 
     def cronInit(self):
