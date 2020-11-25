@@ -55,6 +55,7 @@ services:
     container_name: analyzer
     depends_on:
       - postgres
+      - dbs-configurator
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -66,6 +67,7 @@ services:
     container_name: scraper
     depends_on:
       - postgres
+      - dbs-configurator
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
