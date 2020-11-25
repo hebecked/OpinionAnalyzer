@@ -6,7 +6,7 @@ logger = logging.getLogger()
 
 def main():
     logger.info("Analyzer successfully started")
-    logger.info("Analyzer Scraper...")
+    logger.info("Initiating Analyzer...")
     sleep(6)
     logger.info("Analyzer initiated")
 
