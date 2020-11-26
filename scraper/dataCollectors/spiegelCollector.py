@@ -78,7 +78,7 @@ if __name__ == '__main__':
     firstInitValue = getFirstInitValue()
 
     if firstInitValue[0]:
-        dateObject = getDateObject('2020-11-01', '2020-11-24')
+        dateObject = getDateObject('2020-01-01', '2020-11-25')
         setFirstInitValue('spiegel', 'false')
 
         for dateOt in dateObject:
