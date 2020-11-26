@@ -84,7 +84,6 @@ if __name__ == '__main__':
         for dateOt in dateObject:
             logger.info('Collecting Article meta data for day ' + dateOt)
             dateSplit = dateOt.split('-')
-            logger.info(dateSplit)
             year = int(dateSplit[0])
             month = int(dateSplit[1])
             day = int(dateSplit[2])
