@@ -25,26 +25,30 @@ with open('../Testdata/TestComments.json') as f:
 
 #print(testArticle)
 #print(testComments)
+results=["positiv", "negativ", "neutral"]
 
-					
+#Based on Amazonreview (1-5 stars)					
 tokenizer = AutoTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
 model = AutoModelForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
-
+#Based on a range of sources including twitter, facebook, product reviews
+tokenizer2 = AutoTokenizer.from_pretrained("oliverguhr/german-sentiment-bert")
+model2 = AutoModelForSequenceClassification.from_pretrained("oliverguhr/german-sentiment-bert")
 
 i=0
 for comment in testComments:
 	if comment["user"] is not None and comment["body"] is not None:
 		sentence = Sentence(comment["body"])
-		#tokenized_text = tokenizer.tokenize(comment["body"])
-		#token_ids = tokenizer.convert_tokens_to_ids(tokenized_text)
-		#token_ids2 = tokenizer.encode(comment["body"])
 		Tourette = classifier.predict(sentence)
 		inputs = tokenizer(comment["body"], return_tensors="pt")
 		proOrCon = model(**inputs)
-		print("\n" + comment["body"])
-		print(str(i) + ": " + comment["user"]["username"] + \
+		inputs2 = tokenizer2(comment["body"], return_tensors="pt")
+		proOrCon2 = model2(**inputs2)
+		print("\n" + comment["user"]["username"] + ": " + comment["body"])
+		print(str(i) + ": " +  \
 			" Text length: " + str(len(comment["body"])) + \
-			" subcomments: " + str(len(comment["replies"])) + \
-			" Swearing: " + str(Tourette) + \
-			" Sentiment (star): " + str(1+proOrCon[0].argmax()) )  #Mache ich heir das richtige?
+			"; subcomments: " + str(len(comment["replies"])) + \
+			"; Swearing: " + str(Tourette) + \
+			"; Sentiment (star): " + str(1+proOrCon[0].argmax()) + "/" + results[proOrCon2[0][0].argmax()] )  #Mache ich heir das richtige?
 	i+=1
+	if i == 10:
+		break
