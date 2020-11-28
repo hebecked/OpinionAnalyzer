@@ -11,10 +11,14 @@ class article:
 
     def __init__(self):
         self.__complete=False
-        if(self.__udfList==None or self.__sourceList==None):
+        if(article.__udfList==None or article.__sourceList==None):
+            print("first launch, setting class variables")
             #db=ownDBObject()
             #db.connect()
             #todo fetch lists
+            article.__sourceList=[]
+            article.__udfList=[]
+            
             #db.close()
             pass
         self.__header={"obsolete":False}
@@ -79,6 +83,7 @@ class article:
             self.__body["procCounter"]=bodyCounter
             return True
         return False
+    
     #udf setter functions
     def addUdf(self,key:str,value:str):
         pass
@@ -152,6 +157,7 @@ class article:
     
     def print(self):
         #for testing and debugging purposes
+        print("printing article",self)
         print("header: ",self.__header)
         print("body: ",self.__body)
         print("udfs: ",self.__udfs)
@@ -162,3 +168,4 @@ if __name__ == '__main__':
     testArticle.setHeader({"headerId":5,"obsolete":True,"testBullshit":"asdf","datePublished":dt.datetime.today()})
     testArticle.setBody({"bodyId":27,"testBullshit":"asdf","articleId":3,"body":"testText"})
     testArticle.print()
+    testArticle2=article() #no first launch, here
