@@ -9,9 +9,7 @@ class article:
     __udfDict=None
     #mandatory database fields to be checked before writing
     MANDATORY_HEADER={"url","obsolete","source"}
-    EMPTY_Header={"url":"NULL","obsolete":False,"source":"NULL","source_date":"NULL"}
     MANDATORY_BODY={"article_id","headline","body","proc_timestamp","proc_counter"}
-    EMPTY_BODY={"article_id":"NULL","headline":"NULL","body":"NULL","proc_timestamp":"NULL","proc_counter":0}
     
     #article class constants
     OBJECT_TYPE=1 #article    
@@ -35,10 +33,8 @@ class article:
             sources = db.retrieveValues("SELECT id,source FROM news_meta_data.source_header;")
             article.__sourceList=list(source[0] for source in sources)
             db.close()
-        self.__header=article.EMPTY_Header
-        self.__headerMandatoryDone={"obsolete"}
-        self.__body=article.EMPTY_BODY
-        self.__bodyMandatoryDone={"proc_counter"}
+        self.__header={"obsolete":False}
+        self.__body={"proc_counter":0}
         self.__oldBody={}
         self.__udfs=set([])
         self.__inDb=False
@@ -57,7 +53,6 @@ class article:
     def setUrl(self, url:str):
         if type(url)==str and validators.url(url)and len(url)<article.MAX_URL_LENGTH:
             self.__header["url"]=url
-            self.__headerMandatoryDone|={"url"}
             return True
         return False
     def setObsolete(self, obsolete:bool):
@@ -68,7 +63,6 @@ class article:
     def setSource(self, source:int):
         if type(source)==int and source>0 and source in article.__sourceList:
             self.__header["source"]=source
-            self.__headerMandatoryDone|={"source"}
             return True
         return False
     def setHeaderDate(self, datePublished:dt.datetime):
@@ -86,25 +80,21 @@ class article:
     def setBodyArticleId(self,bodyArticleId:int):
         if  type(bodyArticleId)==int and bodyArticleId>0:
             self.__body["article_id"]=bodyArticleId
-            self.__bodyMandatoryDone|={"article_id"}
             return True
         return False
     def setBodyText(self, bodyText:str):
         if type(bodyText)==str:
             self.__body["body"]=bodyText
-            self.__bodyMandatoryDone|={"body"}
             return True
         return False
     def setBodyHeadline(self, bodyHeadline:str):
         if type(bodyHeadline)==str and len(bodyHeadline)<=article.MAX_HEADLINE_LENGTH:
             self.__body["headline"]=bodyHeadline
-            self.__bodyMandatoryDone|={"headline"}
             return True
         return False
     def setBodyTimeStamp(self, bodyTimestamp:dt.datetime=dt.datetime.today()):
         if type(bodyTimestamp)==dt.datetime:
             self.__body["proc_timestamp"]=bodyTimestamp
-            self.__bodyMandatoryDone|={"proc_timestamp"}
             return True
         return False
     def setBodyCounter(self, bodyCounter:int):
@@ -130,8 +120,8 @@ class article:
         #checking for data in all mandatory database fields
         #return Value: True=ok, ohterwise (False, missing data)
         missing={"header":{},"body":{}}
-        missing["header"]=article.MANDATORY_HEADER-self.__headerMandatoryDone
-        missing["body"]=article.MANDATORY_BODY-self.__bodyMandatoryDone
+        missing["header"]=article.MANDATORY_HEADER-self.__header.keys()
+        missing["body"]=article.MANDATORY_BODY-self.__body.keys()
         if missing["header"]=={} and missing["body"]=={}:
             return True
         return (False,missing)
