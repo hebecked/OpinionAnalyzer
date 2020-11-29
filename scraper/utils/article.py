@@ -143,7 +143,10 @@ class article:
             if (hash(self.__body[key])!=hash(self.__oldBody[key])):
                 return True
         return False
-        
+    
+    def getData(self):
+        all={"header":self.__header,"body":self.__body,"udfs":self.__udfs}
+        return all
 
     #class Variable: Lookup table for setter functions
     #defined here because of dependency (setter functions)
