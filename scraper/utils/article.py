@@ -6,7 +6,7 @@ import validators
 
 class article:
     __sourceList=None
-    __udfList=None
+    __udfDict=None
     #mandatory database fields to be checked before writing
     MANDATORY_HEADER={"url","obsolete","source"}
     MANDATORY_BODY={"articleId","headline","body","procTimestamp","procCounter"}
@@ -20,20 +20,18 @@ class article:
 
     def __init__(self):
         self.__complete=False
-        if(article.__udfList==None or article.__sourceList==None):
+        if(article.__udfDict==None or article.__sourceList==None):
             article.__sourceList=[]
-            article.__udfList=[]
+            article.__udfList={}
             print("first launch, setting class variables")
             #database connection to be rewritten later
             db=ownDBObject()
             db.connect()
             udf_header = db.retrieveValues("SELECT udf_name,id FROM news_meta_data.udf_header;")
-            for udf_name in udf_header:
-                article.__udfList+=[udf_name[0]]
-            print(article.__udfList)
+            article.__udfDict=dict(zip((udf[0] for udf in udf_header),(udf[1]for udf in udf_header)))
+            print("udf list: ",article.__udfList)
             sources = db.retrieveValues("SELECT id,source FROM news_meta_data.source_header;")
-            for sourceId in sources:
-                article.__sourceList+=[sourceId[0]]
+            article.__sourceList=list(source[0] for source in sources)
             db.close()
         self.__header={"obsolete":False}
         self.__body={"procCounter":0}
@@ -110,8 +108,8 @@ class article:
         return True
     #udf setter functions
     def addUdf(self,key:str,value:str):
-        if type(key)==str and key in article.__udfList and type(value)==str and len(value)<=article.MAX_UDF_LENGTH:
-            self.__udfs|={(key,value)}
+        if type(key)==str and key in article.__udfDict.keys() and type(value)==str and len(value)<=article.MAX_UDF_LENGTH:
+            self.__udfs|={(article.__udfDict[key],value)}
             return True
         return False
 
