@@ -10,6 +10,8 @@ TODO:
 from flair.models import TextClassifier
 from flair.data import Sentence
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from textblob_de import TextBlobDE as TextBlob
+import tensorflow as tf
 import numpy as np
 import json
 
@@ -34,6 +36,8 @@ model = AutoModelForSequenceClassification.from_pretrained("nlptown/bert-base-mu
 tokenizer2 = AutoTokenizer.from_pretrained("oliverguhr/german-sentiment-bert")
 model2 = AutoModelForSequenceClassification.from_pretrained("oliverguhr/german-sentiment-bert")
 
+correlationMatrix=[[0]*3 for i in range(5)]
+
 i=0
 for comment in testComments:
 	if comment["user"] is not None and comment["body"] is not None:
@@ -43,12 +47,20 @@ for comment in testComments:
 		proOrCon = model(**inputs)
 		inputs2 = tokenizer2(comment["body"], return_tensors="pt")
 		proOrCon2 = model2(**inputs2)
-		print("\n" + comment["user"]["username"] + ": " + comment["body"])
-		print(str(i) + ": " +  \
-			" Text length: " + str(len(comment["body"])) + \
-			"; subcomments: " + str(len(comment["replies"])) + \
-			"; Swearing: " + str(Tourette) + \
-			"; Sentiment (star): " + str(1+proOrCon[0].argmax()) + "/" + results[proOrCon2[0][0].argmax()] )  #Mache ich heir das richtige?
+		blob = TextBlob(comment["body"])
+		mood = blob.sentiment
+		print( proOrCon, proOrCon2, mood )
+		#print("\n" + comment["user"]["username"] + ": " + comment["body"])
+		#print(str(i) + ": " +  \
+		#	" Text length: " + str(len(comment["body"])) + \
+		#	"; subcomments: " + str(len(comment["replies"])) + \
+		#	"; Swearing: " + str(Tourette) + \
+		#	"; Sentiment (star): " + str(1+proOrCon[0].argmax().tolist()) + "/" + results[proOrCon2[0][0].argmax()] )  #Mache ich heir das richtige?
+		stars=proOrCon[0].argmax().tolist()
+		rating=proOrCon2[0][0].argmax().tolist()
+		correlationMatrix[stars][rating]+=1
 	i+=1
-	if i == 10:
-		break
+	#if i == 10:
+	#	break
+for i in range(5):
+	print(correlationMatrix[i])
