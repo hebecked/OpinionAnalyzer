@@ -8,7 +8,7 @@ class article:
     __sourceList=None
     __udfDict=None
     #mandatory database fields to be checked before writing
-    MANDATORY_HEADER={"url","obsolete","source"}
+    MANDATORY_HEADER={"url","obsolete","source_id"}
     MANDATORY_BODY={"article_id","headline","body","proc_timestamp","proc_counter"}
     
     #article class constants
@@ -19,7 +19,8 @@ class article:
 
 
     def __init__(self):
-        self.__complete=False
+        self.__headerComplete=False
+        self.__bodyComplete=False
         if(article.__udfDict==None or article.__sourceList==None):
             article.__sourceList=[]
             article.__udfList={}
@@ -32,6 +33,7 @@ class article:
             print("udf Dict: ",article.__udfDict) #todo delete line (debugging purposes only)
             sources = db.retrieveValues("SELECT id,source FROM news_meta_data.source_header;")
             article.__sourceList=list(source[0] for source in sources)
+            print("sourceList ", article.__sourceList) #todo delete line (debugging purposes only)
             db.close()
         self.__header={"obsolete":False}
         self.__body={"proc_counter":0}
@@ -62,11 +64,11 @@ class article:
         return False
     def setSource(self, source:int):
         if type(source)==int and source>0 and source in article.__sourceList:
-            self.__header["source"]=source
+            self.__header["source_id"]=source
             return True
         return False
-    def setHeaderDate(self, datePublished:dt.datetime):
-        if type(datePublished)==dt.datetime:
+    def setHeaderDate(self, datePublished:dt.date):
+        if type(datePublished)==dt.date:
             self.__header["source_date"]=datePublished.isoformat()
             return True
         return False
@@ -116,21 +118,31 @@ class article:
         return False
 
 
-    def checkComplete(self):
+    def checkHeaderComplete(self):
         #checking for data in all mandatory database fields
         #return Value: True=ok, ohterwise (False, missing data)
-        missing={"header":{},"body":{}}
-        missing["header"]=article.MANDATORY_HEADER-self.__header.keys()
-        missing["body"]=article.MANDATORY_BODY-self.__body.keys()
-        if missing["header"]=={} and missing["body"]=={}:
+        missing=article.MANDATORY_HEADER-self.__header.keys()
+        if not(missing):
             return True
         return (False,missing)
-    def setComplete(self):
-        if self.checkComplete()==True:
-            self.__complete=True
+    def setHeaderComplete(self):
+        if self.checkHeaderComplete()==True:
+            self.__headerComplete=True
             return True
         return False
-
+    
+    def checkBodyComplete(self):
+        #checking for data in all mandatory database fields
+        #return Value: True=ok, ohterwise (False, missing data)
+        missing=article.MANDATORY_BODY-self.__body.keys()
+        if not(missing):
+            return True
+        return (False,missing)
+    def setBodyComplete(self):
+        if self.checkBodyComplete()==True:
+            self.__bodyComplete=True
+            return True
+        return False
 
     def checkNewVersion(self):
         #some logic to identify newer version of article body
@@ -159,7 +171,7 @@ class article:
 
     #class Variable: Lookup table for setter functions
     #defined here because of dependency (setter functions)
-    __setHeaderFunct={"id":setHeaderId,"url":setUrl,"obsolete":setObsolete,"source":setSource,"source_date":setHeaderDate}
+    __setHeaderFunct={"id":setHeaderId,"url":setUrl,"obsolete":setObsolete,"source_id":setSource,"source_date":setHeaderDate}
     __setBodyFunct={"id":setBodyId,"article_id":setBodyArticleId,"headline":setBodyHeadline,"body":setBodyText,"proc_timestamp":setBodyTimeStamp,"proc_counter":setBodyCounter}
 
 
@@ -194,7 +206,7 @@ class article:
 
 if __name__ == '__main__':
     testArticle=article()
-    testArticle.setHeader({"id":5,"obsolete":True,"testBullshit":"asdf","source_date":dt.datetime.today()})
+    testArticle.setHeader({"id":5,"obsolete":True,"testBullshit":"asdf","source_date":dt.date.today()})
     testArticle.setBody({"id":27,"testBullshit":"asdf","article_id":3,"headline":"example of headline","body":"testText"})
     for i in range(0,10):
         testArticle.addUdf("label",str(i**2))
@@ -206,4 +218,5 @@ if __name__ == '__main__':
     testArticle.print()
     print("creating new article object - class variables already in place")
     testArticle2=article() #no first launch, here
-    print("test testArticle for completeness: ",testArticle.checkComplete())
+    print("test testArticle header for completeness: ",testArticle.checkHeaderComplete())
+    print("test testArticle body for completeness: ",testArticle.checkBodyComplete())
