@@ -96,7 +96,7 @@ class article:
         return False
     def setBodyTimeStamp(self, bodyTimestamp:dt.datetime=dt.datetime.today()):
         if type(bodyTimestamp)==dt.datetime:
-            self.__body["proc_timestamp"]=bodyTimestamp
+            self.__body["proc_timestamp"]=bodyTimestamp.replace(microsecond=0).isoformat()
             return True
         return False
     def setBodyCounter(self, bodyCounter:int):
