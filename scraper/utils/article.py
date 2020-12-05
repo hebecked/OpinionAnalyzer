@@ -5,6 +5,12 @@ import validators
 
 
 class article:
+    
+    #static data related database queries
+    __UDFS_STATEMENT="""SELECT udf_name,id FROM news_meta_data.udf_header;"""
+    __SOURCES_STATEMENT="""SELECT id,source FROM news_meta_data.source_header;"""
+    
+    
     __sourceList=None
     __udfDict=None
     #mandatory database fields to be checked before writing
@@ -28,10 +34,10 @@ class article:
             #database connection to be rewritten later
             db=ownDBObject()
             db.connect()
-            udf_header = db.retrieveValues("SELECT udf_name,id FROM news_meta_data.udf_header;")
+            udf_header = db.retrieveValues(article.__UDFS_STATEMENT)
             article.__udfDict=dict(zip((udf[0] for udf in udf_header),(udf[1]for udf in udf_header)))
             print("udf Dict: ",article.__udfDict) #todo delete line (debugging purposes only)
-            sources = db.retrieveValues("SELECT id,source FROM news_meta_data.source_header;")
+            sources = db.retrieveValues(article.__SOURCES_STATEMENT)
             article.__sourceList=list(source[0] for source in sources)
             print("sourceList ", article.__sourceList) #todo delete line (debugging purposes only)
             db.close()
