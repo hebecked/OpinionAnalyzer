@@ -1,12 +1,20 @@
 """
 TODO:
 
-- test and install various libs
-- Reduce article(s) to a few representative words (Top N=8(?) words in (maximum word frequency - common words)) (ML-NLP approaches, gpt summary?)
-- Run sentiment analysis on comments
-- Compare different sentiment analyser and possibly combine to a ensemble approach to increase accuracy and obtain reasonable errors
-- Find additional analyser to run (5 personality traits, mood, IQ/education, wordcount vs sentiment, spelling, offensiveLanguage detection, ...)
+1. Clean up Testfile and split over different files (1 for each lib class + 1 analyzing comments +1 analyzing articles)
+2. Libs to add: Topic detection, big 5 personality traits, IQ/Education, wordcount, spelling, offensiveLanguage detection, mood
+Sources:
+Prep text (bag of words): 	https://monkeylearn.com/topic-analysis/
+							https://towardsdatascience.com/nlp-extracting-the-main-topics-from-your-dataset-using-lda-in-minutes-21486f5aa925
+Get text topic:	https://spacy.io/models/de
+				Reduce article(s) to a few representative words (Top N=8(?) words in (maximum word frequency - common words)) 
+				(ML-NLP approaches, gpt summary?)
+Get Personalities: 	https://github.com/jkwieser/personality-detection-text
+					https://github.com/SenticNet/personality-detection
 """
+
+
+
 #from flair.models import TextClassifier
 #from flair.data import Sentence
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -17,7 +25,7 @@ import numpy as np
 import json
 
 
-class multiling_bert_sentiment: 
+class multilang_bert_sentiment: 
 
 	def __init__(self):
 		#Based on Amazonreview (1-5 stars)		#https://huggingface.co/nlptown/bert-base-multilingual-uncased-sentiment?text=Nicht+kaufen 			
@@ -33,6 +41,7 @@ class multiling_bert_sentiment:
 		error=np.sqrt(np.average((np.linspace(1,5,5)-average)**2,weights=weights))*2./5.
 		average=average*2./5.-1
 		return [average,error]
+
 
 class german_bert_sentiment: 
 
@@ -50,6 +59,7 @@ class german_bert_sentiment:
 		average=np.average(np.linspace(1,-1,3),weights=weights)
 		error=np.sqrt(np.average((np.linspace(1,-1,3)-average)**2,weights=weights))
 		return [average,error]
+
 
 class Textblob_sentiment: 
 
@@ -78,12 +88,8 @@ with open('../Testdata/TestArticle.json') as f:
 with open('../Testdata/TestComments.json') as f:
 	testComments = json.load(f)
 
-#print(testArticle)
-#print(testComments)
-results=["positiv", "negativ", "neutral"]
-
 #Based on Amazonreview (1-5 stars)	
-SentimentModel1=multiling_bert_sentiment()
+SentimentModel1=multilang_bert_sentiment()
 
 #Based on a range of sources including twitter, facebook, product reviews
 SentimentModel2=german_bert_sentiment()
