@@ -42,7 +42,8 @@ class article:
         self.__inDb=False
 
     def __del__(self):
-        self.__complete=False
+        self.__headerComplete=False
+        self.__bodyComplete=False
         
     #header setter functions    
     def setHeaderId(self, headerId:int):
@@ -156,7 +157,7 @@ class article:
                 return True
         return False
     
-    def getData(self):
+    def getArticle(self):
         all={"header":self.__header,"body":self.__body,"udfs":self.__udfs}
         return all
     

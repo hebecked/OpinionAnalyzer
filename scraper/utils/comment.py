@@ -1,0 +1,117 @@
+# -*- coding: utf-8 -*-
+import datetime as dt
+from connectDb import database as ownDBObject    #to be recreated with article specific functionality
+
+
+class comment:
+    __udfDict=None
+    #mandatory database fields to be checked before writing
+    MANDATORY_DATA={"article_body_id","external_id","level","body","proc_timestamp"}
+    MAX_UDF_LENGTH=80
+
+
+    def __init__(self):
+        self.__complete=False
+        if comment.__udfDict==None:
+            comment.__udfList={}
+            print("first launch, setting class variables") #todo delete line (debugging purposes only)
+            #database connection to be rewritten later
+            db=ownDBObject()
+            db.connect()
+            udf_header = db.retrieveValues("SELECT udf_name,id FROM news_meta_data.udf_header;")
+            comment.__udfDict=dict(zip((udf[0] for udf in udf_header),(udf[1]for udf in udf_header)))
+            print("udf Dict: ",comment.__udfDict) #todo delete line (debugging purposes only)
+            db.close()
+        self.__data={}
+        self.__udfs=set([])
+
+    def __del__(self):
+        self.__complete=False
+        
+    #setter functions    
+    def setBodyId(self, bodyId:int):
+        if  type(bodyId)==int and bodyId>0:
+            self.__data["article_body_id"]=bodyId
+            return True
+        return False
+    def setLevel(self,level:int):
+        if  type(level)==int and level>0:
+            self.__data["level"]=level
+            return True
+        return False        
+    def setCommentText(self, commentText:str):
+        if type(commentText)==str:
+            self.__data["body"]=commentText
+            return True
+        return False
+    def setTimeStamp(self, commentTimestamp:dt.datetime=dt.datetime.today()):
+        if type(commentTimestamp)==dt.datetime:
+            self.__data["proc_timestamp"]=commentTimestamp.replace(microsecond=0).isoformat()
+            return True
+        return False   
+    def setExternalId(self,externalId:int):
+        if  type(externalId)==int:
+            self.__data["external_id"]=externalId
+            return True
+        return False
+    
+    #udf setter functions
+    def addUdf(self,key:str,value:str):
+        if type(key)==str and key in comment.__udfDict.keys() and type(value)==str and len(value)<=comment.MAX_UDF_LENGTH:
+            self.__udfs|={(comment.__udfDict[key],value)}
+            return True
+        return False
+
+
+    def checkCommentComplete(self):
+        #checking for data in all mandatory database fields
+        #return Value: True=ok, otherwise (False, missing data)
+        missing=comment.MANDATORY_DATA-self.__data.keys()
+        if not(missing):
+            return True
+        return (False,missing)
+    def setCommentComplete(self):
+        if self.checkCommentComplete()==True:
+            self.__complete=True
+            return True
+        return False
+
+    def getComment(self):
+        all={"data":self.__data,"udfs":self.__udfs}
+        return all
+  
+    #class Variable: Lookup table for setter functions
+    #defined here because of dependency (setter functions)
+    __setDataFunct={"article_body_id":setBodyId,"level":setLevel,"body":setCommentText,"proc_timestamp":setTimeStamp,"external_id":setExternalId}
+
+    def setData(self, data:dict):
+        """
+        more comfortable bulk setter for mandatory data with dictionary
+        """
+        return self.__setByDict__(data,self.__setDataFunct)
+ 
+    def __setByDict__(self,data:dict,target:dict):
+        returnDefault=True
+        if type(data)==dict:
+            if len(data.keys()&target.keys())==0:
+                return False
+            for key in data.keys()&target.keys():
+                if(target[key](self,data[key])==False):
+                    returnDefault=False
+            return returnDefault
+        return False
+    
+    def print(self):
+        #for testing and debugging purposes
+        print("\nprinting comment",self)
+        print("\ndata: ",self.__data)
+        print("\nudfs\n: ",self.__udfs)
+            
+
+if __name__ == '__main__':
+    testComment=comment()
+    testComment.setData({"article_body_id":5,"level":3,"body":"asdf","proc_timestamp":dt.datetime.today()})
+    testComment.addUdf("author","some author")
+    testComment.addUdf("label","nonsense")
+    testComment.setExternalId(hash(testComment.getComment()["data"]["body"]+testComment.getComment()["data"]["proc_timestamp"]))
+    testComment.print()
