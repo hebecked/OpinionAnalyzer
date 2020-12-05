@@ -120,7 +120,7 @@ class article:
 
     def checkHeaderComplete(self):
         #checking for data in all mandatory database fields
-        #return Value: True=ok, ohterwise (False, missing data)
+        #return Value: True=ok, otherwise (False, missing data)
         missing=article.MANDATORY_HEADER-self.__header.keys()
         if not(missing):
             return True
