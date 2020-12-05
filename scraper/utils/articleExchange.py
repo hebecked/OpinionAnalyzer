@@ -2,9 +2,13 @@ import connectDb
 from article import article
 import datetime as dt
 
+#add comments, rename to dataExchange
+#add getUdfs(), getSources() for article and comment object
+
 class articleExchange(connectDb.database):
-    #__DB_SCHEMA="news_meta_data"
-    #__DB_HEADER_TABLE="article_header"
+    
+
+    #article related database queries
     __HEADER_MIN_STATEMENT="""SELECT MAX(id) FROM news_meta_data.article_header;"""
     __HEADER_STATEMENT="""INSERT INTO news_meta_data.article_header (source_date,obsolete,source_id,url) VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
     __HEADER_ID_FETCH_STATEMENT="""SELECT url, id FROM news_meta_data.article_header WHERE id > %s AND source_id=%s AND source_date=%s;"""
@@ -16,17 +20,22 @@ class articleExchange(connectDb.database):
 
     __UDF_INSERT_STATEMENT="""INSERT INTO news_meta_data.udf_values (udf_id,object_type,object_id,udf_value) VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
 
+    #comment related database queries
+    
+    #logging related database queries
+
     def __init__(self):
-        super(articleExchange,self).__init__()
-        self.__lastBodyWritten=0;
+        super().__init__()
         
     def close(self):
-        super(articleExchange,self).close()
-    def __del__(self):
-        super(articleExchange,self).__del__()
-    def connect(self):
-        super(articleExchange,self).connect()
+        super().close()
         
+    def __del__(self):
+        super().__del__()
+        
+    def connect(self):
+        super().connect()
+              
     def fetchTodoList(sourceId:int):
         #todo
         #get articles (header + body) from db view v_totoCrawl
@@ -93,7 +102,7 @@ class articleExchange(connectDb.database):
         cur.close()
         self.fillBodyIds(articlesList,startId)
     
-    def __writeUdfs(self, articlesList:list):
+    def __writeArticleUdfs(self, articlesList:list):
         cur = self.conn.cursor()
         for art in articlesList:
             if art.getBodyToWrite()["insert"]:
@@ -132,10 +141,23 @@ class articleExchange(connectDb.database):
             self.__writeBodies(bodies)
             print("bodies written and id added")
             #bodies[0].print()
-            self.__writeUdfs(bodies)
+            self.__writeArticleUdfs(bodies)
             print("udfs written")
             start+=SUBSET_LENGTH
 
+    def fetchCommentIds(self, commentsList:list, startId:int):
+        pass
+    def fetchOldCommentKeys(self, startdate:dt.datetime):
+        pass
+    def __writeCommentBodies(self, commentsList:list):
+        pass
+    def __writeCommentUdfs(self, commentsList:list):
+        pass
+    
+    def writeComments(self, commentsList:list):
+        pass
+    
+    
 
 
 if __name__ == '__main__':

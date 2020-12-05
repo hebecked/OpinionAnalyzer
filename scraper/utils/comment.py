@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 import datetime as dt
-from connectDb import database as ownDBObject    #to be recreated with article specific functionality
+from articleExchange import articleExchange as ownDBObject    #to be recreated with article specific functionality
 
 
 class comment:
+    
+    #static data related database queries
+    __UDFS_STATEMENT="""SELECT udf_name,id FROM news_meta_data.udf_header;"""
+    
+   
     __udfDict=None
     #mandatory database fields to be checked before writing
     MANDATORY_DATA={"article_body_id","external_id","level","body","proc_timestamp"}
+    KEY_DATA={"article_body_id""external_id"}   #unique identifier in database
     MAX_UDF_LENGTH=80
 
 
@@ -18,7 +24,7 @@ class comment:
             #database connection to be rewritten later
             db=ownDBObject()
             db.connect()
-            udf_header = db.retrieveValues("SELECT udf_name,id FROM news_meta_data.udf_header;")
+            udf_header = db.retrieveValues(comment.__UDFS_STATEMENT)
             comment.__udfDict=dict(zip((udf[0] for udf in udf_header),(udf[1]for udf in udf_header)))
             print("udf Dict: ",comment.__udfDict) #todo delete line (debugging purposes only)
             db.close()
@@ -79,6 +85,10 @@ class comment:
     def getComment(self):
         all={"data":self.__data,"udfs":self.__udfs}
         return all
+    def getKey(self):
+        if not(comment.KEY_DATA-self.__data.keys()):
+            return (self.__data["article_body_id"],self.__data["external_id"])
+        return False
   
     #class Variable: Lookup table for setter functions
     #defined here because of dependency (setter functions)
