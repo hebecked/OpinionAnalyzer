@@ -44,7 +44,7 @@ class articleExchange(connectDb.database):
     def fetchArticleIds(self, articlesList:list, startId:int):
         articleIds=[]
         cur = self.conn.cursor()
-        for sourcesDates in set((x.getData()["header"]["source_id"],x.getData()["header"]["source_date"]) for x in articlesList):
+        for sourcesDates in set((x.getArticle()["header"]["source_id"],x.getArticle()["header"]["source_date"]) for x in articlesList):
             cur.execute(articleExchange.__HEADER_ID_FETCH_STATEMENT,tuple([startId]+list(sourcesDates)))
             result = cur.fetchall()
             articleIds+=list(result)
@@ -67,7 +67,7 @@ class articleExchange(connectDb.database):
         else: startId=result[0]
         for art in articlesList:
             if (art.setHeaderComplete()):
-                hdr=art.getData()["header"]
+                hdr=art.getArticle()["header"]
                 cur.execute(articleExchange.__HEADER_STATEMENT,(hdr["source_date"],hdr["obsolete"],hdr["source_id"],hdr["url"]))
         self.conn.commit()
         # close the communication with the PostgreSQL
@@ -97,24 +97,24 @@ class articleExchange(connectDb.database):
         cur = self.conn.cursor()
         for art in articlesList:
             if art.getBodyToWrite()["insert"]:
-                for udf in art.getData()["udfs"]:
-                    cur.execute(articleExchange.__UDF_INSERT_STATEMENT,(udf[0],article.OBJECT_TYPE, art.getData()["body"]["id"],udf[1]))
+                for udf in art.getArticle()["udfs"]:
+                    cur.execute(articleExchange.__UDF_INSERT_STATEMENT,(udf[0],article.OBJECT_TYPE, art.getArticle()["body"]["id"],udf[1]))
         self.conn.commit()
         cur.close()            
     
     def fillHeaderIds(self,articlesList:list, startId: int):
         Ids=self.fetchArticleIds(articlesList,startId)
         for art in articlesList:
-            url=art.getData()["header"]["url"]
+            url=art.getArticle()["header"]["url"]
             if url in Ids.keys():
-                art.setHeaderId(Ids[art.getData()["header"]["url"]])
+                art.setHeaderId(Ids[art.getArticle()["header"]["url"]])
                 
     def fillBodyIds(self,articlesList:list, startId: int):
         Ids=self.fetchBodyIds(articlesList,startId)
         for art in articlesList:
-            articleId=art.getData()["header"]["id"]
+            articleId=art.getArticle()["header"]["id"]
             if articleId in Ids.keys():
-                art.setBodyId(Ids[art.getData()["header"]["id"]])    
+                art.setBodyId(Ids[art.getArticle()["header"]["id"]])    
         
     
     def writeArticles(self, articlesList:list):
