@@ -1,5 +1,6 @@
 import connectDb
 from article import article
+from comment import comment
 import datetime as dt
 
 #add comments, rename to dataExchange
@@ -18,9 +19,14 @@ class articleExchange(connectDb.database):
     __BODY_UPDATE_STATEMENT="""UPDATE news_meta_data.article_body set proc_counter=%s where id=%s;"""
     __BODY_ID_FETCH_STATEMENT="""select article_id, max(id) as id from  news_meta_data.article_body where id > %s group by article_id;"""
 
+    #udf related database queries
     __UDF_INSERT_STATEMENT="""INSERT INTO news_meta_data.udf_values (udf_id,object_type,object_id,udf_value) VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
 
     #comment related database queries
+    __COMMENT_MIN_STATEMENT="""SELECT MAX(id) FROM news_meta_data.comment;"""
+    __COMMENT_STATEMENT="""INSERT INTO news_meta_data.comment (article_body_id, external_id, parent_id, level, body,proc_timestamp ) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
+    __COMMENT_ID_FETCH_STATEMENT="""SELECT external_id, article_body_id, id FROM news_meta_data.comment WHERE id > %s AND article_body_id in %s;"""    
+    #tbd get recent comments from view (by source_id and proc_timestamp)
     
     #logging related database queries
 
@@ -116,14 +122,14 @@ class articleExchange(connectDb.database):
         for art in articlesList:
             url=art.getArticle()["header"]["url"]
             if url in Ids.keys():
-                art.setHeaderId(Ids[art.getArticle()["header"]["url"]])
+                art.setHeaderId(Ids[url])
                 
     def fillBodyIds(self,articlesList:list, startId: int):
         Ids=self.fetchBodyIds(articlesList,startId)
         for art in articlesList:
             articleId=art.getArticle()["header"]["id"]
             if articleId in Ids.keys():
-                art.setBodyId(Ids[art.getArticle()["header"]["id"]])    
+                art.setBodyId(Ids[articleId])    
         
     
     def writeArticles(self, articlesList:list):
@@ -146,16 +152,65 @@ class articleExchange(connectDb.database):
             start+=SUBSET_LENGTH
 
     def fetchCommentIds(self, commentsList:list, startId:int):
+        article_body_id_List=list(x.getComment()["data"]["article_body_id"] for x in commentsList)
+        article_body_id_tuple=tuple(article_body_id_List)
+        commentIds=[]       
+        cur = self.conn.cursor()        
+        cur.execute(articleExchange.__COMMENT_ID_FETCH_STATEMENT,(startId,article_body_id_tuple))
+        result = cur.fetchall()
+        commentIds=list(((r[0],r[1]),r[2]) for r in result)       
+        return dict(commentIds)        
+
+    def fillCommentIds(self, commentsList:list, startId:int):
+        Ids=self.fetchCommentIds(commentsList,startId)
+        print("Ids: ",Ids)
+        for comm in commentsList:
+            identifier=(comm.getComment()["data"]["external_id"],comm.getComment()["data"]["article_body_id"])
+            if identifier in Ids.keys():
+                print("test")
+                comm.setCommentId(Ids[identifier])    
+    
+    def fetchOldCommentKeys(self, sourceId: int, startdate:dt.datetime):
         pass
-    def fetchOldCommentKeys(self, startdate:dt.datetime):
-        pass
-    def __writeCommentBodies(self, commentsList:list):
-        pass
+    def __writeCommentData(self, commentsList:list):
+        cur = self.conn.cursor()
+        cur.execute(articleExchange.__COMMENT_MIN_STATEMENT)
+        result = cur.fetchall()
+        if result[0][0]==None: startId=0
+        else: startId=result[0]
+        for comm in commentsList:
+            if (comm.setComplete()):
+                data=comm.getComment()["data"]
+                comm.print()
+                cur.execute(articleExchange.__COMMENT_STATEMENT,(data["article_body_id"],data["external_id"],data["parent_id"],data["level"],data["body"],data["proc_timestamp"]))
+        self.conn.commit()
+        # close the communication with the PostgreSQL
+        cur.close()
+        self.fillCommentIds(commentsList,startId)
+        
     def __writeCommentUdfs(self, commentsList:list):
-        pass
+        cur = self.conn.cursor()
+        for comm in commentsList:
+            if comm.getComment()["udfs"]:
+                for udf in comm.getComment()["udfs"]:
+                    cur.execute(articleExchange.__UDF_INSERT_STATEMENT,(udf[0],comment.OBJECT_TYPE, comm.getComment()["data"]["id"],udf[1]))
+        self.conn.commit()
+        cur.close()   
     
     def writeComments(self, commentsList:list):
-        pass
+        if(type(commentsList)!=list): return False
+        SUBSET_LENGTH=100
+        start=0
+        while start < len(commentsList):
+            worklist=list(filter(lambda x: type(x)==comment,commentsList[start:start+SUBSET_LENGTH]))
+            
+            # todo filter by not in db (use fetchOldCommentKeys)
+            comments=worklist
+            
+            self.__writeCommentData(comments)
+            self.__writeCommentUdfs(comments)
+            #print("udfs written")
+            start+=SUBSET_LENGTH
     
     
 
@@ -173,4 +228,12 @@ if __name__ == '__main__':
     writer=articleExchange()
     writer.connect()
     writer.writeArticles([testArticle])
+    testComment=comment()
+    testComment.setData({"article_body_id":5,"level":0,"body":"i'm a comment","proc_timestamp":dt.datetime.today()})
+    testComment.addUdf("author","brilliant me")
+    testComment.setExternalId((hash("brilliant me"+testComment.getComment()["data"]["body"])))
+    print("plain comment print")
+    testComment.print()
+    writer.writeComments([testComment])
+   # testComment.print()
     writer.close()

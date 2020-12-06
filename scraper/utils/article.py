@@ -18,7 +18,7 @@ class article:
     MANDATORY_BODY={"article_id","headline","body","proc_timestamp","proc_counter"}
     
     #article class constants
-    OBJECT_TYPE=1 #article    
+    OBJECT_TYPE=1 #article - more robust: fetch from database    
     MAX_URL_LENGTH=2048
     MAX_HEADLINE_LENGTH=200
     MAX_UDF_LENGTH=80
