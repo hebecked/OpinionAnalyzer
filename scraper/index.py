@@ -26,6 +26,13 @@ def main():
         logger.info('Triggering Spiegel Scraper')
         os.system('python3 -u /usr/src/app/dataCollectors/spiegelCollector.py')
 
+    logger.info('Triggering Article')
+    os.system('python3 -u /usr/src/app/utils/article.py')
+    sleep(2)
+    logger.info('Triggering Comment')
+    os.system('python3 -u /usr/src/app/utils/comment.py')
+    sleep(2)
+    logger.info('Running Cron')
     cron = CronJobs()
     cron.cronInit()
 
