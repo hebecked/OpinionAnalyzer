@@ -2,13 +2,13 @@ import connectDb
 from article import article
 from comment import comment
 import datetime as dt
-import time
 
 #add comments, rename to dataExchange
 #add getUdfs(), getSources() for article and comment object
 
 class databaseExchange(connectDb.database):
-    
+    #scraper related database queries
+    __SCRAPER_FETCH_LAST_RUN="""SELECT MAX(start_timestamp) FROM news_meta_data.crawl_log WHERE success=True and source_id=%s;"""    
 
     #article related database queries
     __HEADER_MIN_STATEMENT="""SELECT MAX(id) FROM news_meta_data.article_header;"""
@@ -54,6 +54,13 @@ class databaseExchange(connectDb.database):
         #get articles (header + body) from db view v_todoCrawl
         #set BodyOld
         pass
+    def fetchLastRun(self,sourceId:int):
+        cur = self.conn.cursor()
+        cur.execute(databaseExchange.__SCRAPER_FETCH_LAST_RUN,(sourceId,))
+        result = cur.fetchall()
+        cur.close()
+        if result[0][0]==None: return dt.date(1900,1,1)
+        return result[0][0]
     
     def logStartCrawl(self,sourceId:int):
         cur = self.conn.cursor()
@@ -190,7 +197,7 @@ class databaseExchange(connectDb.database):
                 comm.setCommentId(Ids[identifier])    
     
     def fetchOldCommentKeys(self, sourceId: int, startdate:dt.datetime):
-        # use view to get "not so old" comments from database
+        # todo use view to get "not so old" comments from database
         
         pass
     def __writeCommentData(self, commentsList:list):
@@ -248,6 +255,7 @@ if __name__ == '__main__':
     testArticle.print()
     writer=databaseExchange()
     writer.connect()
+    print("last Run= ",writer.fetchLastRun(1))
     writer.logStartCrawl(1)
     writer.writeArticles([testArticle])
     testComment=comment()
