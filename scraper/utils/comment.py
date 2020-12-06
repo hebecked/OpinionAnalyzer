@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime as dt
-from articleExchange import articleExchange as ownDBObject    #to be recreated with article specific functionality
+from connectDb import database as ownDBObject    #to be recreated with article specific functionality
 
 
 class comment:
@@ -13,6 +13,7 @@ class comment:
     #mandatory database fields to be checked before writing
     MANDATORY_DATA={"article_body_id","external_id","level","body","proc_timestamp"}
     KEY_DATA={"article_body_id""external_id"}   #unique identifier in database
+    OBJECT_TYPE=2 #comment - more robust: fetch from database
     MAX_UDF_LENGTH=80
 
 
@@ -30,18 +31,24 @@ class comment:
             db.close()
         self.__data={}
         self.__udfs=set([])
+        self.__data["parent_id"]=None
 
     def __del__(self):
         self.__complete=False
         
-    #setter functions    
+    #setter functions
+    def setCommentId(self, commentId:int):
+        if  type(commentId)==int and commentId>0:
+            self.__data["id"]=commentId
+            return True
+        return False
     def setBodyId(self, bodyId:int):
         if  type(bodyId)==int and bodyId>0:
             self.__data["article_body_id"]=bodyId
             return True
         return False
     def setLevel(self,level:int):
-        if  type(level)==int and level>0:
+        if  type(level)==int and level>=0:
             self.__data["level"]=level
             return True
         return False        
@@ -60,6 +67,11 @@ class comment:
             self.__data["external_id"]=externalId
             return True
         return False
+    def setParentId(self,parentId:int):
+        if  type(parentId)==int:
+            self.__data["external_id"]=parentId
+            return True
+        return False
     
     #udf setter functions
     def addUdf(self,key:str,value:str):
@@ -76,7 +88,7 @@ class comment:
         if not(missing):
             return True
         return (False,missing)
-    def setCommentComplete(self):
+    def setComplete(self):
         if self.checkCommentComplete()==True:
             self.__complete=True
             return True
@@ -92,7 +104,7 @@ class comment:
   
     #class Variable: Lookup table for setter functions
     #defined here because of dependency (setter functions)
-    __setDataFunct={"article_body_id":setBodyId,"level":setLevel,"body":setCommentText,"proc_timestamp":setTimeStamp,"external_id":setExternalId}
+    __setDataFunct={"article_body_id":setBodyId,"parent_id":setParentId,"level":setLevel,"body":setCommentText,"proc_timestamp":setTimeStamp,"external_id":setExternalId}
 
     def setData(self, data:dict):
         """
