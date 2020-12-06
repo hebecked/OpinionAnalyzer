@@ -2,11 +2,12 @@ import connectDb
 from article import article
 from comment import comment
 import datetime as dt
+import time
 
 #add comments, rename to dataExchange
 #add getUdfs(), getSources() for article and comment object
 
-class articleExchange(connectDb.database):
+class databaseExchange(connectDb.database):
     
 
     #article related database queries
@@ -29,9 +30,15 @@ class articleExchange(connectDb.database):
     #tbd get recent comments from view (by source_id and proc_timestamp)
     
     #logging related database queries
+    __LOG_STARTCRAWL="""INSERT INTO news_meta_data.crawl_log (source_id,start_timestamp, success) VALUES (%s, %s,False);"""
+    __LOG_ENDCRAWL="""UPDATE news_meta_data.crawl_log SET end_timestamp=%s, success=%s WHERE id=%s;"""
+    __LOG_ENDCRAWL_TEST="""SELECT * FROM news_meta_data.crawl_log  WHERE id=%s;"""
+    __LOG_GET_MAX_ID="""SELECT MAX(id) FROM news_meta_data.crawl_log WHERE source_id=%s;"""
+    
 
     def __init__(self):
         super().__init__()
+        self.__logId=None
         
     def close(self):
         super().close()
@@ -42,25 +49,37 @@ class articleExchange(connectDb.database):
     def connect(self):
         super().connect()
               
-    def fetchTodoList(sourceId:int):
+    def fetchTodoList(self, sourceId:int):
         #todo
-        #get articles (header + body) from db view v_totoCrawl
+        #get articles (header + body) from db view v_todoCrawl
         #set BodyOld
         pass
     
-    def logStartCrawl(sourceId:int):
-        #todo
-        pass
-    def logEndCrawl(sourceId:int):
-        #todo
-        pass
+    def logStartCrawl(self,sourceId:int):
+        cur = self.conn.cursor()
+        cur.execute(databaseExchange.__LOG_STARTCRAWL,(sourceId,dt.datetime.today().replace(microsecond=0).isoformat()))
+        self.conn.commit()
+        cur.execute(databaseExchange.__LOG_GET_MAX_ID,(sourceId,))
+        result = cur.fetchall()
+        cur.close()
+        if result[0][0]==None: return False
+        self.__logId=result[0][0]
+        print("logId: ",self.__logId)
+        return True
+
+    def logEndCrawl(self,success:bool=True):
+        cur = self.conn.cursor()
+        argument_tuple=(dt.datetime.today().replace(microsecond=0).isoformat(),success,self.__logId)
+        cur.execute(databaseExchange.__LOG_ENDCRAWL,argument_tuple)
+        self.conn.commit()        
+        cur.close()
         
 
     def fetchArticleIds(self, articlesList:list, startId:int):
         articleIds=[]
         cur = self.conn.cursor()
         for sourcesDates in set((x.getArticle()["header"]["source_id"],x.getArticle()["header"]["source_date"]) for x in articlesList):
-            cur.execute(articleExchange.__HEADER_ID_FETCH_STATEMENT,tuple([startId]+list(sourcesDates)))
+            cur.execute(databaseExchange.__HEADER_ID_FETCH_STATEMENT,tuple([startId]+list(sourcesDates)))
             result = cur.fetchall()
             articleIds+=list(result)
         cur.close()
@@ -69,21 +88,21 @@ class articleExchange(connectDb.database):
     def fetchBodyIds(self, articlesList:list, startId:int):
         bodyIds=[]       
         cur = self.conn.cursor()        
-        cur.execute(articleExchange.__BODY_ID_FETCH_STATEMENT,(startId,))
+        cur.execute(databaseExchange.__BODY_ID_FETCH_STATEMENT,(startId,))
         result = cur.fetchall()
         bodyIds=list(result)       
         return dict(bodyIds)
     
     def __writeHeaders(self, articlesList:list):
         cur = self.conn.cursor()
-        cur.execute(articleExchange.__HEADER_MIN_STATEMENT)
+        cur.execute(databaseExchange.__HEADER_MIN_STATEMENT)
         result = cur.fetchall()
         if result[0][0]==None: startId=0
         else: startId=result[0]
         for art in articlesList:
             if (art.setHeaderComplete()):
                 hdr=art.getArticle()["header"]
-                cur.execute(articleExchange.__HEADER_STATEMENT,(hdr["source_date"],hdr["obsolete"],hdr["source_id"],hdr["url"]))
+                cur.execute(databaseExchange.__HEADER_STATEMENT,(hdr["source_date"],hdr["obsolete"],hdr["source_id"],hdr["url"]))
         self.conn.commit()
         # close the communication with the PostgreSQL
         cur.close()
@@ -92,7 +111,7 @@ class articleExchange(connectDb.database):
     
     def __writeBodies(self, articlesList:list):
         cur = self.conn.cursor()
-        cur.execute(articleExchange.__BODY_MIN_STATEMENT)
+        cur.execute(databaseExchange.__BODY_MIN_STATEMENT)
         result = cur.fetchall()
         if result[0][0]==None: startId=0
         else: startId=result[0]
@@ -101,9 +120,9 @@ class articleExchange(connectDb.database):
                 todo=art.getBodyToWrite()
                 #print("todo: ", todo)
                 if(todo["insert"]):
-                    cur.execute(articleExchange.__BODY_STATEMENT,(todo["body"]["article_id"],todo["body"]["headline"],todo["body"]["body"],todo["body"]["proc_timestamp"],todo["body"]["proc_counter"]+1))
+                    cur.execute(databaseExchange.__BODY_STATEMENT,(todo["body"]["article_id"],todo["body"]["headline"],todo["body"]["body"],todo["body"]["proc_timestamp"],todo["body"]["proc_counter"]+1))
                 else:
-                    cur.execute(articleExchange.__BODY_UPDATE_STATEMENT,(todo["body"]["proc_counter"]+1,todo["body"]["id"]))
+                    cur.execute(databaseExchange.__BODY_UPDATE_STATEMENT,(todo["body"]["proc_counter"]+1,todo["body"]["id"]))
         self.conn.commit()
         cur.close()
         self.fillBodyIds(articlesList,startId)
@@ -113,7 +132,7 @@ class articleExchange(connectDb.database):
         for art in articlesList:
             if art.getBodyToWrite()["insert"]:
                 for udf in art.getArticle()["udfs"]:
-                    cur.execute(articleExchange.__UDF_INSERT_STATEMENT,(udf[0],article.OBJECT_TYPE, art.getArticle()["body"]["id"],udf[1]))
+                    cur.execute(databaseExchange.__UDF_INSERT_STATEMENT,(udf[0],article.OBJECT_TYPE, art.getArticle()["body"]["id"],udf[1]))
         self.conn.commit()
         cur.close()            
     
@@ -156,7 +175,7 @@ class articleExchange(connectDb.database):
         article_body_id_tuple=tuple(article_body_id_List)
         commentIds=[]       
         cur = self.conn.cursor()        
-        cur.execute(articleExchange.__COMMENT_ID_FETCH_STATEMENT,(startId,article_body_id_tuple))
+        cur.execute(databaseExchange.__COMMENT_ID_FETCH_STATEMENT,(startId,article_body_id_tuple))
         result = cur.fetchall()
         commentIds=list(((r[0],r[1]),r[2]) for r in result)       
         return dict(commentIds)        
@@ -171,10 +190,12 @@ class articleExchange(connectDb.database):
                 comm.setCommentId(Ids[identifier])    
     
     def fetchOldCommentKeys(self, sourceId: int, startdate:dt.datetime):
+        # use view to get "not so old" comments from database
+        
         pass
     def __writeCommentData(self, commentsList:list):
         cur = self.conn.cursor()
-        cur.execute(articleExchange.__COMMENT_MIN_STATEMENT)
+        cur.execute(databaseExchange.__COMMENT_MIN_STATEMENT)
         result = cur.fetchall()
         if result[0][0]==None: startId=0
         else: startId=result[0]
@@ -182,7 +203,7 @@ class articleExchange(connectDb.database):
             if (comm.setComplete()):
                 data=comm.getComment()["data"]
                 comm.print()
-                cur.execute(articleExchange.__COMMENT_STATEMENT,(data["article_body_id"],data["external_id"],data["parent_id"],data["level"],data["body"],data["proc_timestamp"]))
+                cur.execute(databaseExchange.__COMMENT_STATEMENT,(data["article_body_id"],data["external_id"],data["parent_id"],data["level"],data["body"],data["proc_timestamp"]))
         self.conn.commit()
         # close the communication with the PostgreSQL
         cur.close()
@@ -193,7 +214,7 @@ class articleExchange(connectDb.database):
         for comm in commentsList:
             if comm.getComment()["udfs"]:
                 for udf in comm.getComment()["udfs"]:
-                    cur.execute(articleExchange.__UDF_INSERT_STATEMENT,(udf[0],comment.OBJECT_TYPE, comm.getComment()["data"]["id"],udf[1]))
+                    cur.execute(databaseExchange.__UDF_INSERT_STATEMENT,(udf[0],comment.OBJECT_TYPE, comm.getComment()["data"]["id"],udf[1]))
         self.conn.commit()
         cur.close()   
     
@@ -225,8 +246,9 @@ if __name__ == '__main__':
     testArticle.addUdf("label","smart")
     print("plain article print")
     testArticle.print()
-    writer=articleExchange()
+    writer=databaseExchange()
     writer.connect()
+    writer.logStartCrawl(1)
     writer.writeArticles([testArticle])
     testComment=comment()
     testComment.setData({"article_body_id":5,"level":0,"body":"i'm a comment","proc_timestamp":dt.datetime.today()})
@@ -236,4 +258,5 @@ if __name__ == '__main__':
     testComment.print()
     writer.writeComments([testComment])
    # testComment.print()
+    writer.logEndCrawl()
     writer.close()
