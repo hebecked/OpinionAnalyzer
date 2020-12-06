@@ -259,7 +259,7 @@ if __name__ == '__main__':
     writer.logStartCrawl(1)
     writer.writeArticles([testArticle])
     testComment=comment()
-    testComment.setData({"article_body_id":5,"level":0,"body":"i'm a comment","proc_timestamp":dt.datetime.today()})
+    testComment.setData({"article_body_id":1,"level":0,"body":"i'm a comment","proc_timestamp":dt.datetime.today()})
     testComment.addUdf("author","brilliant me")
     testComment.setExternalId((hash("brilliant me"+testComment.getComment()["data"]["body"])))
     print("plain comment print")
