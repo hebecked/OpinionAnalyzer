@@ -127,13 +127,22 @@ class comment:
         #for testing and debugging purposes
         print("\nprinting comment",self)
         print("\ndata: ",self.__data)
-        print("\nudfs\n: ",self.__udfs)
+        print("\nudfs: ",self.__udfs)
             
 
 if __name__ == '__main__':
+    print("\n\n")
+    print("-------------------------------------------------\n")
+    print("Starting comment testcases here:\n\n")
     testComment=comment()
-    testComment.setData({"article_body_id":5,"level":3,"body":"asdf","proc_timestamp":dt.datetime.today()})
-    testComment.addUdf("author","some author")
+    commentData={"article_body_id":5,"level":3,"body":"asdf","proc_timestamp":dt.datetime.today()}
+    print("setting comment with data: ",commentData)
+    testComment.setData(commentData)
+    print("adding udf= ","author","some author")
+    testComment.addUdf("author:","some author")
+    print("adding udf= ","label:","nonsense")
     testComment.addUdf("label","nonsense")
+    print("setting external ID")
     testComment.setExternalId(hash(testComment.getComment()["data"]["body"]+testComment.getComment()["data"]["proc_timestamp"]))
+    print("printing resulting comment:")
     testComment.print()

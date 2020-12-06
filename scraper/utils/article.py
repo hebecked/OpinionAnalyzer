@@ -2,6 +2,8 @@
 import datetime as dt
 from connectDb import database as ownDBObject    #to be recreated with article specific functionality
 import validators
+import logging
+
 
 
 class article:
@@ -212,18 +214,27 @@ class article:
             
 
 if __name__ == '__main__':
+    print("\n\n")
+    print("-------------------------------------------------\n")
+    print("Starting article testcases here:\n\n")
     testArticle=article()
-    testArticle.setHeader({"id":5,"obsolete":True,"testBullshit":"asdf","source_date":dt.date.today()})
-    testArticle.setBody({"id":27,"testBullshit":"asdf","article_id":3,"headline":"example of headline","body":"testText"})
+    header={"id":5,"obsolete":True,"testBullshit":"asdf","source_date":dt.date.today()}
+    body={"id":27,"testBullshit":"asdf","article_id":3,"headline":"example of headline","body":"testText"}
+    print("setting article header as: ", header)
+    testArticle.setHeader(header)
+    print("setting article body as: ", body)
+    testArticle.setBody(body)
+    print("setting some udfs...")
     for i in range(0,10):
         testArticle.addUdf("label",str(i**2))
         testArticle.addUdf("author","me")
-    print("testing empty history - new Version: ",testArticle.checkNewVersion())
+    print("testing empty history: is new Version= ",testArticle.checkNewVersion())
     testArticle.setBodyOld()
     testArticle.setBody({"id":27,"testBullshit":"asdf","article_id":3,"headline":"esxample of headline","body":"testText"})
-    print("testing new headline - new Version: ",testArticle.checkNewVersion())
+    print("testing new headline ('esxample of headline'): is new Version= ",testArticle.checkNewVersion())
+    print("printing article:")
     testArticle.print()
-    print("creating new article object - class variables already in place")
+    print("creating second article object - class variables already in place")
     testArticle2=article() #no first launch, here
     print("test testArticle header for completeness: ",testArticle.checkHeaderComplete())
     print("test testArticle body for completeness: ",testArticle.checkBodyComplete())
