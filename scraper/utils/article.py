@@ -2,6 +2,7 @@
 import datetime as dt
 from connectDb import database as ownDBObject    #to be recreated with article specific functionality
 import validators
+import copy
 
 
 
@@ -42,11 +43,12 @@ class article:
             article.__sourceList=list(source[0] for source in sources)
             print("sourceList ", article.__sourceList) #todo delete line (debugging purposes only)
             db.close()
-        self.__header={"obsolete":False}
+        self.__header={"obsolete":False,"source_date":None}
         self.__body={"proc_counter":0}
         self.__oldBody={}
         self.__udfs=set([])
         self.__inDb=False
+        self.freeData=None
 
     def __del__(self):
         self.__headerComplete=False
@@ -115,9 +117,11 @@ class article:
     def setBodyOld(self):
         #shifting body data to old body data for comparison with newer version
         #tobe used after import from database
-        self.__oldBody=self.__body
-        self.__body={"proc_counter":0}
-        return True
+        if self.checkBodyComplete():
+            self.__oldBody=copy.deepcopy(self.__body)
+            self.__body={"proc_counter":0,"article_id":self.__body["article_id"]}
+            return True
+        return False
     #udf setter functions
     def addUdf(self,key:str,value:str):
         if type(key)==str and key in article.__udfDict.keys() and type(value)==str and len(value)<=article.MAX_UDF_LENGTH:

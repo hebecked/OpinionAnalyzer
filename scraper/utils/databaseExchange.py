@@ -1,4 +1,4 @@
-import connectDb
+import connectDb as connectDb
 from article import article
 from comment import comment
 import datetime as dt
@@ -9,6 +9,8 @@ import datetime as dt
 class databaseExchange(connectDb.database):
     #scraper related database queries
     __SCRAPER_FETCH_LAST_RUN="""SELECT MAX(start_timestamp) FROM news_meta_data.crawl_log WHERE success=True and source_id=%s;"""    
+#todo change WHERE clause: sourceId instead of source
+    __SCRAPER_FETCH_TODO="""SELECT article_id,url,article_body_id,headline,body,proc_timestamp,proc_counter FROM news_meta_data.v_todo_crawl WHERE src_name=%s;"""
 
     #article related database queries
     __HEADER_MIN_STATEMENT="""SELECT MAX(id) FROM news_meta_data.article_header;"""
@@ -50,10 +52,22 @@ class databaseExchange(connectDb.database):
         super().connect()
               
     def fetchTodoList(self, sourceId:int):
-        #todo
-        #get articles (header + body) from db view v_todoCrawl
-        #set BodyOld
-        pass
+        cur = self.conn.cursor()
+        #todo: call by sourceId
+        cur.execute(databaseExchange.__SCRAPER_FETCH_TODO,('Spiegel',))
+        result = cur.fetchall()
+        cur.close()
+        if len(result)==0: return []
+        #todo rework check empty as above (len)
+        returnList=[]
+        for res in result:
+            art=article()
+            art.setHeader({'id':res[0],'url':res[1],'source_id':sourceId})
+            if(res[2]!=None):
+                art.setBody({'id':res[2],'article_id':res[0],'headline':res[3],'body':res[4],'proc_timestamp':res[5],'proc_counter':res[6]})
+                art.setBodyOld()
+            returnList+=[art]
+        return returnList
     def fetchLastRun(self,sourceId:int):
         cur = self.conn.cursor()
         cur.execute(databaseExchange.__SCRAPER_FETCH_LAST_RUN,(sourceId,))
@@ -167,14 +181,14 @@ class databaseExchange(connectDb.database):
             headers=list(filter(lambda x: not(x.isInDb()),worklist))
             self.__writeHeaders(headers)
             #headers[0].print()
-            print("headers written and id added")
+            print("article headers written and id added")
             #worklist[0].print()
             bodies=list(filter(lambda x: x.isInDb(),worklist))
             self.__writeBodies(bodies)
-            print("bodies written and id added")
+            print("article bodies written and id added")
             #bodies[0].print()
-            self.__writeArticleUdfs(bodies)
-            print("udfs written")
+#todo reactivate after database bug fixed            self.__writeArticleUdfs(bodies)   
+            print("article udfs written")
             start+=SUBSET_LENGTH
 
     def fetchCommentIds(self, commentsList:list, startId:int):
@@ -189,11 +203,9 @@ class databaseExchange(connectDb.database):
 
     def fillCommentIds(self, commentsList:list, startId:int):
         Ids=self.fetchCommentIds(commentsList,startId)
-        print("Ids: ",Ids)
         for comm in commentsList:
             identifier=(comm.getComment()["data"]["external_id"],comm.getComment()["data"]["article_body_id"])
             if identifier in Ids.keys():
-                print("test")
                 comm.setCommentId(Ids[identifier])    
     
     def fetchOldCommentKeys(self, sourceId: int, startdate:dt.datetime):
@@ -209,10 +221,8 @@ class databaseExchange(connectDb.database):
         for comm in commentsList:
             if (comm.setComplete()):
                 data=comm.getComment()["data"]
-                comm.print()
                 cur.execute(databaseExchange.__COMMENT_STATEMENT,(data["article_body_id"],data["external_id"],data["parent_id"],data["level"],data["body"],data["proc_timestamp"]))
         self.conn.commit()
-        # close the communication with the PostgreSQL
         cur.close()
         self.fillCommentIds(commentsList,startId)
         
@@ -236,8 +246,9 @@ class databaseExchange(connectDb.database):
             comments=worklist
             
             self.__writeCommentData(comments)
-            self.__writeCommentUdfs(comments)
-            #print("udfs written")
+            print("comment data written")
+#todo reactivate after database bug fixed             self.__writeCommentUdfs(comments)
+            print("comment udfs written")
             start+=SUBSET_LENGTH
     
     
@@ -257,14 +268,17 @@ if __name__ == '__main__':
     writer.connect()
     print("last Run= ",writer.fetchLastRun(1))
     writer.logStartCrawl(1)
-    writer.writeArticles([testArticle])
+#    writer.writeArticles([testArticle])
     testComment=comment()
     testComment.setData({"article_body_id":1,"level":0,"body":"i'm a comment","proc_timestamp":dt.datetime.today()})
     testComment.addUdf("author","brilliant me")
     testComment.setExternalId((hash("brilliant me"+testComment.getComment()["data"]["body"])))
     print("plain comment print")
     testComment.print()
-    writer.writeComments([testComment])
+#    writer.writeComments([testComment])
    # testComment.print()
     writer.logEndCrawl()
+    todo=writer.fetchTodoList(1)
+    for td in todo:
+        td.print()
     writer.close()

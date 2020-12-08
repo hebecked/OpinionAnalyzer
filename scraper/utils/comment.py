@@ -69,7 +69,7 @@ class comment:
         return False
     def setParentId(self,parentId:int):
         if  type(parentId)==int:
-            self.__data["external_id"]=parentId
+            self.__data["parent_id"]=parentId
             return True
         return False
     
