@@ -2,7 +2,6 @@
 import datetime as dt
 from connectDb import database as ownDBObject    #to be recreated with article specific functionality
 import validators
-import logging
 
 
 
