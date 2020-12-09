@@ -59,6 +59,7 @@ vabl.proc_timestamp + (interval '1 hour' * (2^vabl.proc_counter)) as next_review
 from news_meta_data.v_article_header_current vahc,
 news_meta_data.v_article_body_last vabl
 where vahc.article_id=vabl.article_id
-and current_timestamp > vabl.proc_timestamp + (interval '1 hour' * (2^vabl.proc_counter)));
+and vabl.proc_counter < 14
+and current_timestamp > vabl.proc_timestamp + (interval '1 hour' * ((2^vabl.proc_counter)-1)));
 
 COMMIT;
