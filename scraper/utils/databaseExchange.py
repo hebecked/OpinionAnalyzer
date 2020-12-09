@@ -7,6 +7,7 @@ import datetime as dt
 #add getUdfs(), getSources() for article and comment object
 
 class databaseExchange(connectDb.database):
+    SUBSET_LENGTH=100   #threshold for database flush
     #scraper related database queries
     __SCRAPER_FETCH_LAST_RUN="""SELECT MAX(start_timestamp) FROM news_meta_data.crawl_log WHERE success=True and source_id=%s;"""    
 #todo change WHERE clause: sourceId instead of source
@@ -29,7 +30,7 @@ class databaseExchange(connectDb.database):
     __COMMENT_MIN_STATEMENT="""SELECT MAX(id) FROM news_meta_data.comment;"""
     __COMMENT_STATEMENT="""INSERT INTO news_meta_data.comment (article_body_id, external_id, parent_id, level, body,proc_timestamp ) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
     __COMMENT_ID_FETCH_STATEMENT="""SELECT external_id, article_body_id, id FROM news_meta_data.comment WHERE id > %s AND article_body_id in %s;"""    
-    #tbd get recent comments from view (by source_id and proc_timestamp)
+#todo get recent comments from view (by source_id and proc_timestamp)
     
     #logging related database queries
     __LOG_STARTCRAWL="""INSERT INTO news_meta_data.crawl_log (source_id,start_timestamp, success) VALUES (%s, %s,False);"""
@@ -53,12 +54,11 @@ class databaseExchange(connectDb.database):
               
     def fetchTodoList(self, sourceId:int):
         cur = self.conn.cursor()
-        #todo: call by sourceId
+#todo: call by sourceId
         cur.execute(databaseExchange.__SCRAPER_FETCH_TODO,('Spiegel',))
         result = cur.fetchall()
         cur.close()
         if len(result)==0: return []
-        #todo rework check empty as above (len)
         returnList=[]
         for res in result:
             art=article()
@@ -73,7 +73,7 @@ class databaseExchange(connectDb.database):
         cur.execute(databaseExchange.__SCRAPER_FETCH_LAST_RUN,(sourceId,))
         result = cur.fetchall()
         cur.close()
-        if result[0][0]==None: return dt.date(1900,1,1)
+        if result[0][0]==None: return dt.datetime(1990,1,1)
         return result[0][0]
     
     def logStartCrawl(self,sourceId:int):
@@ -111,6 +111,7 @@ class databaseExchange(connectDb.database):
         cur = self.conn.cursor()        
         cur.execute(databaseExchange.__BODY_ID_FETCH_STATEMENT,(startId,))
         result = cur.fetchall()
+        if len(result)==0: return {}
         bodyIds=list(result)       
         return dict(bodyIds)
     
@@ -125,7 +126,6 @@ class databaseExchange(connectDb.database):
                 hdr=art.getArticle()["header"]
                 cur.execute(databaseExchange.__HEADER_STATEMENT,(hdr["source_date"],hdr["obsolete"],hdr["source_id"],hdr["url"]))
         self.conn.commit()
-        # close the communication with the PostgreSQL
         cur.close()
         self.fillHeaderIds(articlesList,startId)
 
@@ -139,7 +139,6 @@ class databaseExchange(connectDb.database):
         for art in articlesList:
             if (art.setBodyComplete()):
                 todo=art.getBodyToWrite()
-                #print("todo: ", todo)
                 if(todo["insert"]):
                     cur.execute(databaseExchange.__BODY_STATEMENT,(todo["body"]["article_id"],todo["body"]["headline"],todo["body"]["body"],todo["body"]["proc_timestamp"],todo["body"]["proc_counter"]+1))
                 else:
@@ -174,10 +173,9 @@ class databaseExchange(connectDb.database):
     
     def writeArticles(self, articlesList:list):
         if(type(articlesList)!=list): return False
-        SUBSET_LENGTH=100
         start=0
         while start < len(articlesList):
-            worklist=list(filter(lambda x: type(x)==article,articlesList[start:start+SUBSET_LENGTH]))
+            worklist=list(filter(lambda x: type(x)==article,articlesList[start:start+databaseExchange.SUBSET_LENGTH]))
             headers=list(filter(lambda x: not(x.isInDb()),worklist))
             self.__writeHeaders(headers)
             #headers[0].print()
@@ -189,7 +187,7 @@ class databaseExchange(connectDb.database):
             #bodies[0].print()
 #todo reactivate after database bug fixed            self.__writeArticleUdfs(bodies)   
             print("article udfs written")
-            start+=SUBSET_LENGTH
+            start+=databaseExchange.SUBSET_LENGTH
 
     def fetchCommentIds(self, commentsList:list, startId:int):
         article_body_id_List=list(x.getComment()["data"]["article_body_id"] for x in commentsList)
@@ -198,6 +196,7 @@ class databaseExchange(connectDb.database):
         cur = self.conn.cursor()        
         cur.execute(databaseExchange.__COMMENT_ID_FETCH_STATEMENT,(startId,article_body_id_tuple))
         result = cur.fetchall()
+        if len(result)==0: return {}
         commentIds=list(((r[0],r[1]),r[2]) for r in result)       
         return dict(commentIds)        
 
@@ -209,7 +208,7 @@ class databaseExchange(connectDb.database):
                 comm.setCommentId(Ids[identifier])    
     
     def fetchOldCommentKeys(self, sourceId: int, startdate:dt.datetime):
-        # todo use view to get "not so old" comments from database
+# todo use view to get "not so old" comments from database
         
         pass
     def __writeCommentData(self, commentsList:list):
@@ -237,19 +236,18 @@ class databaseExchange(connectDb.database):
     
     def writeComments(self, commentsList:list):
         if(type(commentsList)!=list): return False
-        SUBSET_LENGTH=100
         start=0
         while start < len(commentsList):
-            worklist=list(filter(lambda x: type(x)==comment,commentsList[start:start+SUBSET_LENGTH]))
+            worklist=list(filter(lambda x: type(x)==comment,commentsList[start:start+databaseExchange.SUBSET_LENGTH]))
             
             # todo filter by not in db (use fetchOldCommentKeys)
             comments=worklist
             
             self.__writeCommentData(comments)
-            print("comment data written")
+            print("comment data written:",start," - ",start+databaseExchange.SUBSET_LENGTH)
 #todo reactivate after database bug fixed             self.__writeCommentUdfs(comments)
-            print("comment udfs written")
-            start+=SUBSET_LENGTH
+            print("comment udfs written:",start," - ",start+databaseExchange.SUBSET_LENGTH)
+            start+=databaseExchange.SUBSET_LENGTH
     
     
 
@@ -273,12 +271,12 @@ if __name__ == '__main__':
     testComment.setData({"article_body_id":1,"level":0,"body":"i'm a comment","proc_timestamp":dt.datetime.today()})
     testComment.addUdf("author","brilliant me")
     testComment.setExternalId((hash("brilliant me"+testComment.getComment()["data"]["body"])))
-    print("plain comment print")
+#    print("plain comment print")
     testComment.print()
 #    writer.writeComments([testComment])
    # testComment.print()
     writer.logEndCrawl()
     todo=writer.fetchTodoList(1)
     for td in todo:
-        td.print()
+        pass#td.print()
     writer.close()
