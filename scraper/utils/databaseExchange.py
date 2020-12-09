@@ -1,6 +1,6 @@
-import connectDb as connectDb
-from article import article
-from comment import comment
+import utils.connectDb as connectDb
+from utils.article import article
+from utils.comment import comment
 import datetime as dt
 
 #add comments, rename to dataExchange
@@ -136,7 +136,6 @@ class databaseExchange(connectDb.database):
         result = cur.fetchall()
         if result[0][0]==None: startId=0
         else: startId=result[0][0]  #todo check if correct
-        print(startId)
         for art in articlesList:
             if (art.setBodyComplete()):
                 todo=art.getBodyToWrite()
@@ -252,10 +251,7 @@ class databaseExchange(connectDb.database):
             print("comment udfs written:",start," - ",start+databaseExchange.SUBSET_LENGTH)
             start+=databaseExchange.SUBSET_LENGTH
     
-    
-
-
-if __name__ == '__main__':
+def test():
     testArticle=article()
     testArticle.setHeader({"url":"http://www.google.de","obsolete":False,"source_id":1,"source_date":dt.date(2020,12,1)})
     #testArticle.setBody({"proc_timestamp":dt.datetime(2020,12,2,22,0,33),"headline":"example of headline","body":"testText","proc_counter":2,"id":1})
@@ -283,3 +279,10 @@ if __name__ == '__main__':
     for td in todo:
         pass#td.print()
     writer.close()
+
+
+if __name__ == '__main__':
+    print("\n\n")
+    print("-------------------------------------------------\n")
+    print("Starting databaseExchange testcases here:\n\n")
+    print("test deactivated")

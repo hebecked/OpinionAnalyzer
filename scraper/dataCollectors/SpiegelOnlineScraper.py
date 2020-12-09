@@ -1,9 +1,9 @@
 #!/usr/bin/python
 from datetime import datetime, date, timedelta
 import spiegel_scraper as spon
-from article import article
-from comment import comment
-from databaseExchange import databaseExchange
+from utils.article import article
+from utils.comment import comment
+from utils.databaseExchange import databaseExchange
 import TemplateScraper
 import time
 import math
@@ -140,7 +140,11 @@ class SponScraper(TemplateScraper.Scraper):
   
 
 if __name__ == '__main__':
+   print("\n\n")
+   print("-------------------------------------------------\n")
+   print("Starting SpiegelOnlineScraper testcases here:\n\n")
    starttime=datetime.today()
+   print("started at ",starttime)
    SpS=SponScraper()
    db=databaseExchange()
    db.connect()
