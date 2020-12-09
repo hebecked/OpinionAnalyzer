@@ -10,7 +10,7 @@ class CronJobs:
     def __init__(self):
         self.jobs = [
             #{"schedule": '* * * * *', "module": 'test.py'},  # Execute every minute "test.py"
-            {"schedule": '* */24 * * *', "module": 'spiegelCollector.py'},  # Execute every 30 minutes "spiegelCollector.py"
+            {"schedule": '* */24 * * *', "module": 'SpiegelOnlineScraper.py'},  # Execute every 30 minutes "spiegelCollector.py"
         ]
 
     def cronInit(self):
