@@ -54,7 +54,7 @@ class comment:
         return False        
     def setCommentText(self, commentText:str):
         if type(commentText)==str:
-            self.__data["body"]=commentText
+            self.__data["body"]=commentText.replace('\x00','')
             return True
         return False
     def setTimeStamp(self, commentTimestamp:dt.datetime=dt.datetime.today()):

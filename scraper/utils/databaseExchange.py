@@ -120,7 +120,7 @@ class databaseExchange(connectDb.database):
         cur.execute(databaseExchange.__HEADER_MIN_STATEMENT)
         result = cur.fetchall()
         if result[0][0]==None: startId=0
-        else: startId=result[0]
+        else: startId=result[0][0]  #todo check if correct
         for art in articlesList:
             if (art.setHeaderComplete()):
                 hdr=art.getArticle()["header"]
@@ -135,7 +135,8 @@ class databaseExchange(connectDb.database):
         cur.execute(databaseExchange.__BODY_MIN_STATEMENT)
         result = cur.fetchall()
         if result[0][0]==None: startId=0
-        else: startId=result[0]
+        else: startId=result[0][0]  #todo check if correct
+        print(startId)
         for art in articlesList:
             if (art.setBodyComplete()):
                 todo=art.getBodyToWrite()
@@ -185,7 +186,7 @@ class databaseExchange(connectDb.database):
             self.__writeBodies(bodies)
             print("article bodies written and id added")
             #bodies[0].print()
-#todo reactivate after database bug fixed            self.__writeArticleUdfs(bodies)   
+            self.__writeArticleUdfs(bodies)   
             print("article udfs written")
             start+=databaseExchange.SUBSET_LENGTH
 
@@ -228,6 +229,8 @@ class databaseExchange(connectDb.database):
     def __writeCommentUdfs(self, commentsList:list):
         cur = self.conn.cursor()
         for comm in commentsList:
+            if not('id' in comm.getComment()["data"].keys()):
+                continue
             if comm.getComment()["udfs"]:
                 for udf in comm.getComment()["udfs"]:
                     cur.execute(databaseExchange.__UDF_INSERT_STATEMENT,(udf[0],comment.OBJECT_TYPE, comm.getComment()["data"]["id"],udf[1]))
@@ -245,7 +248,7 @@ class databaseExchange(connectDb.database):
             
             self.__writeCommentData(comments)
             print("comment data written:",start," - ",start+databaseExchange.SUBSET_LENGTH)
-#todo reactivate after database bug fixed             self.__writeCommentUdfs(comments)
+            self.__writeCommentUdfs(comments)
             print("comment udfs written:",start," - ",start+databaseExchange.SUBSET_LENGTH)
             start+=databaseExchange.SUBSET_LENGTH
     
@@ -268,7 +271,7 @@ if __name__ == '__main__':
     writer.logStartCrawl(1)
 #    writer.writeArticles([testArticle])
     testComment=comment()
-    testComment.setData({"article_body_id":1,"level":0,"body":"i'm a comment","proc_timestamp":dt.datetime.today()})
+    testComment.setData({"article_body_id":141,"level":0,"body":"i'm a comment","proc_timestamp":dt.datetime.today()})
     testComment.addUdf("author","brilliant me")
     testComment.setExternalId((hash("brilliant me"+testComment.getComment()["data"]["body"])))
 #    print("plain comment print")

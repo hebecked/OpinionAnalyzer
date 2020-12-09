@@ -119,7 +119,7 @@ class article:
         #tobe used after import from database
         if self.checkBodyComplete():
             self.__oldBody=copy.deepcopy(self.__body)
-            self.__body={"proc_counter":0,"article_id":self.__body["article_id"]}
+            self.__body={"proc_counter":0,"article_id":self.__oldBody["article_id"]}
             return True
         return False
     #udf setter functions

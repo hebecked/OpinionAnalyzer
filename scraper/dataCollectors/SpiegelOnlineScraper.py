@@ -72,7 +72,7 @@ class SponScraper(TemplateScraper.Scraper):
                 art.addUdf('author',author)
         if('date_created' in content.keys()):
             art.addUdf('date_created',content['date_created'])
-            try: art.setBodyCounter(max(int(math.log((date.today()-date.fromisoformat(content['date_created'][0:10])).days*24,2)),0))
+            try: art.setBodyCounter(max(int(math.log((date.today()-date.fromisoformat(content['date_created'][0:10])).days*24,2))-1,0))
             except: print('Body Counter not set')
         if 'date_modified' in content.keys(): art.addUdf('date_modified',content['date_modified'])
         if 'date_published' in content.keys(): art.addUdf('date_published',content['date_published'])
@@ -107,13 +107,15 @@ class SponScraper(TemplateScraper.Scraper):
             if (cmt['body']!=None and cmt['user']!=None and cmt['created_at']!=None):
                 cmt_id=self.getCommmentExternalId(cmt)
                 tmp=comment()
-                tmp.setData({"article_body_id":art.getArticle()["body"]["id"],"parent_id":parent,"level":depth,"body":cmt['body'],"proc_timestamp":datetime.today(),"external_id":cmt_id})
-                if "replies" in cmt.keys(): tmp.addUdf("replies",str(len(cmt['replies'])))
-                if "author" in cmt.keys():tmp.addUdf("author",cmt['user']['username'])
-                tmp.addUdf("created_at",cmt['created_at'])
+                tmp.setData({"article_body_id":art.getBodyToWrite()["body"]["id"],"parent_id":parent,"level":depth,"body":cmt['body'],"proc_timestamp":datetime.today(),"external_id":cmt_id})
+                if 'user' in cmt.keys():tmp.addUdf("author",cmt['user']['username'])
+                tmp.addUdf("date_created",cmt['created_at'])
                 if (start<=date.fromisoformat(cmt['created_at'][0:10])<=end):
                     returnList+=[tmp]
-                if "replies" in cmt.keys(): returnList+= self.flattenComments(art,cmt['replies'],cmt_id,depth+1,start,end)
+                if 'replies' in cmt.keys(): 
+                    tmp.addUdf("replies",str(len(cmt['replies'])))
+                    returnList+= self.flattenComments(art,cmt['replies'],cmt_id,depth+1,start,end)
+                #tmp.print()
         return returnList
 
 	
@@ -121,13 +123,14 @@ class SponScraper(TemplateScraper.Scraper):
         returnList=[]
         if type(art.freeData)==str:
             articleId=art.freeData
-        else:    
-            articleId=self.getArticleDetails(art.getArticle()['header']['url']).freeData
+        else:
+            self.getArticleDetails(art)
+            articleId=art.freeData
         try:
             comments=spon.comments.by_article_id(articleId)
             returnList+=self.flattenComments(art,comments,None,0,start,end)
         except:
-            print("Article crawl error!")
+            print("Comment crawl error!")
             self.hasErrors=True
         return returnList
 
