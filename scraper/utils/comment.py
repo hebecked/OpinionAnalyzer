@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime as dt
-from connectDb import database as ownDBObject    #to be recreated with article specific functionality
+from utils.connectDb import database as ownDBObject    #to be recreated with article specific functionality
 
 
 class comment:

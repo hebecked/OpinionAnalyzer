@@ -35,7 +35,7 @@ def main():
     logger.info('Triggering databaseExchangeTest')
     os.system('python3 -u /usr/src/app/utils/databaseExchange.py')
     sleep(2)
-    logger.info('Triggering databaseExchangeTest')
+    logger.info('Triggering SpiegelOnlineScraper')
     os.system('python3 -u /usr/src/app/dataCollectors/SpiegelOnlineScraper.py')
     sleep(2)
     logger.info('Running Cron')
