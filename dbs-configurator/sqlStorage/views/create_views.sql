@@ -8,6 +8,7 @@ group by article_id);
 CREATE OR REPLACE VIEW news_meta_data.v_article_header_current AS (SELECT 
 sth.type AS src_type,
 sh.source AS src_name,
+sh.id as src_id,
 ah.id AS article_id,
 ah.url,
 ah.source_date,
