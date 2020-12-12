@@ -10,6 +10,7 @@ from utils.databaseExchange import databaseExchange
 import dataCollectors.TemplateScraper
 import time
 import math
+import hashlib
 
 class SponScraper(dataCollectors.TemplateScraper.Scraper):
     SUBSET_LENGTH=10   #threshold for database flush
@@ -98,7 +99,9 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
             time.sleep(SponScraper.DELAY_SUBSET)
     
     def getCommmentExternalId(self,url, cmt:spon.comments):
-        return hash(url+cmt['user']['username']+cmt['body'])
+        key=url+cmt['user']['username']+cmt['body']
+        ext_id=int.from_bytes(hashlib.md5(key.encode()).digest()[0:8],"big",signed=True)
+        return ext_id
 
     def flattenComments(self, art:article,comments:list,parent:int=None,depth=0,start:date=date(1900,1,1),end:date=date.today()):
         returnList=[]
