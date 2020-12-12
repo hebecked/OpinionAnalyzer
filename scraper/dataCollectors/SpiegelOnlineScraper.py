@@ -4,11 +4,11 @@ import spiegel_scraper as spon
 from utils.article import article
 from utils.comment import comment
 from utils.databaseExchange import databaseExchange
-import TemplateScraper
+import dataCollectors.TemplateScraper
 import time
 import math
 
-class SponScraper(TemplateScraper.Scraper):
+class SponScraper(dataCollectors.TemplateScraper.Scraper):
     SUBSET_LENGTH=10   #threshold for database flush
     DELAY_SUBSET=1  #sleep x every SUBSET_LENGTH html requests
     DELAY_INDIVIDUAL=0  #sleep x every html request
