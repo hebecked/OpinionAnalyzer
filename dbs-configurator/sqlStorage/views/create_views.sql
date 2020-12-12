@@ -63,4 +63,24 @@ where vahc.article_id=vabl.article_id
 and vabl.proc_counter < 14
 and current_timestamp > vabl.proc_timestamp + (interval '1 hour' * ((2^vabl.proc_counter)-1)));
 
+--analyzer_log todo list analyzer1
+create or replace view news_meta_data.v_todo_analyzer1 as (
+select 
+c.id as comment_id,
+al.analyzer_id,
+al.start_timestamp,
+al.end_timestamp,
+al.success,
+case
+	when al.id is null
+	then 'new'
+	else 're-run'
+end as status
+from news_meta_data.comment c
+left outer join news_meta_data.analyzer_log al 
+on c.id = al.comment_id
+where al.end_timestamp is null
+and al.analyzer_id=1
+);
+
 COMMIT;

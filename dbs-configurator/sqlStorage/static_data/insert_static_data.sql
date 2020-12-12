@@ -13,5 +13,6 @@ INSERT INTO news_meta_data.udf_header (udf_name) VALUES('author');
 INSERT INTO news_meta_data.udf_header (udf_name) VALUES('date_created');
 INSERT INTO news_meta_data.udf_header (udf_name) VALUES('date_modified');
 INSERT INTO news_meta_data.udf_header (udf_name) VALUES('date_published');
+INSERT INTO news_meta_data.analyzer_header (analyzer_name, analyzer_table_name) VALUES('comment_sentiment','analyzer1_result');
 
 COMMIT;
