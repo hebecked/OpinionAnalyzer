@@ -11,7 +11,7 @@ class databaseExchange(connectDb.database):
     #scraper related database queries
     __SCRAPER_FETCH_LAST_RUN="""SELECT MAX(start_timestamp) FROM news_meta_data.crawl_log WHERE success=True and source_id=%s;"""    
 #todo change WHERE clause: sourceId instead of source
-    __SCRAPER_FETCH_TODO="""SELECT article_id,url,article_body_id,headline,body,proc_timestamp,proc_counter FROM news_meta_data.v_todo_crawl WHERE src_name=%s;"""
+    __SCRAPER_FETCH_TODO="""SELECT article_id,url,article_body_id,headline,body,proc_timestamp,proc_counter FROM news_meta_data.v_todo_crawl WHERE src_id=%s;"""
 
     #article related database queries
     __HEADER_MIN_STATEMENT="""SELECT MAX(id) FROM news_meta_data.article_header;"""
@@ -54,8 +54,7 @@ class databaseExchange(connectDb.database):
               
     def fetchTodoList(self, sourceId:int):
         cur = self.conn.cursor()
-#todo: call by sourceId
-        cur.execute(databaseExchange.__SCRAPER_FETCH_TODO,('Spiegel',))
+        cur.execute(databaseExchange.__SCRAPER_FETCH_TODO,(sourceId,))
         result = cur.fetchall()
         cur.close()
         if len(result)==0: return []
