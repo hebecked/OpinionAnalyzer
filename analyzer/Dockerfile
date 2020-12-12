@@ -15,6 +15,8 @@ COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+RUN python3 -m textblob.download_corpora
+#RUN python3 -m spacy download de
 
 # Just generically copy everything to avoid conflicts later when adding new moduls
 COPY . .
