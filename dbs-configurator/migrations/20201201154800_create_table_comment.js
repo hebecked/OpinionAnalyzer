@@ -7,7 +7,7 @@ exports.up = function(knex) {
         table.increments("id");
         table.biginteger("external_id").notNullable();
         table.integer("article_body_id").notNullable();
-        table.unique(["external_id","article_body_id"]);
+        table.unique("external_id");
         table.biginteger("parent_id");
         table.integer("level").notNullable();
         table.text("body").notNullable();
