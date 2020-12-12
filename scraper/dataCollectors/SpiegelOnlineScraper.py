@@ -1,4 +1,7 @@
 #!/usr/bin/python
+
+#todo: open tasks marked with todo
+
 from datetime import datetime, date, timedelta
 import spiegel_scraper as spon
 from utils.article import article
@@ -22,16 +25,15 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
         Parameters
         ----------
         start : date, optional
-            DESCRIPTION. The default is date(1900,1,1).
+            The default is date(1900,1,1).
         end : date, optional
-            DESCRIPTION. The default is date.today().
+            The default is date.today().
 
         Returns
         -------
-        List of corresponding URLs from this source in string format
+        List of corresponding URLs (published between start and end date) from this source in string format
 
         """
-        #get all articles from archive between corresponding start and end date
         returnList=[]
         num_of_days=(start-end).days
         date_list=[(timedelta(i)+date.today()) for i in range(num_of_days,1)]
@@ -95,8 +97,8 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
             start+=SponScraper.SUBSET_LENGTH
             time.sleep(SponScraper.DELAY_SUBSET)
     
-    def getCommmentExternalId(self,cmt:spon.comments):
-        return hash(cmt['user']['username']+cmt['body'])
+    def getCommmentExternalId(self,url, cmt:spon.comments):
+        return hash(url+cmt['user']['username']+cmt['body'])
 
     def flattenComments(self, art:article,comments:list,parent:int=None,depth=0,start:date=date(1900,1,1),end:date=date.today()):
         returnList=[]
@@ -105,7 +107,7 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
         for cmt in comments:
             if type(cmt)!=dict: continue
             if (cmt['body']!=None and cmt['user']!=None and cmt['created_at']!=None):
-                cmt_id=self.getCommmentExternalId(cmt)
+                cmt_id=self.getCommmentExternalId(art.getArticle()["header"]["url"], cmt)
                 tmp=comment()
                 tmp.setData({"article_body_id":art.getBodyToWrite()["body"]["id"],"parent_id":parent,"level":depth,"body":cmt['body'],"proc_timestamp":datetime.today(),"external_id":cmt_id})
                 if 'user' in cmt.keys():tmp.addUdf("author",cmt['user']['username'])
