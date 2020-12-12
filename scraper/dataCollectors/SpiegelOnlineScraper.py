@@ -80,7 +80,7 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
         if 'date_published' in content.keys(): art.addUdf('date_published',content['date_published'])
         return True
     
-    def getWriteArticlesDetails(self, writer:databaseExchange, articlesList:list):
+    def getWriteArticlesDetails(self, writer:databaseExchange, articlesList:list, startdate:date=date(1900,1,1)):
         if(type(articlesList)!=list): return False
         start=0
         while start < len(articlesList):
@@ -91,7 +91,7 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
             writer.writeArticles(articlesList[start:(start+SponScraper.SUBSET_LENGTH)])
             for art in articlesList[start:(start+SponScraper.SUBSET_LENGTH)]:
                 print("fetching comments for ",art.getArticle()['header']['url'])
-                cmts=self.getCommentsForArticle(art)
+                cmts=self.getCommentsForArticle(art,startdate)
                 writer.writeComments(cmts)
                 time.sleep(SponScraper.DELAY_INDIVIDUAL)
             start+=SponScraper.SUBSET_LENGTH
