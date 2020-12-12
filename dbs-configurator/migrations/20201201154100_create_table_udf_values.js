@@ -9,6 +9,7 @@ exports.up = function(knex) {
         table.integer("object_type").notNullable();
         table.integer("object_id").notNullable();
         table.string("udf_value",80).notNullable();
+        table.unique(["udf_id","object_type","object_id","udf_value"]);
       });
     }
   })
