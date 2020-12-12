@@ -2,7 +2,7 @@
 TODO:
 
 1. Clean up Testfile and split over different files (1 for each lib class + 1 analyzing comments +1 analyzing articles)
-2. Libs to add: Topic detection, big 5 personality traits, IQ/Education, wordcount, spelling, offensiveLanguage detection, mood
+2. Libs to add: Topic detection, big 5 personality traits, IQ/Education, origin, wordcount, spelling, offensiveLanguage detection, mood
 Sources:
 Prep text (bag of words): 	https://monkeylearn.com/topic-analysis/
 							https://towardsdatascience.com/nlp-extracting-the-main-topics-from-your-dataset-using-lda-in-minutes-21486f5aa925
@@ -63,7 +63,8 @@ class german_bert_sentiment:
 
 class Textblob_sentiment: 
 
-	#More information at https://textblob-de.readthedocs.io/en/latest/
+	#More information at https://textblob-de.readthedocs.io/en/latest/ and https://github.com/sloria/TextBlob/
+	#https://machine-learning-blog.de/2019/06/03/stimmungsanalyse-sentiment-analysis-auf-deutsch-mit-python/
 	def __init__(self):
 		pass
 		
