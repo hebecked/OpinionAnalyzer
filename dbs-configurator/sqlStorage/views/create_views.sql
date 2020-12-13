@@ -67,6 +67,7 @@ and current_timestamp > vabl.proc_timestamp + (interval '1 hour' * ((2^vabl.proc
 create or replace view news_meta_data.v_todo_analyzer1 as (
 select 
 c.id as comment_id,
+c.level as comment_level,
 al.analyzer_id,
 al.start_timestamp,
 al.end_timestamp,
@@ -81,6 +82,22 @@ left outer join news_meta_data.analyzer_log al
 on c.id = al.comment_id
 where al.end_timestamp is null
 and al.analyzer_id=1
+);
+
+--top 1000 of todo_analyzer1
+create or replace view news_meta_data.v_todo_analyzer1_next as (
+select 
+comment_id,
+comment_level,
+analyzer_id,
+start_timestamp,
+end_timestamp,
+success,
+status
+from news_meta_data.v_todo_analyzer1
+where comment_level = 0
+and start_timestamp is null
+limit 1000
 );
 
 COMMIT;
