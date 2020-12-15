@@ -22,7 +22,9 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
         pass
    
     def getArticlesList(self, start:date=date(1900,1,1), end:date=date.today()):
-        """   
+        """
+        function makes use of spiegel_scraper package to directly create own article object from crawling the archive
+                
         Parameters
         ----------
         start : date, optional
@@ -32,8 +34,8 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
 
         Returns
         -------
-        List of corresponding URLs (published between start and end date) from this source in string format
-
+        List of corresponding article objects (published between start and end date) from this source \n
+        article will just contain header information so far
         """
         returnList=[]
         num_of_days=(start-end).days
@@ -55,6 +57,21 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
         return(returnList)	
 	        
     def getArticleDetails(self, art:article):
+        """
+        adds detailed information (article text and several others) to article \n
+        article body will be added
+
+        Parameters
+        ----------
+        art : article
+            the article to add detailed information to
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         try:
             html = spon.article.html_by_url(art.getArticle()['header']['url'])
             content = spon.article.scrape_html(html)
@@ -82,6 +99,24 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
         return True
     
     def getWriteArticlesDetails(self, writer:databaseExchange, articlesList:list, startdate:date=date(1900,1,1)):
+        """
+        
+
+        Parameters
+        ----------
+        writer : databaseExchange
+            databaseExchange object, the crawler will use to connect to database
+        articlesList : list
+            a list of articles to fetch details for and write to database
+        startdate : date, optional
+            used to define which comments are too old to be fetched. Comments posted after startdate will be processed. \n
+            he default is date(1900,1,1).
+
+        Returns
+        -------
+        None.
+
+        """
         if(type(articlesList)!=list): return False
         start=0
         while start < len(articlesList):
@@ -99,11 +134,52 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
             time.sleep(SponScraper.DELAY_SUBSET)
     
     def getCommmentExternalId(self,url, cmt:spon.comments):
+        """
+        calculate comment external id as hash
+
+        Parameters
+        ----------
+        url : TYPE
+            article url where the comment has been found
+        cmt : spon.comments
+            spon.comment object for which we calculate the external_id
+
+        Returns
+        -------
+        ext_id : int
+            external_id as 8 byte integer
+
+        """
         key=url+cmt['user']['username']+cmt['body']
         ext_id=int.from_bytes(hashlib.md5(key.encode()).digest()[0:8],"big",signed=True)
         return ext_id
 
     def flattenComments(self, art:article,comments:list,parent:int=None,depth=0,start:date=date(1900,1,1),end:date=date.today()):
+        """
+        recursively traverses the comment tree and returns list of own comment objects filled with predefined data
+
+        Parameters
+        ----------
+        art : article
+            the article the comments belong to
+        comments : list
+            list of comments (starting level)
+        parent : int, optional
+            for recursive call: if comment has parent, add parent_id here to save this connection to database \n
+            The default is None.
+        depth : TYPE, optional
+            current depth of comment list. The default is starting value of 0 (comment for article).
+        start : date, optional
+            comments before this date are dropped. The default is date(1900,1,1).
+        end : date, optional
+            comments after this date are dropped. The default is date.today().
+
+        Returns
+        -------
+        returnList:list
+            list of all comment objects below the article, which fit between the given dates
+
+        """
         returnList=[]
         if type(comments)!=list: 
             return []
@@ -125,6 +201,25 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
 
 	
     def getCommentsForArticle(self,art:article,start:date=date(1900,1,1),end:date=date.today()): 
+        """
+        
+
+        Parameters
+        ----------
+        art : article
+            input article for which we want to gather comments
+        start : date, optional
+             comments before this date are dropped. The default is date(1900,1,1).
+        end : date, optional
+            comments after this date are dropped. The default is date.today().
+
+        Returns
+        -------
+        returnList : list
+            list of all comment objects below the article, which fit between the given dates
+
+
+        """
         returnList=[]
         if type(art.freeData)==str:
             articleId=art.freeData
