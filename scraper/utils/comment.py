@@ -6,7 +6,7 @@ import datetime as dt
 from utils.connectDb import database as ownDBObject    #to be recreated with article specific functionality
 
 
-class Comment:
+class comment:
     
     #static data related database queries
     __UDFS_STATEMENT="""SELECT udf_name,id FROM news_meta_data.udf_header;"""
@@ -23,8 +23,8 @@ class Comment:
     def __init__(self):
         
         """
-        Comment object for use with all scrapers \n
-        manages Comment components for several database tables \n
+        comment object for use with all scrapers \n
+        manages comment components for several database tables \n
         
         sub objects are "data" and "udfs". \n
         they organize the data for the corresponding database tables. \n
@@ -33,15 +33,15 @@ class Comment:
         """
         
         self.__complete=False
-        if Comment.__udfDict==None:
-            Comment.__udfList={}
+        if comment.__udfDict==None:
+            comment.__udfList={}
             print("first launch, setting class variables") #todo delete line (debugging purposes only)
             #database connection to be rewritten later
             db=ownDBObject()
             db.connect()
-            udf_header = db.retrieveValues(Comment.__UDFS_STATEMENT)
-            Comment.__udfDict=dict(zip((udf[0] for udf in udf_header), (udf[1] for udf in udf_header)))
-            print("udf Dict: ", Comment.__udfDict) #todo delete line (debugging purposes only)
+            udf_header = db.retrieveValues(comment.__UDFS_STATEMENT)
+            comment.__udfDict=dict(zip((udf[0] for udf in udf_header),(udf[1]for udf in udf_header)))
+            print("udf Dict: ",comment.__udfDict) #todo delete line (debugging purposes only)
             db.close()
         self.__data={}
         self.__udfs=set([])
@@ -58,7 +58,7 @@ class Comment:
         Parameters
         ----------
         commentId : int
-            Corresponding to database field id in Comment table\n
+            Corresponding to database field id in comment table\n
             Id is given by database. Don't add random self generated data here.'
 
         Returns
@@ -78,7 +78,7 @@ class Comment:
         Parameters
         ----------
         bodyId : int
-            Corresponding to database field article_body_id in Comment table\n
+            Corresponding to database field article_body_id in comment table\n
             Id is given by database. Don't add random self generated data here.'
 
         Returns
@@ -98,10 +98,10 @@ class Comment:
         Parameters
         ----------
         level : int
-            Corresponding to database field level in Comment table\n
-            level of Comment: \n
-            0 for Comment directly related to Article \n
-            n depth of Comment of Comment
+            Corresponding to database field level in comment table\n
+            level of comment: \n
+            0 for comment directly related to article \n
+            n depth of comment of comment
 
         Returns
         -------
@@ -120,8 +120,8 @@ class Comment:
         Parameters
         ----------
         commentText : str
-            Corresponding to database field body in Comment table\n
-            full Comment text to be inserted here
+            Corresponding to database field body in comment table\n
+            full comment text to be inserted here
 
         Returns
         -------
@@ -140,8 +140,8 @@ class Comment:
         Parameters
         ----------
         commentTimestamp : dtatetime.datetime, optional
-            Corresponding to database field proc_tiomestamp in Comment table\n
-            When did the crawler add this Comment text \n
+            Corresponding to database field proc_tiomestamp in comment table\n
+            When did the crawler add this comment text \n
             The default is datetime.datetime.today()
 
         Returns
@@ -161,8 +161,8 @@ class Comment:
         Parameters
         ----------
         externalId : int
-            Corresponding to database field external_id in Comment table\n
-            unique identifier for Comment
+            Corresponding to database field external_id in comment table\n
+            unique identifier for comment
             best practice: (8 Byte hash value of body, author and url)
 
         Returns
@@ -182,8 +182,8 @@ class Comment:
         Parameters
         ----------
         parentId : int
-            Corresponding to database field parent_id in Comment table\n
-            set external_id of parent Comment (if level >0)
+            Corresponding to database field parent_id in comment table\n
+            set external_id of parent comment (if level >0)
 
         Returns
         -------
@@ -216,15 +216,15 @@ class Comment:
             returns True if successful.
 
         """
-        if type(key)==str and key in Comment.__udfDict.keys() and type(value)==str and len(value)<=Comment.MAX_UDF_LENGTH:
-            self.__udfs|={(Comment.__udfDict[key], value)}
+        if type(key)==str and key in comment.__udfDict.keys() and type(value)==str and len(value)<=comment.MAX_UDF_LENGTH:
+            self.__udfs|={(comment.__udfDict[key],value)}
             return True
         return False
 
 
     def checkCommentComplete(self):
         """
-        validation of completeness of Comment data \n
+        validation of completeness of comment data \n
         comparision with set MANDATORY_DATA
 
         Returns
@@ -236,7 +236,7 @@ class Comment:
         """
         #checking for data in all mandatory database fields
         #return Value: True=ok, otherwise (False, missing data)
-        missing= Comment.MANDATORY_DATA - self.__data.keys()
+        missing=comment.MANDATORY_DATA-self.__data.keys()
         if not(missing):
             return True
         return (False,missing)
@@ -256,13 +256,13 @@ class Comment:
 
     def getComment(self):
         """
-        fetch all Comment components\n
+        fetch all comment components\n
         consists of data and udfs components
 
         Returns
         -------
         dict
-            dict: {"data":dict with Comment data, "udfs":set of udfs (key value)}
+            dict: {"data":dict with comment data, "udfs":set of udfs (key value)}
 
         """
         all={"data":self.__data,"udfs":self.__udfs}
@@ -277,13 +277,13 @@ class Comment:
         """
         more comfortable bulk setter for mandatory data with dictionary
         keys: "article_body_id","parent_id","level","body","proc_timestamp","external_id"\n
-        keys corresponding to database table Comment
+        keys corresponding to database table comment
         """
         return self.__setByDict__(data,self.__setDataFunct)
  
     def __setByDict__(self,data:dict,target:dict):
         """
-        goal: setting all Comment data fields at once \n
+        goal: setting all comment data fields at once \n
         lookup of setter function in target dict and calling setter function with input parameters from data dict
         same as in article.py though no multi-object switch needed
 
@@ -312,7 +312,7 @@ class Comment:
     
     def print(self):
         #for testing and debugging purposes
-        print("\nprinting Comment",self)
+        print("\nprinting comment",self)
         print("\ndata: ",self.__data)
         print("\nudfs: ",self.__udfs)
             
@@ -320,10 +320,10 @@ class Comment:
 if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
-    print("Starting Comment showcase here:\n\n")
-    testComment=Comment()
+    print("Starting comment showcase here:\n\n")
+    testComment=comment()
     commentData={"article_body_id":5,"level":3,"body":"asdf","proc_timestamp":dt.datetime.today()}
-    print("setting Comment with data: ",commentData)
+    print("setting comment with data: ",commentData)
     testComment.setData(commentData)
     print("adding udf= ","author","some author")
     testComment.addUdf("author:","some author")
@@ -331,5 +331,5 @@ if __name__ == '__main__':
     testComment.addUdf("label","nonsense")
     print("setting external ID")
     testComment.setExternalId(hash(testComment.getComment()["data"]["body"]+testComment.getComment()["data"]["proc_timestamp"]))
-    print("printing resulting Comment:")
+    print("printing resulting comment:")
     testComment.print()

@@ -8,7 +8,7 @@ import validators      # used for url validation
 import copy            #deepcopy used for oldBody
 
 
-class Article:
+class article:
     
     #static data related database queries
     __UDFS_STATEMENT="""SELECT udf_name,id FROM news_meta_data.udf_header;"""
@@ -21,7 +21,7 @@ class Article:
     MANDATORY_HEADER={"url","obsolete","source_id"}
     MANDATORY_BODY={"article_id","headline","body","proc_timestamp","proc_counter"}
     
-    #Article class constants (given by database entries / restrictions)
+    #article class constants (given by database entries / restrictions)
     OBJECT_TYPE=1 #article - more robust: fetch from database    
     MAX_URL_LENGTH=2048
     MAX_HEADLINE_LENGTH=200
@@ -43,19 +43,19 @@ class Article:
         """
         self.__headerComplete=False
         self.__bodyComplete=False
-        if(Article.__udfDict==None or Article.__sourceList==None):
-            Article.__sourceList=[]
-            Article.__udfList={}
+        if(article.__udfDict==None or article.__sourceList==None):
+            article.__sourceList=[]
+            article.__udfList={}
             print("first launch, setting class variables") #todo delete line (debugging purposes only)
             #database connection to be rewritten later
             db=ownDBObject()
             db.connect()
-            udf_header = db.retrieveValues(Article.__UDFS_STATEMENT)
-            Article.__udfDict=dict(zip((udf[0] for udf in udf_header), (udf[1] for udf in udf_header)))
-            print("udf Dict: ", Article.__udfDict) #todo delete line (debugging purposes only)
-            sources = db.retrieveValues(Article.__SOURCES_STATEMENT)
-            Article.__sourceList=list(source[0] for source in sources)
-            print("sourceList ", Article.__sourceList) #todo delete line (debugging purposes only)
+            udf_header = db.retrieveValues(article.__UDFS_STATEMENT)
+            article.__udfDict=dict(zip((udf[0] for udf in udf_header),(udf[1]for udf in udf_header)))
+            print("udf Dict: ",article.__udfDict) #todo delete line (debugging purposes only)
+            sources = db.retrieveValues(article.__SOURCES_STATEMENT)
+            article.__sourceList=list(source[0] for source in sources)
+            print("sourceList ", article.__sourceList) #todo delete line (debugging purposes only)
             db.close()
         self.__header={"obsolete":False,"source_date":None}
         self.__body={"proc_counter":0}
@@ -107,7 +107,7 @@ class Article:
             returns True if successful.
 
         """
-        if type(url)==str and validators.url(url)and len(url)<Article.MAX_URL_LENGTH:
+        if type(url)==str and validators.url(url)and len(url)<article.MAX_URL_LENGTH:
             self.__header["url"]=url
             return True
         return False
@@ -147,7 +147,7 @@ class Article:
             returns True if successful.
 
         """
-        if type(source)==int and source>0 and source in Article.__sourceList:
+        if type(source)==int and source>0 and source in article.__sourceList:
             self.__header["source_id"]=source
             return True
         return False
@@ -223,7 +223,7 @@ class Article:
         ----------
         bodyText : str
             Corresponding to database field body in article_body table\n
-            full Article text to be inserted here
+            full article text to be inserted here
 
         Returns
         -------
@@ -252,7 +252,7 @@ class Article:
             returns True if successful.
 
         """
-        if type(bodyHeadline)==str and len(bodyHeadline)<=Article.MAX_HEADLINE_LENGTH:
+        if type(bodyHeadline)==str and len(bodyHeadline)<=article.MAX_HEADLINE_LENGTH:
             self.__body["headline"]=bodyHeadline
             return True
         return False
@@ -265,7 +265,7 @@ class Article:
         ----------
         bodyTimestamp : datetime.datetime, optional
             Corresponding to database field proc_timestamp in article_body table\n
-            When did the crawler add this Article text (version)\n
+            When did the crawler add this article text (version)\n
             The default is datetime.datetime.today()
 
         Returns
@@ -287,7 +287,7 @@ class Article:
         ----------
         bodyCounter : int
             Corresponding to database field proc_counter in article_body table\n
-            set =0 with Article cration and therefore only strictly positive values are allowed\n
+            set =0 with article cration and therefore only strictly positive values are allowed\n
             manages the time till revisit of already seen articles\n
             next visit = proc_timestamp + 1 hour * (pow(2,bodyCounter)-1), so set carefully\n
             value of 0 for new articles
@@ -305,7 +305,7 @@ class Article:
     
     def setBodyOld(self):
         """
-        function moves current Article body data to old Article body data (deepcopy) and creates new empty body element\n
+        function moves current article body data to old article body data (deepcopy) and creates new empty body element\n
         intended to be called after import (old) body data fromn database
 
         Returns
@@ -340,8 +340,8 @@ class Article:
             returns True if successful.
 
         """
-        if type(key)==str and key in Article.__udfDict.keys() and type(value)==str and len(value)<=Article.MAX_UDF_LENGTH:
-            self.__udfs|={(Article.__udfDict[key], value)}
+        if type(key)==str and key in article.__udfDict.keys() and type(value)==str and len(value)<=article.MAX_UDF_LENGTH:
+            self.__udfs|={(article.__udfDict[key],value)}
             return True
         return False
 
@@ -360,7 +360,7 @@ class Article:
         """
         #checking for data in all mandatory database fields
         #return Value: True=ok, otherwise (False, missing data)
-        missing= Article.MANDATORY_HEADER - self.__header.keys()
+        missing=article.MANDATORY_HEADER-self.__header.keys()
         if not(missing):
             return True
         return (False,missing)
@@ -392,7 +392,7 @@ class Article:
             (false, set of missing fields) if incomplete
 
         """
-        missing= Article.MANDATORY_BODY - self.__body.keys()
+        missing=article.MANDATORY_BODY-self.__body.keys()
         if not(missing):
             return True
         return (False,missing)
@@ -414,7 +414,7 @@ class Article:
 
     def checkNewVersion(self):
         """
-        some logic to identify newer version of Article body\n
+        some logic to identify newer version of article body\n
         starting easy with hashes
 
         Returns
@@ -424,7 +424,7 @@ class Article:
 
         """
 
-        check= {"headline","body"} & Article.MANDATORY_BODY
+        check={"headline","body"}&article.MANDATORY_BODY
         sharedKeys=check&self.__body.keys()&self.__oldBody.keys()
         if len(sharedKeys)==0:
             return True
@@ -435,7 +435,7 @@ class Article:
     
     def getArticle(self):
         """
-        fetch all Article data\n
+        fetch all article data\n
         consists of header, body, udfs components
 
         Returns
@@ -459,7 +459,7 @@ class Article:
         Returns
         -------
         dict
-            {"insert":Boolean (new Article body to write),"body": corresponding body data}
+            {"insert":Boolean (new article body to write),"body": corresponding body data}
 
         """
         if self.checkNewVersion():
@@ -481,7 +481,7 @@ class Article:
         
         
         """
-        return self.__setByDict__(data, Article.__setHeaderFunct)
+        return self.__setByDict__(data,article.__setHeaderFunct)
     
     def setBody(self, data:dict):
         """
@@ -489,11 +489,11 @@ class Article:
         keys: "id","article_id","headline","body","proc_timestamp","proc_counter"\n
         keys corresponding to database table article_body
         """
-        return self.__setByDict__(data, Article.__setBodyFunct)
+        return self.__setByDict__(data,article.__setBodyFunct) 
     
     def __setByDict__(self,data:dict,target:dict):
         """
-        goal: setting all Article sub-object fields (body or header) at once \n
+        goal: setting all article sub-object fields (body or header) at once \n
         lookup of setter function in target dict and calling setter function with input parameters from data dict
 
         Parameters
@@ -521,7 +521,7 @@ class Article:
     
     def print(self):
         """
-        printing Article (python object id) and components  \n
+        printing article (python object id) and components  \n
         for testing and debugging purposes
 
         Returns
@@ -530,7 +530,7 @@ class Article:
 
         """
 
-        print("\nprinting Article",self)
+        print("\nprinting article",self)
         print("\nheader: ",self.__header)
         print("\nbody: ",self.__body)
         print("\nudfs\n: ",self.__udfs)
@@ -539,13 +539,13 @@ class Article:
 if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
-    print("Starting Article showcase here:\n\n")
-    testArticle=Article()
+    print("Starting article showcase here:\n\n")
+    testArticle=article()
     header={"id":5,"obsolete":True,"testBullshit":"asdf","source_date":dt.date.today()}
     body={"id":27,"testBullshit":"asdf","article_id":3,"headline":"example of headline","body":"testText"}
-    print("setting Article header as: ", header)
+    print("setting article header as: ", header)
     testArticle.setHeader(header)
-    print("setting Article body as: ", body)
+    print("setting article body as: ", body)
     testArticle.setBody(body)
     print("setting some udfs...")
     for i in range(0,10):
@@ -555,9 +555,9 @@ if __name__ == '__main__':
     testArticle.setBodyOld()
     testArticle.setBody({"id":27,"testBullshit":"asdf","article_id":3,"headline":"esxample of headline","body":"testText"})
     print("testing new headline ('esxample of headline'): is new Version= ",testArticle.checkNewVersion())
-    print("printing Article:")
+    print("printing article:")
     testArticle.print()
-    print("creating second Article object - class variables already in place")
-    testArticle2=Article() #no first launch, here
+    print("creating second article object - class variables already in place")
+    testArticle2=article() #no first launch, here
     print("test testArticle header for completeness: ",testArticle.checkHeaderComplete())
     print("test testArticle body for completeness: ",testArticle.checkBodyComplete())
