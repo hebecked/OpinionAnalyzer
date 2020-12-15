@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-import datetime as dt
-from utils.connectDb import database as ownDBObject    #to be recreated with article specific functionality
-import validators
-import copy
 
+#todo: open tasks marked with todo
+
+import datetime as dt
+from utils.connectDb import database as ownDBObject
+import validators      # used for url validation
+import copy            #deepcopy used for oldBody
 
 
 class article:
@@ -19,7 +21,7 @@ class article:
     MANDATORY_HEADER={"url","obsolete","source_id"}
     MANDATORY_BODY={"article_id","headline","body","proc_timestamp","proc_counter"}
     
-    #article class constants
+    #article class constants (given by database entries / restrictions)
     OBJECT_TYPE=1 #article - more robust: fetch from database    
     MAX_URL_LENGTH=2048
     MAX_HEADLINE_LENGTH=200
@@ -27,6 +29,18 @@ class article:
 
 
     def __init__(self):
+        """
+        article object for use with all scrapers \n
+        manages article components for several database tables \n
+        
+        sub objects are "header", "body", "udfs". \n
+        they organize the data for the corresponding database tables. \n
+        objects to be retrieved by .getArticle()["header"] e.g. \n        
+        
+        
+        free to use data storage .freeData with no predefined type or usage \n
+ 
+        """
         self.__headerComplete=False
         self.__bodyComplete=False
         if(article.__udfDict==None or article.__sourceList==None):
@@ -56,6 +70,21 @@ class article:
         
     #header setter functions    
     def setHeaderId(self, headerId:int):
+        """
+        
+
+        Parameters
+        ----------
+        headerId : int
+            Corresponding to database field id in article_header table\n
+            Id is given by database. Don't add random self generated data here.'
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if  type(headerId)==int and headerId>0:
             self.__header["id"]=headerId
             self.__body["article_id"]=headerId
@@ -63,21 +92,81 @@ class article:
             return True
         return False
     def setUrl(self, url:str):
+        """
+        
+
+        Parameters
+        ----------
+        url : str
+            Corresponding to database field url in article_header table.\n
+            Provide validated url format. Function will validate and reject.
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(url)==str and validators.url(url)and len(url)<article.MAX_URL_LENGTH:
             self.__header["url"]=url
             return True
         return False
     def setObsolete(self, obsolete:bool):
+        """
+        
+
+        Parameters
+        ----------
+        obsolete : bool
+            Corresponding to database field obsolete in article_header table.\n
+            Set True to exclude url from crawling
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(obsolete)==bool:
             self.__header["obsolete"]=obsolete
             return True
         return False
     def setSource(self, source:int):
+        """
+        
+
+        Parameters
+        ----------
+        source : int
+            Corresponding to database field obsolete in article_header table.\n
+            source_id will be validated as existant in database
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(source)==int and source>0 and source in article.__sourceList:
             self.__header["source_id"]=source
             return True
         return False
     def setHeaderDate(self, datePublished:dt.date):
+        """
+        
+
+        Parameters
+        ----------
+        datePublished : datetime.date
+            Corresponding to database field source_date in article_header table.\n
+            will be validated as datetime.date and converted to string automatically
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(datePublished)==dt.date:
             self.__header["source_date"]=datePublished.isoformat()
             return True
@@ -85,45 +174,172 @@ class article:
     
     #Body setter functions
     def setBodyId(self,bodyId:int):
+        """
+        
+
+        Parameters
+        ----------
+        bodyId : int
+            Corresponding to database field id in article_body table\n
+            Id is given by database. Don't add random self generated data here.'
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if  type(bodyId)==int and bodyId>0:
             self.__body["id"]=bodyId
             return True
         return False
+    
     def setBodyArticleId(self,bodyArticleId:int):
+        """
+        
+
+        Parameters
+        ----------
+        bodyArticleId : int
+            Corresponding to database field id in article_header table and database field article_id in table article_body\n
+            Id is given by database. Don't add random self generated data here.'
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if  type(bodyArticleId)==int and bodyArticleId>0:
             self.__body["article_id"]=bodyArticleId
             return True
         return False
+    
     def setBodyText(self, bodyText:str):
+        """
+        
+
+        Parameters
+        ----------
+        bodyText : str
+            Corresponding to database field body in article_body table\n
+            full article text to be inserted here
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(bodyText)==str:
             self.__body["body"]=bodyText
             return True
         return False
+    
     def setBodyHeadline(self, bodyHeadline:str):
+        """
+        
+
+        Parameters
+        ----------
+        bodyHeadline : str
+            Corresponding to database field headline in article_body table\n
+            headline length is cappen at MAX_HEADLINE_LENGTH (corresponding to database layout)
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(bodyHeadline)==str and len(bodyHeadline)<=article.MAX_HEADLINE_LENGTH:
             self.__body["headline"]=bodyHeadline
             return True
         return False
+    
     def setBodyTimeStamp(self, bodyTimestamp:dt.datetime=dt.datetime.today()):
+        """
+        
+
+        Parameters
+        ----------
+        bodyTimestamp : datetime.datetime, optional
+            Corresponding to database field proc_timestamp in article_body table\n
+            When did the crawler add this article text (version)\n
+            The default is datetime.datetime.today()
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(bodyTimestamp)==dt.datetime:
             self.__body["proc_timestamp"]=bodyTimestamp.replace(microsecond=0).isoformat()
             return True
         return False
+    
     def setBodyCounter(self, bodyCounter:int):
+        """
+        
+
+        Parameters
+        ----------
+        bodyCounter : int
+            Corresponding to database field proc_counter in article_body table\n
+            set =0 with article cration and therefore only strictly positive values are allowed\n
+            manages the time till revisit of already seen articles\n
+            next visit = proc_timestamp + 1 hour * (pow(2,bodyCounter)-1), so set carefully\n
+            value of 0 for new articles
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if  type(bodyCounter)==int and bodyCounter>0:
             self.__body["proc_counter"]=bodyCounter
             return True
         return False
+    
     def setBodyOld(self):
-        #shifting body data to old body data for comparison with newer version
-        #tobe used after import from database
+        """
+        function moves current article body data to old article body data (deepcopy) and creates new empty body element\n
+        intended to be called after import (old) body data fromn database
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
+
         if self.checkBodyComplete():
             self.__oldBody=copy.deepcopy(self.__body)
             self.__body={"proc_counter":0,"article_id":self.__oldBody["article_id"]}
             return True
         return False
-    #udf setter functions
+
     def addUdf(self,key:str,value:str):
+        """
+        udfs have to be set separately one by one
+        important: udf key converted to udf_id internally 
+
+        Parameters
+        ----------
+        key : str
+            name of udf - for insertion only, converted for internal use
+        value : str
+            value (string) of udf field\n
+            length limited to MAX_UDF_LENGTH (corresponding to database layout)
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(key)==str and key in article.__udfDict.keys() and type(value)==str and len(value)<=article.MAX_UDF_LENGTH:
             self.__udfs|={(article.__udfDict[key],value)}
             return True
@@ -131,34 +347,83 @@ class article:
 
 
     def checkHeaderComplete(self):
+        """
+        validation of completeness of header data\n
+        comparision with set MANDATORY_HEADER
+
+        Returns
+        -------
+        specific
+            True if complete
+            (false, set of missing fields) if incomplete
+
+        """
         #checking for data in all mandatory database fields
         #return Value: True=ok, otherwise (False, missing data)
         missing=article.MANDATORY_HEADER-self.__header.keys()
         if not(missing):
             return True
         return (False,missing)
+    
     def setHeaderComplete(self):
+        """
+        check if complete and set internal state
+
+        Returns
+        -------
+        bool
+            True if complete, False if incomplete
+
+        """
         if self.checkHeaderComplete()==True:
             self.__headerComplete=True
             return True
         return False
     
     def checkBodyComplete(self):
-        #checking for data in all mandatory database fields
-        #return Value: True=ok, ohterwise (False, missing data)
+        """
+        validation of completeness of body data \n
+        comparision with set MANDATORY_BODY
+
+        Returns
+        -------
+        specific
+            True if complete
+            (false, set of missing fields) if incomplete
+
+        """
         missing=article.MANDATORY_BODY-self.__body.keys()
         if not(missing):
             return True
         return (False,missing)
+    
     def setBodyComplete(self):
+        """
+        check if complete and set internal state
+
+        Returns
+        -------
+        bool
+            True if complete, False if incomplete
+
+        """
         if self.checkBodyComplete()==True:
             self.__bodyComplete=True
             return True
         return False
 
     def checkNewVersion(self):
-        #some logic to identify newer version of article body
-        #starting easy with hashes
+        """
+        some logic to identify newer version of article body\n
+        starting easy with hashes
+
+        Returns
+        -------
+        bool
+            True if new version detected
+
+        """
+
         check={"headline","body"}&article.MANDATORY_BODY
         sharedKeys=check&self.__body.keys()&self.__oldBody.keys()
         if len(sharedKeys)==0:
@@ -169,6 +434,16 @@ class article:
         return False
     
     def getArticle(self):
+        """
+        fetch all article data\n
+        consists of header, body, udfs components
+
+        Returns
+        -------
+        dict
+            dict: {"header":dict with headerdata, "body":dict with bodydata, "udfs":set of udfs (key value)}
+
+        """
         all={"header":self.__header,"body":self.__body,"udfs":self.__udfs}
         return all
     
@@ -176,6 +451,17 @@ class article:
         return self.__inDb
     
     def getBodyToWrite(self):
+        """
+        get flags if new version\n
+        get new Body if different from old version\n
+        get old version if new is the same (no need to write)
+
+        Returns
+        -------
+        dict
+            {"insert":Boolean (new article body to write),"body": corresponding body data}
+
+        """
         if self.checkNewVersion():
             return {"insert":True, "body":self.__body}
         return {"insert":False, "body":self.__oldBody}
@@ -189,15 +475,40 @@ class article:
 
     def setHeader(self, data:dict):
         """
-        more comfortable bulk setter for header information with dictionary
+        more comfortable bulk setter for header information with dictionary\n
+        keys: "id","url","obslete","source_id","source_date"\n
+        keys corresponding to database table article_header
+        
+        
         """
-        return self.__setByDict__(data,self.__setHeaderFunct)
+        return self.__setByDict__(data,article.__setHeaderFunct)
+    
     def setBody(self, data:dict):
         """
-        more comfortable bulk setter for header information with dictionary
+        more comfortable bulk setter for header information with dictionary\n
+        keys: "id","article_id","headline","body","proc_timestamp","proc_counter"\n
+        keys corresponding to database table article_body
         """
-        return self.__setByDict__(data,self.__setBodyFunct)    
+        return self.__setByDict__(data,article.__setBodyFunct) 
+    
     def __setByDict__(self,data:dict,target:dict):
+        """
+        goal: setting all article sub-object fields (body or header) at once \n
+        lookup of setter function in target dict and calling setter function with input parameters from data dict
+
+        Parameters
+        ----------
+        data : dict
+            dict of fields to set.
+        target : dict
+            dict to look up corresponding setter functions
+
+        Returns
+        -------
+        bool
+            returns True if ALL successful.
+
+        """
         returnDefault=True
         if type(data)==dict:
             if len(data.keys()&target.keys())==0:
@@ -209,7 +520,16 @@ class article:
         return False
     
     def print(self):
-        #for testing and debugging purposes
+        """
+        printing article (python object id) and components  \n
+        for testing and debugging purposes
+
+        Returns
+        -------
+        None.
+
+        """
+
         print("\nprinting article",self)
         print("\nheader: ",self.__header)
         print("\nbody: ",self.__body)
@@ -219,7 +539,7 @@ class article:
 if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
-    print("Starting article testcases here:\n\n")
+    print("Starting article showcase here:\n\n")
     testArticle=article()
     header={"id":5,"obsolete":True,"testBullshit":"asdf","source_date":dt.date.today()}
     body={"id":27,"testBullshit":"asdf","article_id":3,"headline":"example of headline","body":"testText"}
