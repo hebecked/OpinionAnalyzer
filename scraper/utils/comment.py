@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+#todo: open tasks marked with todo
+
 import datetime as dt
 from utils.connectDb import database as ownDBObject    #to be recreated with article specific functionality
 
@@ -18,6 +21,17 @@ class comment:
 
 
     def __init__(self):
+        
+        """
+        comment object for use with all scrapers \n
+        manages comment components for several database tables \n
+        
+        sub objects are "data" and "udfs". \n
+        they organize the data for the corresponding database tables. \n
+        objects to be retrieved by .getComment()["data"] e.g. \n        
+ 
+        """
+        
         self.__complete=False
         if comment.__udfDict==None:
             comment.__udfList={}
@@ -38,36 +52,145 @@ class comment:
         
     #setter functions
     def setCommentId(self, commentId:int):
+        """
+        
+
+        Parameters
+        ----------
+        commentId : int
+            Corresponding to database field id in comment table\n
+            Id is given by database. Don't add random self generated data here.'
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if  type(commentId)==int and commentId>0:
             self.__data["id"]=commentId
             return True
         return False
     def setBodyId(self, bodyId:int):
+        """
+        
+
+        Parameters
+        ----------
+        bodyId : int
+            Corresponding to database field article_body_id in comment table\n
+            Id is given by database. Don't add random self generated data here.'
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if  type(bodyId)==int and bodyId>0:
             self.__data["article_body_id"]=bodyId
             return True
         return False
     def setLevel(self,level:int):
+        """
+        
+
+        Parameters
+        ----------
+        level : int
+            Corresponding to database field level in comment table\n
+            level of comment: \n
+            0 for comment directly related to article \n
+            n depth of comment of comment
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if  type(level)==int and level>=0:
             self.__data["level"]=level
             return True
         return False        
     def setCommentText(self, commentText:str):
+        """
+        
+
+        Parameters
+        ----------
+        commentText : str
+            Corresponding to database field body in comment table\n
+            full comment text to be inserted here
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(commentText)==str:
             self.__data["body"]=commentText.replace('\x00','')
             return True
         return False
     def setTimeStamp(self, commentTimestamp:dt.datetime=dt.datetime.today()):
+        """
+        
+
+        Parameters
+        ----------
+        commentTimestamp : dtatetime.datetime, optional
+            Corresponding to database field proc_tiomestamp in comment table\n
+            When did the crawler add this comment text \n
+            The default is datetime.datetime.today()
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(commentTimestamp)==dt.datetime:
             self.__data["proc_timestamp"]=commentTimestamp.replace(microsecond=0).isoformat()
             return True
         return False   
     def setExternalId(self,externalId:int):
+        """
+        
+
+        Parameters
+        ----------
+        externalId : int
+            Corresponding to database field external_id in comment table\n
+            unique identifier for comment
+            best practice: (8 Byte hash value of body, author and url)
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if  type(externalId)==int:
             self.__data["external_id"]=externalId
             return True
         return False
     def setParentId(self,parentId:int):
+        """
+        
+
+        Parameters
+        ----------
+        parentId : int
+            Corresponding to database field parent_id in comment table\n
+            set external_id of parent comment (if level >0)
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if  type(parentId)==int:
             self.__data["parent_id"]=parentId
             return True
@@ -75,6 +198,24 @@ class comment:
     
     #udf setter functions
     def addUdf(self,key:str,value:str):
+        """
+        udfs have to be set separately one by one
+        important: udf key converted to udf_id internally         
+
+        Parameters
+        ----------
+        key : str
+            name of udf - for insertion only, converted for internal use
+        value : str
+            value (string) of udf field\n
+            length limited to MAX_UDF_LENGTH (corresponding to database layout)
+
+        Returns
+        -------
+        bool
+            returns True if successful.
+
+        """
         if type(key)==str and key in comment.__udfDict.keys() and type(value)==str and len(value)<=comment.MAX_UDF_LENGTH:
             self.__udfs|={(comment.__udfDict[key],value)}
             return True
@@ -82,6 +223,17 @@ class comment:
 
 
     def checkCommentComplete(self):
+        """
+        validation of completeness of comment data \n
+        comparision with set MANDATORY_DATA
+
+        Returns
+        -------
+        specific
+            True if complete
+            (false, set of missing fields) if incomplete
+
+        """
         #checking for data in all mandatory database fields
         #return Value: True=ok, otherwise (False, missing data)
         missing=comment.MANDATORY_DATA-self.__data.keys()
@@ -89,18 +241,33 @@ class comment:
             return True
         return (False,missing)
     def setComplete(self):
+        """
+        check if complete and set internal state
+
+        Returns
+        -------
+        bool
+            True if complete, False if incomplete
+        """
         if self.checkCommentComplete()==True:
             self.__complete=True
             return True
-        return False
+        # return False
 
     def getComment(self):
+        """
+        fetch all comment components\n
+        consists of data and udfs components
+
+        Returns
+        -------
+        dict
+            dict: {"data":dict with comment data, "udfs":set of udfs (key value)}
+
+        """
         all={"data":self.__data,"udfs":self.__udfs}
         return all
-    def getKey(self):
-        if not(comment.KEY_DATA-self.__data.keys()):
-            return (self.__data["article_body_id"],self.__data["external_id"])
-        return False
+
   
     #class Variable: Lookup table for setter functions
     #defined here because of dependency (setter functions)
@@ -109,10 +276,30 @@ class comment:
     def setData(self, data:dict):
         """
         more comfortable bulk setter for mandatory data with dictionary
+        keys: "article_body_id","parent_id","level","body","proc_timestamp","external_id"\n
+        keys corresponding to database table comment
         """
         return self.__setByDict__(data,self.__setDataFunct)
  
     def __setByDict__(self,data:dict,target:dict):
+        """
+        goal: setting all comment data fields at once \n
+        lookup of setter function in target dict and calling setter function with input parameters from data dict
+        same as in article.py though no multi-object switch needed
+
+        Parameters
+        ----------
+        data : dict
+            dict of fields to set.
+        target : dict
+            dict to look up corresponding setter functions
+
+        Returns
+        -------
+        bool
+            returns True if ALL successful.
+
+        """
         returnDefault=True
         if type(data)==dict:
             if len(data.keys()&target.keys())==0:
@@ -133,7 +320,7 @@ class comment:
 if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
-    print("Starting comment testcases here:\n\n")
+    print("Starting comment showcase here:\n\n")
     testComment=comment()
     commentData={"article_body_id":5,"level":3,"body":"asdf","proc_timestamp":dt.datetime.today()}
     print("setting comment with data: ",commentData)

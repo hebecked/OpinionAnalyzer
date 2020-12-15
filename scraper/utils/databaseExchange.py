@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+#todo: open tasks marked with todo
+
 import utils.connectDb as connectDb
 from utils.article import article
 from utils.comment import comment
@@ -264,24 +268,25 @@ def test():
     writer.connect()
     print("last Run= ",writer.fetchLastRun(1))
     writer.logStartCrawl(1)
-#    writer.writeArticles([testArticle])
+    writer.writeArticles([testArticle])
     testComment=comment()
     testComment.setData({"article_body_id":141,"level":0,"body":"i'm a comment","proc_timestamp":dt.datetime.today()})
     testComment.addUdf("author","brilliant me")
     testComment.setExternalId((hash("brilliant me"+testComment.getComment()["data"]["body"])))
-#    print("plain comment print")
+    print("plain comment print")
     testComment.print()
-#    writer.writeComments([testComment])
-   # testComment.print()
+    writer.writeComments([testComment])
     writer.logEndCrawl()
     todo=writer.fetchTodoList(1)
     for td in todo:
-        pass#td.print()
+        td.print()
     writer.close()
 
 
 if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
-    print("Starting databaseExchange testcases here:\n\n")
+    print("Starting databaseExchange showcase here:\n\n")
     print("test deactivated")
+    #to reactivateuncomment test()
+    #test() functionality spams crap to db. Better use SpiegelOnlineScraper as test unit 
