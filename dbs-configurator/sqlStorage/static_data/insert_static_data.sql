@@ -7,12 +7,12 @@ INSERT INTO news_meta_data.source_type_header (type) VALUES('crawl');
 INSERT INTO news_meta_data.source_header (type, source) VALUES(1,'Spiegel');
 INSERT INTO news_meta_data.object_header (type) VALUES('article_body');
 INSERT INTO news_meta_data.object_header (type) VALUES('comment');
-INSERT INTO news_meta_data.udf_header (udf_name) VALUES('headline');
-INSERT INTO news_meta_data.udf_header (udf_name) VALUES('label');
-INSERT INTO news_meta_data.udf_header (udf_name) VALUES('author');
-INSERT INTO news_meta_data.udf_header (udf_name) VALUES('date_created');
-INSERT INTO news_meta_data.udf_header (udf_name) VALUES('date_modified');
-INSERT INTO news_meta_data.udf_header (udf_name) VALUES('date_published');
+INSERT INTO news_meta_data.udf_header (udf_name, udf_type) VALUES('headline','string');
+INSERT INTO news_meta_data.udf_header (udf_name, udf_type) VALUES('label','string');
+INSERT INTO news_meta_data.udf_header (udf_name, udf_type) VALUES('author','string');
+INSERT INTO news_meta_data.udf_header (udf_name, udf_type) VALUES('date_created','datetime');
+INSERT INTO news_meta_data.udf_header (udf_name, udf_type) VALUES('date_modified','datetime');
+INSERT INTO news_meta_data.udf_header (udf_name, udf_type) VALUES('date_published','datetime');
 INSERT INTO news_meta_data.analyzer_header (analyzer_name, analyzer_table_name) VALUES('comment_sentiment','analyzer1_result');
 
 COMMIT;

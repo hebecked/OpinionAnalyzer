@@ -96,4 +96,142 @@ and start_timestamp is null
 limit 1000
 );
 
+--show all article_headers without a body
+create or replace view news_meta_data.v_log_article_header_no_body as (
+select ah.id, ah.url, ah.source_id, ah.source_date
+from news_meta_data.article_header ah 
+LEFT JOIN news_meta_data.article_body ab
+ON ah.id = ab. article_id
+where ab.article_id is null
+and ah.obsolete = false
+);
+
+--show all article bodies without comments
+create or replace view news_meta_data.v_log_article_body_no_comments as (
+select ah.id, ah.url, ah.source_id, ah.source_date, ab.proc_timestamp, ab.proc_counter
+from news_meta_data.article_header ah, news_meta_data.article_body ab
+LEFT JOIN news_meta_data.comment co
+ON ab.id = co.article_body_id
+where ah.id=ab.article_id
+and ah.obsolete = false
+and co.article_body_id is null
+);
+
+--show all udf_values without object attached
+create or replace view news_meta_data.v_log_udf_values_no_object as (
+select uv.udf_id, 
+'udf without article_body attached' as err_msg,
+uv.object_id,
+uv.udf_value
+
+from news_meta_data.udf_values uv 
+left join news_meta_data.article_body ab
+on uv.object_id = ab.id
+--1 = article_body
+where uv.object_type = 1
+and ab.id is null
+
+union
+
+select uv.udf_id, 
+'udf without comment attached' as err_msg,
+uv.object_id,
+uv.udf_value
+
+from news_meta_data.udf_values uv 
+left join news_meta_data.comment co
+on uv.object_id = co.id
+--2 = comment
+where uv.object_type = 2
+and co.id is null
+);
+
+--article_body udf values date format
+create or replace view news_meta_data.v_udf_values_format_date as (
+select 
+vabli.article_id,
+vabli.last_article_body_id as article_body_id,
+uh.id as udf_id,
+uh.udf_name,
+uv.object_type,
+TO_DATE(substring(uv.udf_value,1,10),'YYYY-MM-DD') as udf_value_format
+
+from news_meta_data.udf_header uh, news_meta_data.v_article_body_last_id vabli
+LEFT JOIN  news_meta_data.udf_values uv ON vabli.last_article_body_id = uv.object_id
+where uv.object_type = 1
+and uh.udf_type = 'date'
+and uh.id=uv.udf_id
+);
+
+--article_body udf values date format
+create or replace view news_meta_data.v_udf_values_format_datetime as (
+select 
+vabli.article_id,
+vabli.last_article_body_id as article_body_id,
+uh.id as udf_id,
+uh.udf_name,
+uv.object_type,
+TO_DATE(substring(uv.udf_value,1,10),'YYYY-MM-DD') as udf_value_format
+
+from news_meta_data.udf_header uh, news_meta_data.v_article_body_last_id vabli
+LEFT JOIN  news_meta_data.udf_values uv ON vabli.last_article_body_id = uv.object_id
+where uv.object_type = 1
+and uh.udf_type = 'datetime'
+and uh.id=uv.udf_id
+);
+
+--article_body udf values string format
+create or replace view news_meta_data.v_udf_values_format_string as (
+select 
+vabli.article_id,
+vabli.last_article_body_id as article_body_id,
+uh.id as udf_id,
+uh.udf_name,
+uv.object_type,
+uv.udf_value as udf_value_format
+
+
+from news_meta_data.udf_header uh, news_meta_data.v_article_body_last_id vabli
+LEFT JOIN  news_meta_data.udf_values uv ON vabli.last_article_body_id = uv.object_id
+where uv.object_type = 1
+and uh.udf_type = 'string'
+and uh.id=uv.udf_id
+);
+
+--article_body udf values integer format
+create or replace view news_meta_data.v_udf_values_format_integer as (
+select 
+vabli.article_id,
+vabli.last_article_body_id as article_body_id,
+uh.id as udf_id,
+uh.udf_name,
+uv.object_type,
+cast(uv.udf_value as integer) as udf_value_format
+
+
+from news_meta_data.udf_header uh, news_meta_data.v_article_body_last_id vabli
+LEFT JOIN  news_meta_data.udf_values uv ON vabli.last_article_body_id = uv.object_id
+where uv.object_type = 1
+and uh.udf_type = 'integer'
+and uh.id=uv.udf_id
+);
+
+--article_body udf values float format
+create or replace view news_meta_data.v_udf_values_format_double as (
+select 
+vabli.article_id,
+vabli.last_article_body_id as article_body_id,
+uh.id as udf_id,
+uh.udf_name,
+uv.object_type,
+cast(uv.udf_value as double precision) as udf_value_format
+
+
+from news_meta_data.udf_header uh, news_meta_data.v_article_body_last_id vabli
+LEFT JOIN  news_meta_data.udf_values uv ON vabli.last_article_body_id = uv.object_id
+where uv.object_type = 1
+and uh.udf_type = 'integer'
+and uh.id=uv.udf_id
+);
+
 COMMIT;
