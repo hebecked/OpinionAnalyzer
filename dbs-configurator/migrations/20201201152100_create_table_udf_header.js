@@ -6,6 +6,7 @@ exports.up = function(knex) {
       return knex.schema.withSchema('news_meta_data').createTable("udf_header", function (table) {
         table.increments("id");
         table.string("udf_name",30).notNullable();
+        table.string("udf_type",15).notNullable();
       });
     }
   })
