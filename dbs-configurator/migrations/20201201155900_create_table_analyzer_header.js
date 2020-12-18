@@ -7,6 +7,7 @@ exports.up = function(knex) {
         table.increments("id");
         table.string("analyzer_name",50).notNullable();
         table.string("analyzer_table_name",30).notNullable();
+        table.string("analyzer_view_name",30).notNullable();
       });
     }
   })
