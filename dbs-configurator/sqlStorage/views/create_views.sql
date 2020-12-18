@@ -67,6 +67,7 @@ and current_timestamp > vabl.proc_timestamp + (interval '1 hour' * ((2^vabl.proc
 create or replace view news_meta_data.v_todo_analyzer1 as (
  SELECT c.id AS comment_id,
     c.level AS comment_level,
+    c.body AS comment_body,
     al.analyzer_id,
     al.start_timestamp,
     al.end_timestamp,
@@ -85,6 +86,7 @@ create or replace view news_meta_data.v_todo_analyzer1_next as (
 select 
 comment_id,
 comment_level,
+comment_body,
 analyzer_id,
 start_timestamp,
 end_timestamp,

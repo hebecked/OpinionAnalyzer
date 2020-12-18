@@ -13,6 +13,6 @@ INSERT INTO news_meta_data.udf_header (udf_name, udf_type) VALUES('author','stri
 INSERT INTO news_meta_data.udf_header (udf_name, udf_type) VALUES('date_created','datetime');
 INSERT INTO news_meta_data.udf_header (udf_name, udf_type) VALUES('date_modified','datetime');
 INSERT INTO news_meta_data.udf_header (udf_name, udf_type) VALUES('date_published','datetime');
-INSERT INTO news_meta_data.analyzer_header (analyzer_name, analyzer_table_name) VALUES('comment_sentiment','analyzer1_result');
+INSERT INTO news_meta_data.analyzer_header (analyzer_name, analyzer_table_name, analyzer_view_name) VALUES('comment_sentiment','analyzer1_result','v_todo_analyzer1_next');
 
 COMMIT;
