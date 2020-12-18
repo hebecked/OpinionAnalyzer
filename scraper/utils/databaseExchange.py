@@ -2,6 +2,7 @@ import utils.connectDb as connectDb
 from utils.article import article
 from utils.comment import comment
 import datetime as dt
+from psycopg2 import sql
 
 #add comments, rename to dataExchange
 #add getUdfs(), getSources() for article and comment object
@@ -21,7 +22,7 @@ class databaseExchange(connectDb.database):
     __BODY_MIN_STATEMENT="""SELECT MAX(id) from news_meta_data.article_body;"""
     __BODY_STATEMENT="""INSERT INTO news_meta_data.article_body (article_id, headline, body, proc_timestamp, proc_counter) VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
     __BODY_UPDATE_STATEMENT="""UPDATE news_meta_data.article_body set proc_counter=%s where id=%s;"""
-    __BODY_ID_FETCH_STATEMENT="""select article_id, max(id) as id from  news_meta_data.article_body where id > %s group by article_id;"""
+    __BODY_ID_FETCH_STATEMENT="""select article_id, max(id) as id FROM  news_meta_data.article_body where id > %s group by article_id;"""
 
     #udf related database queries
     __UDF_INSERT_STATEMENT="""INSERT INTO news_meta_data.udf_values (udf_id,object_type,object_id,udf_value) VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
@@ -38,10 +39,27 @@ class databaseExchange(connectDb.database):
     __LOG_ENDCRAWL_TEST="""SELECT * FROM news_meta_data.crawl_log  WHERE id=%s;"""
     __LOG_GET_MAX_ID="""SELECT MAX(id) FROM news_meta_data.crawl_log WHERE source_id=%s;"""
     
+    #analyzer related database queries
+    #todo  read comment_id_comment
+    __ANALYZER_FETCH_HEADER="""SELECT id, analyzer_view_name, analyzer_table_name FROM news_meta_data.analyzer_header;"""
+    __ANALYZER_FETCH_TODO="""SELECT comment_id, comment_body FROM %s"""
+    __ANALYZER_LOG_START="""INSERT INTO news_meta_data.analyzer_log (analyzer_id,comment_id, start_timestamp) VALUES (%s,%s,%s);"""
+    __ANALYZER_FETCH_LOG_IDs="""SELECT comment_id, max(id) AS id  FROM  news_meta_data.analyzer_log where start_timestamp=%s and analyzer_id=%s and comment_id in %s GROUP BY comment_id;"""
+    __ANALYZER_LOG_END="""UPDATE news_meta_data.analyzer_log SET end_timestamp=%s, success=True WHERE id in %s;"""
+    __ANALYZER_INSERT_RESULT=""";"""
+    
+    #class variable representing database architecture for analyzers
+    __analyzer_data={}
+        
 
     def __init__(self):
         super().__init__()
         self.__logId=None
+        self.__analyzerStart=dt.datetime.today()
+        print("initializing...")
+        self.connect()
+        databaseExchange.__analyzer_data=self.__fetchAnalyzerTables()
+        print("Analyzer tables: ",databaseExchange.__analyzer_data )
         
     def close(self):
         super().close()
@@ -51,8 +69,56 @@ class databaseExchange(connectDb.database):
         
     def connect(self):
         super().connect()
-              
-    def fetchTodoList(self, sourceId:int):
+        
+    def __fetchAnalyzerTables(self):
+        #fetch table data for analyzers from header table (which view and target table to use)
+        cur = self.conn.cursor()
+        cur.execute(databaseExchange.__ANALYZER_FETCH_HEADER)
+        result = cur.fetchall()
+        cur.close()
+        if len(result)==0: return {}
+        analyzerDict={}
+        for res in result:
+            analyzerDict[res[0]]={'analyzer_view_name':res[1],'analyzer_table_name':res[2]}
+        return analyzerDict
+
+        
+    def fetchTodoListAnalyzer(self, analyzerId:int):
+        if not analyzerId in databaseExchange.__analyzer_data.keys(): return []
+        cur = self.conn.cursor()
+        cur.execute(databaseExchange.__ANALYZER_FETCH_TODO % ("news_meta_data."+databaseExchange.__analyzer_data[analyzerId]['analyzer_view_name']))
+        result = cur.fetchall()
+        cur.close()
+        dataSet=set([])
+        for res in result:
+            dataSet|=set([res])
+        returnList=list(dataSet)
+#todo: uncomment for logging        self.__logStartAnalyzer(analyzerId,returnList)
+        return returnList
+    
+    def __logStartAnalyzer(self,analyzerId:int,analyzerTodoList: list):
+        if not analyzerId in databaseExchange.__analyzer_data.keys(): return False
+        self.__analyzerStart=dt.datetime.today()
+        cur = self.conn.cursor()
+        [cur.execute(databaseExchange.__ANALYZER_LOG_START,(analyzerId,x[0],self.__analyzerStart)) for x in analyzerTodoList]
+        self.conn.commit()
+        cur.close()
+
+    
+    def writeAnalyzerResults(self,analyzerId:int,analyzerResult: list):
+        #incomplete: need to define result parameters (dict including database fields : values)
+        analyzerEnd=dt.datetime.today()
+        comment_id_tuple=tuple(set(x[0] for x in analyzerResult))
+        cur = self.conn.cursor()
+        cur.execute(databaseExchange.__ANALYZER_FETCH_LOG_IDs,(self.__analyzerStart,analyzerId,comment_id_tuple))
+        ids = cur.fetchall()
+        if len(ids)==0: 
+            cur.close()   
+            return False
+        return True
+
+             
+    def fetchTodoListScraper(self, sourceId:int):
         cur = self.conn.cursor()
         cur.execute(databaseExchange.__SCRAPER_FETCH_TODO,(sourceId,))
         result = cur.fetchall()
@@ -274,7 +340,7 @@ def test():
 #    writer.writeComments([testComment])
    # testComment.print()
     writer.logEndCrawl()
-    todo=writer.fetchTodoList(1)
+    todo=writer.fetchTodoListScraper(1)
     for td in todo:
         pass#td.print()
     writer.close()
@@ -284,4 +350,7 @@ if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
     print("Starting databaseExchange testcases here:\n\n")
-    print("test deactivated")
+    writer=databaseExchange()
+    print(writer.fetchTodoListAnalyzer(1))
+    writer.close()
+    print("further test deactivated")

@@ -49,9 +49,12 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
             time.sleep(1) #remove comment for crawler delay
         url_list=list(filter(lambda x: x['is_paid']==False,full_list)) #remove paid aricles without access
         for url in url_list:
-            art=article()
-            art.setHeader({'source_date':url['date_published'].date(),'source_id':self.id,'url':str(url['url'])})
-            returnList+=[art]
+            try:
+                art=article()
+                art.setHeader({'source_date':url['date_published'].date(),'source_id':self.id,'url':str(url['url'])})
+                returnList+=[art]
+            except:
+                return False
         return(returnList)	
 	        
     def getArticleDetails(self, art:article):
@@ -152,13 +155,12 @@ if __name__ == '__main__':
    print("started at ",starttime)
    SpS=SponScraper()
    db=databaseExchange()
-   db.connect()
    db.logStartCrawl(SpS.id)
    start=max(db.fetchLastRun(SpS.id).date(),date(2020,12,1))
    end=date.today()
    articleHeaderList=SpS.getArticlesList(start,end)
    db.writeArticles(articleHeaderList)
-   todo=db.fetchTodoList(SpS.id)
+   todo=db.fetchTodoListScraper(SpS.id)
    SpS.getWriteArticlesDetails(db,todo)
 #   for art in todo:
 #       print("fetching comments for article:",art)
