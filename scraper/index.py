@@ -24,8 +24,21 @@ def main():
     if firstInitValue[0]:
         logger.info('No original Init found for Spiegel Scraper')
         logger.info('Triggering Spiegel Scraper')
-        os.system('python3 -u /usr/src/app/dataCollectors/spiegelCollector.py')
-
+        #os.system('python3 -u /usr/src/app/dataCollectors/spiegelCollector.py')
+    
+    logger.info('Triggering Article')
+    os.system('python3 -u /usr/src/app/utils/article.py')
+    sleep(2)
+    logger.info('Triggering Comment')
+    os.system('python3 -u /usr/src/app/utils/comment.py')
+    sleep(2)
+    logger.info('Triggering databaseExchangeTest')
+    os.system('python3 -u /usr/src/app/utils/databaseExchange.py')
+    sleep(2)
+    logger.info('Triggering SpiegelOnlineScraper')
+    os.system('python3 -u /usr/src/app/dataCollectors/SpiegelOnlineScraper.py')
+    sleep(2)
+    logger.info('Running Cron')
     cron = CronJobs()
     cron.cronInit()
 
