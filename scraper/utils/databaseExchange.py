@@ -2,7 +2,6 @@ import utils.connectDb as connectDb
 from utils.article import article
 from utils.comment import comment
 import datetime as dt
-from psycopg2 import sql
 
 #add comments, rename to dataExchange
 #add getUdfs(), getSources() for article and comment object
