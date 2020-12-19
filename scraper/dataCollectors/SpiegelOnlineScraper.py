@@ -46,7 +46,7 @@ class SponScraper(dataCollectors.TemplateScraper.Scraper):
             except:
                 print("Article List crawl error!")
                 self.hasErrors=True
-            time.sleep(1) #remove comment for crawler delay
+            time.sleep(SponScraper.DELAY_INDIVIDUAL) #remove comment for crawler delay
         url_list=list(filter(lambda x: x['is_paid']==False,full_list)) #remove paid aricles without access
         for url in url_list:
             try:
