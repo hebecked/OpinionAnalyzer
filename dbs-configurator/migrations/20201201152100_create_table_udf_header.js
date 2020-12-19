@@ -1,15 +1,20 @@
 const logger = require("tracer").console();
 
 exports.up = function(knex) {
-  return knex.schema.withSchema('news_meta_data').createTableIfNotExists("udf_header", function (table) {
-    table.increments("id");
-    table.string("udf_name",30).notNullable();
+  knex.schema.withSchema('news_meta_data').hasTable('udf_header').then(function(exists) {
+    if(!exists) {
+      return knex.schema.withSchema('news_meta_data').createTable("udf_header", function (table) {
+        table.increments("id");
+        table.string("udf_name",30).notNullable();
+        table.string("udf_type",15).notNullable();
+      });
+    }
   })
     .then(function () {
-      logger.log("Successfully created metatables!");
+      logger.log("Successfully created table udf_header!");
     });
 };
 
 exports.down = function(knex) {
-  return knex.schema.dropTable("test")
+  return knex.schema.dropTable("udf_header")
 };
