@@ -35,11 +35,12 @@ class database:
         """ Connect to the PostgreSQL database server """
         try:
             # connect to the PostgreSQL server
-            self.conn = psycopg2.connect(**self.db_params)         
+            self.conn = psycopg2.connect(**self.db_params)
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
 
-    def execute(self, request):
+    # to retrieve actual values from the database
+    def retrieveValues(self, request):
         # create a cursor
         cur = self.conn.cursor()
 
@@ -51,6 +52,17 @@ class database:
         cur.close()
 
         return result
+
+    # execute raw sql commands (no data fetching possible, only things like UPDATE etc.
+    def execute(self, request):
+        # create a cursor
+        cur = self.conn.cursor()
+
+        cur.execute(request)
+
+        self.conn.commit()
+        # close the communication with the PostgreSQL
+        cur.close()
 
     def getVersion(self):
         try:
@@ -74,10 +86,3 @@ class database:
 
     def __del__(self):
         self.close()
-
-# For manual testing
-if __name__ == "__main__":
-    db = database()
-    db.connect()
-    db.getVersion()
-    db.getTestTableMeta()
