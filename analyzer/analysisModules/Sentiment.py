@@ -26,9 +26,9 @@ import json
 
 
 class multilang_bert_sentiment: 
+	"""Based on Amazonreview (1-5 stars)		#https://huggingface.co/nlptown/bert-base-multilingual-uncased-sentiment?text=Nicht+kaufen """
 
-	def __init__(self):
-		#Based on Amazonreview (1-5 stars)		#https://huggingface.co/nlptown/bert-base-multilingual-uncased-sentiment?text=Nicht+kaufen 			
+	def __init__(self):			
 		self.tokenizer = AutoTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
 		self.model = AutoModelForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
 	
@@ -44,9 +44,9 @@ class multilang_bert_sentiment:
 
 
 class german_bert_sentiment: 
+	"""Based on a range of sources including twitter, facebook, product reviews #https://huggingface.co/oliverguhr/german-sentiment-bert?text=Du+Arsch%21"""
 
 	def __init__(self):
-		#Based on a range of sources including twitter, facebook, product reviews #https://huggingface.co/oliverguhr/german-sentiment-bert?text=Du+Arsch%21
 		self.tokenizer = AutoTokenizer.from_pretrained("oliverguhr/german-sentiment-bert")
 		self.model = AutoModelForSequenceClassification.from_pretrained("oliverguhr/german-sentiment-bert")
 	
@@ -61,10 +61,10 @@ class german_bert_sentiment:
 		return [average,error]
 
 
-class Textblob_sentiment: 
+class TextblobSentiment: 
+	"""More information at https://textblob-de.readthedocs.io/en/latest/ and https://github.com/sloria/TextBlob/
+	#https://machine-learning-blog.de/2019/06/03/stimmungsanalyse-sentiment-analysis-auf-deutsch-mit-python/"""
 
-	#More information at https://textblob-de.readthedocs.io/en/latest/ and https://github.com/sloria/TextBlob/
-	#https://machine-learning-blog.de/2019/06/03/stimmungsanalyse-sentiment-analysis-auf-deutsch-mit-python/
 	def __init__(self):
 		pass
 		
@@ -79,48 +79,54 @@ class Textblob_sentiment:
 		return mood.subjectivity
 
 
-#classifier = TextClassifier.load('de-offensive-language') # en-sentiment
+class EnsembleSentiment():
+	"""docstring for ClassName"""
 
-with open('../Testdata/TestArticle.json') as f:
-	testArticle = json.load(f)
-#dict_keys(['url', 'id', 'channel', 'subchannel', 'headline', 'intro', 'text', 'topics', 'author', 'comments_enabled', 'date_created', 'date_modified', 'date_published', 'breadcrumbs'])
-
-
-with open('../Testdata/TestComments.json') as f:
-	testComments = json.load(f)
-
-#Based on Amazonreview (1-5 stars)	
-SentimentModel1=multilang_bert_sentiment()
-
-#Based on a range of sources including twitter, facebook, product reviews
-SentimentModel2=german_bert_sentiment()
-
-testText="Du Arsch!" 
-
-
-result1=SentimentModel1.analyze(testText)
-result2=SentimentModel2.analyze(testText)
-result3=Textblob_sentiment().analyze(testText)
-results=np.array([result1, result2])
-finalResult=np.average(results.T[0], weights=1/results.T[1]**2)
-finalError=np.sqrt(1/np.mean(1/results.T[1]**2))
-print("Test: ", result1 , result2, result3, finalResult, finalError)
-
-
-i=0
-for comment in testComments:
-	if comment["user"] is not None and comment["body"] is not None:
-		#sentence = Sentence(comment["body"])
-		#Tourette = classifier.predict(sentence)
-
+	def __init__(self):
+		#Based on Amazonreview (1-5 stars)	
+		self.sentiment_model_1=multilang_bert_sentiment()
+		#Based on a range of sources including twitter, facebook, product reviews
+		self.sentiment_model_2=german_bert_sentiment()
 		
 
-		result1=SentimentModel1.analyze(comment["body"])
-		result2=SentimentModel2.analyze(comment["body"])
-		result3=Textblob_sentiment().analyze(comment["body"])
+	def analyze(self, text):
+		result1=self.sentiment_model_1.analyze(text)
+		result2=self.sentiment_model_2.analyze(text)
 		results=np.array([result1, result2])
-		finalResult=np.average(results.T[0], weights=1/results.T[1]**2)
-		finalError=np.sqrt(1/np.mean(1/results.T[1]**2))
-		print(result1 , result2, result3, finalResult, finalError)
+		result=np.average(results.T[0], weights=1/results.T[1]**2)
+		error=np.sqrt(1/np.mean(1/results.T[1]**2))
+		return [result, error]
 
-	i+=1
+
+#classifier = TextClassifier.load('de-offensive-language') # en-sentiment
+
+
+
+if __name__ == "__main__":
+
+
+	with open('../Testdata/TestArticle.json') as f:
+		testArticle = json.load(f)
+	#dict_keys(['url', 'id', 'channel', 'subchannel', 'headline', 'intro', 'text', 'topics', 'author', 'comments_enabled', 'date_created', 'date_modified', 'date_published', 'breadcrumbs'])
+	
+	
+	with open('../Testdata/TestComments.json') as f:
+		testComments = json.load(f)
+
+
+	SentimentModel1=ultilang_bert_sentiment()
+	SentimentModel2=german_bert_sentiment()
+	SentimentModel3=EnsembleSentiment()
+
+
+	for i, comment in enumerate(testComments):
+		if comment["user"] is not None and comment["body"] is not None:
+			#sentence = Sentence(comment["body"])
+			#Tourette = classifier.predict(sentence)
+	
+			result1=SentimentModel1.analyze(comment["body"])
+			result2=SentimentModel2.analyze(comment["body"])
+			result3=SentimentModel3.analyze(comment["body"])
+			result4=TextblobSentiment().analyze(comment["body"])
+			print(i, result1 , result2, result3, result4)
+	

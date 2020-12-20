@@ -1,5 +1,5 @@
 # Inspired by https://github.com/poteha/docker-nlp/
-FROM python:3.7-slim-buster
+FROM python:3.8-slim-buster
 
 # Set root as default usr
 USER root
