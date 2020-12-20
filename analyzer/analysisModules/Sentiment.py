@@ -1,8 +1,7 @@
 """
 TODO:
 
-1. Clean up Testfile and split over different files (1 for each lib class + 1 analyzing comments +1 analyzing articles)
-2. Libs to add: Topic detection, big 5 personality traits, IQ/Education, origin, wordcount, spelling, offensiveLanguage detection, mood
+Libs to add: Topic detection, big 5 personality traits, IQ/Education, origin, wordcount, spelling, offensiveLanguage detection, mood
 Sources:
 Prep text (bag of words): 	https://monkeylearn.com/topic-analysis/
 							https://towardsdatascience.com/nlp-extracting-the-main-topics-from-your-dataset-using-lda-in-minutes-21486f5aa925
