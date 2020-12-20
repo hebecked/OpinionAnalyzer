@@ -15,7 +15,12 @@ COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+
+#load required models for nlp (reduces startup time)
+COPY loadRequiredModels.py .
 RUN python3 -m textblob.download_corpora
+RUN python3 loadRequiredModels.py
 #RUN python3 -m spacy download de
 
 # Just generically copy everything to avoid conflicts later when adding new moduls
