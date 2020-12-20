@@ -1,4 +1,4 @@
-#loads reqired NLP models fore them to be cached and not reloaded on each reboot
+"""loads reqired NLP models fore them to be cached and not reloaded on each reboot"""
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 _ = AutoTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")

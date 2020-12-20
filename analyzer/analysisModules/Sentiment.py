@@ -12,8 +12,6 @@ Get Personalities: 	https://github.com/jkwieser/personality-detection-text
 					https://github.com/SenticNet/personality-detection
 """
 
-
-
 #from flair.models import TextClassifier
 #from flair.data import Sentence
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -25,7 +23,10 @@ import json
 
 
 class multilang_bert_sentiment: 
-	"""Based on Amazonreview (1-5 stars)		#https://huggingface.co/nlptown/bert-base-multilingual-uncased-sentiment?text=Nicht+kaufen """
+	"""
+	Sentiment analyzer module based on Amazonreview (1-5 stars)		
+	#https://huggingface.co/nlptown/bert-base-multilingual-uncased-sentiment?text=Nicht+kaufen 
+	"""
 
 	def __init__(self):			
 		self.tokenizer = AutoTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
@@ -39,11 +40,14 @@ class multilang_bert_sentiment:
 		average=np.average(np.linspace(1,5,5),weights=weights)
 		error=np.sqrt(np.average((np.linspace(1,5,5)-average)**2,weights=weights))*2./5.
 		average=average*2./5.-1
-		return [average,error]
+		return [average, error]
 
 
 class german_bert_sentiment: 
-	"""Based on a range of sources including twitter, facebook, product reviews #https://huggingface.co/oliverguhr/german-sentiment-bert?text=Du+Arsch%21"""
+	"""
+	Sentiment analyzer module based on a range of sources including twitter, facebook, product reviews
+	https://huggingface.co/oliverguhr/german-sentiment-bert?text=Du+Arsch%21
+	"""
 
 	def __init__(self):
 		self.tokenizer = AutoTokenizer.from_pretrained("oliverguhr/german-sentiment-bert")
@@ -57,12 +61,14 @@ class german_bert_sentiment:
 		weights=softmax(weights)
 		average=np.average(np.linspace(1,-1,3),weights=weights)
 		error=np.sqrt(np.average((np.linspace(1,-1,3)-average)**2,weights=weights))
-		return [average,error]
+		return [average, error]
 
 
 class TextblobSentiment: 
-	"""More information at https://textblob-de.readthedocs.io/en/latest/ and https://github.com/sloria/TextBlob/
-	#https://machine-learning-blog.de/2019/06/03/stimmungsanalyse-sentiment-analysis-auf-deutsch-mit-python/"""
+	"""
+	More information at https://textblob-de.readthedocs.io/en/latest/ and https://github.com/sloria/TextBlob/
+	https://machine-learning-blog.de/2019/06/03/stimmungsanalyse-sentiment-analysis-auf-deutsch-mit-python/
+	"""
 
 	def __init__(self):
 		pass
@@ -70,7 +76,7 @@ class TextblobSentiment:
 	def analyze(self,text):
 		blob = TextBlob(text)
 		mood = blob.sentiment
-		return mood.polarity
+		return [mood.polarity, 1] #use an error of 1 for compatibility and because results are very unreliable
 
 	def abalyzeSubjectivity(self,text):
 		blob = TextBlob(text)
@@ -79,7 +85,7 @@ class TextblobSentiment:
 
 
 class EnsembleSentiment():
-	"""docstring for ClassName"""
+	"""Sentiment analyzer module combinign the first two modules based on error weighted mean."""
 
 	def __init__(self):
 		#Based on Amazonreview (1-5 stars)	
@@ -100,9 +106,8 @@ class EnsembleSentiment():
 #classifier = TextClassifier.load('de-offensive-language') # en-sentiment
 
 
-
 if __name__ == "__main__":
-
+'''Run some test scenarios'''
 
 	with open('../Testdata/TestArticle.json') as f:
 		testArticle = json.load(f)
