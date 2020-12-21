@@ -106,9 +106,9 @@ class databaseExchange(connectDb.database):
         self.conn.commit()
         cur.close()
 
-    def __fetchAnalyzerLogIds(self, analyzerId:int, commentIds: tuple):
+    def __fetchAnalyzerLogIds(self, analyzerId:int, commentIds: list):
         cur = self.conn.cursor()
-        cur.execute(databaseExchange.__ANALYZER_FETCH_LOG_IDs,(self.__analyzerStart,analyzerId,commentIds))
+        cur.execute(databaseExchange.__ANALYZER_FETCH_LOG_IDs,(self.__analyzerStart,analyzerId,tuple(commentIds)))
         ids = cur.fetchall()
         cur.close()   
         if len(ids)==0: 
@@ -128,20 +128,20 @@ class databaseExchange(connectDb.database):
     
     def writeAnalyzerResults(self, analyzerId:int, analyzerResult: list):
         analyzerEnd=dt.datetime.today()
-        idsDict = self.__fetchAnalyzerLogIds(analyzerId,tuple(set(x[0] for x in analyzerResult)))
+        idsDict = self.__fetchAnalyzerLogIds(analyzerId,list(set(x['comment_id'] for x in analyzerResult)))
         targetColumns=self.__fetchAnalyzerColums(analyzerId)
         cols=tuple(databaseExchange.ANALYZER_RESULT_DEFAULT_COLUMNS[1:] + targetColumns)
         colString='('+','.join(cols)+')'
         cur = self.conn.cursor()
         for result in analyzerResult:
             insert=databaseExchange.__ANALYZER_INSERT_RESULT.format(databaseExchange.__analyzer_data[analyzerId]['analyzer_table_name'],colString)
-            values=(result[0],idsDict[result[0]])
-            if not(set(targetColumns) - set(result[1].keys())):
+            values=(result['comment_id'],idsDict[result['comment_id']])
+            if not(set(targetColumns) - set(result.keys())):
                 for col in targetColumns:
-                    values+=tuple([result[1][col]])
+                    values+=tuple([result[col]])
                 insert.format(values)
                 cur.execute(insert,(values,))
-                cur.execute(databaseExchange.__ANALYZER_LOG_END,(analyzerEnd,idsDict[result[0]],result[0]))
+                cur.execute(databaseExchange.__ANALYZER_LOG_END,(analyzerEnd,idsDict[result['comment_id']],result['comment_id']))
         self.conn.commit()
         cur.close()
         return True
@@ -381,7 +381,7 @@ if __name__ == '__main__':
     print("Starting databaseExchange testcases here:\n\n")
     writer=databaseExchange()
     #print(writer.fetchTodoListAnalyzer(1))
-    todo=writer.fetchTodoListAnalyzer(1)
-    #writer.writeAnalyzerResults(1,[(x[0],{'sentiment_value':-1,'error_value':1})for x in todo])
+    #todo=writer.fetchTodoListAnalyzer(1)
+    #writer.writeAnalyzerResults(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in todo])
     writer.close()
     print("further test deactivated")
