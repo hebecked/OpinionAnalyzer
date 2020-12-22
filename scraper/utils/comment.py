@@ -25,6 +25,7 @@ class Comment:
         """
         Comment object for use with all scrapers \n
         manages Comment components for several database tables \n
+        
         sub objects are "data" and "udfs". \n
         they organize the data for the corresponding database tables. \n
         objects to be retrieved by .getComment()["data"] e.g. \n        
@@ -57,7 +58,7 @@ class Comment:
         Parameters
         ----------
         commentId : int
-            Corresponding to database field id in comment table\n
+            Corresponding to database field id in Comment table\n
             Id is given by database. Don't add random self generated data here.'
 
         Returns
@@ -77,7 +78,7 @@ class Comment:
         Parameters
         ----------
         bodyId : int
-            Corresponding to database field article_body_id in comment table\n
+            Corresponding to database field article_body_id in Comment table\n
             Id is given by database. Don't add random self generated data here.'
 
         Returns
@@ -97,10 +98,10 @@ class Comment:
         Parameters
         ----------
         level : int
-            Corresponding to database field level in comment table\n
-            level of comment: \n
-            0 for comment directly related to article \n
-            n depth of comment of comment
+            Corresponding to database field level in Comment table\n
+            level of Comment: \n
+            0 for Comment directly related to Article \n
+            n depth of Comment of Comment
 
         Returns
         -------
@@ -119,8 +120,8 @@ class Comment:
         Parameters
         ----------
         commentText : str
-            Corresponding to database field body in comment table\n
-            full comment text to be inserted here
+            Corresponding to database field body in Comment table\n
+            full Comment text to be inserted here
 
         Returns
         -------
@@ -139,8 +140,8 @@ class Comment:
         Parameters
         ----------
         commentTimestamp : dtatetime.datetime, optional
-            Corresponding to database field proc_tiomestamp in comment table\n
-            When did the crawler add this comment text \n
+            Corresponding to database field proc_tiomestamp in Comment table\n
+            When did the crawler add this Comment text \n
             The default is datetime.datetime.today()
 
         Returns
@@ -160,8 +161,8 @@ class Comment:
         Parameters
         ----------
         externalId : int
-            Corresponding to database field external_id in comment table\n
-            unique identifier for comment
+            Corresponding to database field external_id in Comment table\n
+            unique identifier for Comment
             best practice: (8 Byte hash value of body, author and url)
 
         Returns
@@ -181,8 +182,8 @@ class Comment:
         Parameters
         ----------
         parentId : int
-            Corresponding to database field parent_id in comment table\n
-            set external_id of parent comment (if level >0)
+            Corresponding to database field parent_id in Comment table\n
+            set external_id of parent Comment (if level >0)
 
         Returns
         -------
@@ -276,13 +277,13 @@ class Comment:
         """
         more comfortable bulk setter for mandatory data with dictionary
         keys: "article_body_id","parent_id","level","body","proc_timestamp","external_id"\n
-        keys corresponding to database table comment
+        keys corresponding to database table Comment
         """
         return self.__setByDict__(data,self.__setDataFunct)
  
     def __setByDict__(self,data:dict,target:dict):
         """
-        goal: setting all comment data fields at once \n
+        goal: setting all Comment data fields at once \n
         lookup of setter function in target dict and calling setter function with input parameters from data dict
         same as in article.py though no multi-object switch needed
 
