@@ -22,6 +22,7 @@ class Article:
     MANDATORY_BODY={"article_id","headline","body","proc_timestamp","proc_counter"}
     
     #Article class constants (given by database entries / restrictions)
+
     OBJECT_TYPE=1 #article - more robust: fetch from database    
     MAX_URL_LENGTH=2048
     MAX_HEADLINE_LENGTH=200
@@ -107,10 +108,13 @@ class Article:
             returns True if successful.
 
         """
+
         if type(url)==str and validators.url(url)and len(url)<Article.MAX_URL_LENGTH:
+
             self.__header["url"]=url
             return True
         return False
+        
     def setObsolete(self, obsolete:bool):
         """
         
@@ -147,10 +151,13 @@ class Article:
             returns True if successful.
 
         """
+
         if type(source)==int and source>0 and source in Article.__sourceList:
+
             self.__header["source_id"]=source
             return True
         return False
+        
     def setHeaderDate(self, datePublished:dt.date):
         """
         
@@ -223,7 +230,7 @@ class Article:
         ----------
         bodyText : str
             Corresponding to database field body in article_body table\n
-            full Article text to be inserted here
+            full article text to be inserted here
 
         Returns
         -------
@@ -252,6 +259,7 @@ class Article:
             returns True if successful.
 
         """
+
         if type(bodyHeadline)==str and len(bodyHeadline)<=Article.MAX_HEADLINE_LENGTH:
             self.__body["headline"]=bodyHeadline
             return True
@@ -265,7 +273,7 @@ class Article:
         ----------
         bodyTimestamp : datetime.datetime, optional
             Corresponding to database field proc_timestamp in article_body table\n
-            When did the crawler add this Article text (version)\n
+            When did the crawler add this article text (version)\n
             The default is datetime.datetime.today()
 
         Returns
@@ -287,7 +295,7 @@ class Article:
         ----------
         bodyCounter : int
             Corresponding to database field proc_counter in article_body table\n
-            set =0 with Article cration and therefore only strictly positive values are allowed\n
+            set =0 with Article creation and therefore only strictly positive values are allowed\n
             manages the time till revisit of already seen articles\n
             next visit = proc_timestamp + 1 hour * (pow(2,bodyCounter)-1), so set carefully\n
             value of 0 for new articles
@@ -305,6 +313,7 @@ class Article:
     
     def setBodyOld(self):
         """
+
         function moves current Article body data to old Article body data (deepcopy) and creates new empty body element\n
         intended to be called after import (old) body data fromn database
 
@@ -340,6 +349,7 @@ class Article:
             returns True if successful.
 
         """
+
         if type(key)==str and key in Article.__udfDict.keys() and type(value)==str and len(value)<=Article.MAX_UDF_LENGTH:
             self.__udfs|={(Article.__udfDict[key], value)}
             return True
@@ -392,7 +402,9 @@ class Article:
             (false, set of missing fields) if incomplete
 
         """
+
         missing= Article.MANDATORY_BODY - self.__body.keys()
+
         if not(missing):
             return True
         return (False,missing)
@@ -414,6 +426,7 @@ class Article:
 
     def checkNewVersion(self):
         """
+
         some logic to identify newer version of Article body\n
         starting easy with hashes
 
@@ -435,7 +448,8 @@ class Article:
     
     def getArticle(self):
         """
-        fetch all Article data\n
+
+        fetch all article data\n
         consists of header, body, udfs components
 
         Returns
@@ -459,7 +473,7 @@ class Article:
         Returns
         -------
         dict
-            {"insert":Boolean (new Article body to write),"body": corresponding body data}
+            {"insert":Boolean (new article body to write),"body": corresponding body data}
 
         """
         if self.checkNewVersion():
@@ -481,6 +495,7 @@ class Article:
         
         
         """
+
         return self.__setByDict__(data, Article.__setHeaderFunct)
     
     def setBody(self, data:dict):
@@ -489,6 +504,7 @@ class Article:
         keys: "id","article_id","headline","body","proc_timestamp","proc_counter"\n
         keys corresponding to database table article_body
         """
+
         return self.__setByDict__(data, Article.__setBodyFunct)
     
     def __setByDict__(self,data:dict,target:dict):
@@ -521,6 +537,7 @@ class Article:
     
     def print(self):
         """
+
         printing Article (python object id) and components  \n
         for testing and debugging purposes
 
@@ -529,6 +546,7 @@ class Article:
         None.
 
         """
+
 
         print("\nprinting Article",self)
         print("\nheader: ",self.__header)
@@ -539,6 +557,7 @@ class Article:
 if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
+
     print("Starting Article showcase here:\n\n")
     testArticle=Article()
     header={"id":5,"obsolete":True,"testBullshit":"asdf","source_date":dt.date.today()}

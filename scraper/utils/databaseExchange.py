@@ -394,3 +394,4 @@ if __name__ == '__main__':
 #    writer.writeAnalyzerResults(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in todo])
     writer.close()
     print("further test deactivated")
+
