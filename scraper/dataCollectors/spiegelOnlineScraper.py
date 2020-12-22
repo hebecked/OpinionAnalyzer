@@ -13,7 +13,7 @@ from utils.comment import Comment
 from utils.databaseExchange import DatabaseExchange
 
 
-def calculate_commment_external_id(url, cmt: spon.comments) -> int:
+def calculate_comment_external_id(url, cmt: spon.comments) -> int:
     """
     calculate Comment external id as hash
 
@@ -207,7 +207,7 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
             if type(cmt) != dict:
                 continue
             if cmt['body'] is not None and cmt['user'] is not None and cmt['created_at'] is not None:
-                cmt_id = calculate_commment_external_id(art.getArticle()["header"]["url"], cmt)
+                cmt_id = calculate_comment_external_id(art.getArticle()["header"]["url"], cmt)
                 tmp_comment = Comment()
                 tmp_comment.setData({"article_body_id": art.getBodyToWrite()["body"]["id"],
                                      "parent_id": parent_external_id, "level": comment_depth, "body": cmt['body'],
