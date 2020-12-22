@@ -38,7 +38,7 @@ class Article:
         objects to be retrieved by .getArticle()["header"] e.g. \n        
         
         
-        free to use data storage .freeData with no predefined type or usage \n
+        free to use data storage .free_data with no predefined type or usage \n
  
         """
         self.__headerComplete=False
@@ -62,7 +62,7 @@ class Article:
         self.__oldBody={}
         self.__udfs=set([])
         self.__inDb=False
-        self.freeData=None
+        self.free_data=None
 
     def __del__(self):
         self.__headerComplete=False
