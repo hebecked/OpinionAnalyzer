@@ -97,25 +97,25 @@ class databaseExchange(connectDb.database):
         self.__logStartAnalyzer(analyzerId,returnList)
         return returnList
     
-    def __logStartAnalyzer(self,analyzerId:int,analyzerTodoList: list):
+    def __logStartAnalyzer(self, analyzerId:int, analyzerTodoList: list):
         if not analyzerId in databaseExchange.__analyzer_data.keys(): return False
         self.__analyzerStart=dt.datetime.today()
         cur = self.conn.cursor()
-        [cur.execute(databaseExchange.__ANALYZER_LOG_START,(analyzerId,x[0],self.__analyzerStart)) for x in analyzerTodoList]
+        [cur.execute(databaseExchange.__ANALYZER_LOG_START,(analyzerId, x[0],self.__analyzerStart)) for x in analyzerTodoList]
         databaseExchange.__analyzerIds.update(self.__fetchAnalyzerLogIds(analyzerId, list(c[0] for c in analyzerTodoList)))
         self.conn.commit()
         cur.close()
 
     def __fetchAnalyzerLogIds(self, analyzerId:int, commentIds: list):
         cur = self.conn.cursor()
-        cur.execute(databaseExchange.__ANALYZER_FETCH_LOG_IDs,(self.__analyzerStart,analyzerId,tuple(commentIds)))
+        cur.execute(databaseExchange.__ANALYZER_FETCH_LOG_IDs, (self.__analyzerStart,analyzerId, tuple(commentIds)))
         ids = cur.fetchall()
         cur.close()   
         if len(ids)==0: 
             return {}
         return dict(ids)
     
-    def __fetchAnalyzerColums(self,analyzerId:int):
+    def __fetchAnalyzerColums(self, analyzerId:int):
         cur = self.conn.cursor()
         cur.execute(databaseExchange.__ANALYZER_GET_TARGET_COLUMNS, (databaseExchange.__analyzer_data[analyzerId]['analyzer_table_name'],))
         table_fields = cur.fetchall()
@@ -136,14 +136,14 @@ class databaseExchange(connectDb.database):
         cur = self.conn.cursor()
         for result in analyzerResult:
             if not type(result)==dict:continue
-            insert=databaseExchange.__ANALYZER_INSERT_RESULT.format(databaseExchange.__analyzer_data[analyzerId]['analyzer_table_name'],colString)
+            insert=databaseExchange.__ANALYZER_INSERT_RESULT.format(databaseExchange.__analyzer_data[analyzerId]['analyzer_table_name'], colString)
             values=(result['comment_id'],databaseExchange.__analyzerIds[result['comment_id']])
             if not(set(targetColumns) - set(result.keys())):
                 for col in targetColumns:
                     values+=tuple([result[col]])
                 insert.format(values)
                 cur.execute(insert,(values,))
-                cur.execute(databaseExchange.__ANALYZER_LOG_END,(analyzerEnd,databaseExchange.__analyzerIds[result['comment_id']],result['comment_id']))
+                cur.execute(databaseExchange.__ANALYZER_LOG_END,(analyzerEnd, databaseExchange.__analyzerIds[result['comment_id']], result['comment_id']))
         self.conn.commit()
         cur.close()
         keys=databaseExchange.__analyzerIds.keys()
