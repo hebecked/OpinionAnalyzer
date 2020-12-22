@@ -1,14 +1,16 @@
 #!/usr/bin/python
 
+import hashlib
+import math
+import time
 from datetime import datetime, date, timedelta
+
 import spiegel_scraper as spon
+
+import dataCollectors.templateScraper
 from utils.article import Article
 from utils.comment import Comment
 from utils.databaseExchange import DatabaseExchange
-import dataCollectors.templateScraper
-import time
-import hashlib
-import math
 
 
 def calculate_commment_external_id(url, cmt: spon.comments) -> int:
