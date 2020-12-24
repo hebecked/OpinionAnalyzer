@@ -107,7 +107,7 @@ class EnsembleSentiment():
 
 
 if __name__ == "__main__":
-'''Run some test scenarios'''
+	'''Run some test scenarios'''
 
 	with open('../Testdata/TestArticle.json') as f:
 		testArticle = json.load(f)
