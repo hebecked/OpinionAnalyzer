@@ -6,6 +6,7 @@ logger = logging.getLogger()
 
 def main():
     logger.info("Analyzer successfully started")
+    #add Testcases DB etc.
     logger.info("Initiating Analyzer...")
     sleep(6)
     logger.info("Analyzer initiated")
