@@ -166,10 +166,12 @@ class DatabaseExchange(connectDb.Database):
         returnList=[]
         for res in result:
             art=Article()
-            art.setHeader({'id':res[0],'url':res[1],'source_id':sourceId})
+            art.set_header({'id': res[0], 'url': res[1], 'source_id': sourceId})
             if(res[2]!=None):
-                art.setBody({'id':res[2],'article_id':res[0],'headline':res[3],'body':res[4],'proc_timestamp':res[5],'proc_counter':res[6]})
-                art.setBodyOld()
+                art.set_body(
+                    {'id': res[2], 'article_id': res[0], 'headline': res[3], 'body': res[4], 'proc_timestamp': res[5],
+                     'proc_counter': res[6]})
+                art.set_body_old()
             returnList+=[art]
         return returnList
     def fetchLastRun(self,sourceId:int):
@@ -203,7 +205,7 @@ class DatabaseExchange(connectDb.Database):
     def fetchArticleIds(self, articlesList:list, startId:int):
         articleIds=[]
         cur = self.conn.cursor()
-        for sourcesDates in set((x.getArticle()["header"]["source_id"],x.getArticle()["header"]["source_date"]) for x in articlesList):
+        for sourcesDates in set((x.get_article()["header"]["source_id"], x.get_article()["header"]["source_date"]) for x in articlesList):
             cur.execute(DatabaseExchange.__HEADER_ID_FETCH_STATEMENT, tuple([startId] + list(sourcesDates)))
             result = cur.fetchall()
             articleIds+=list(result)
@@ -226,8 +228,8 @@ class DatabaseExchange(connectDb.Database):
         if result[0][0]==None: startId=0
         else: startId=result[0][0]  #todo check if correct
         for art in articlesList:
-            if (art.setHeaderComplete()):
-                hdr=art.getArticle()["header"]
+            if (art.set_header_complete()):
+                hdr= art.get_article()["header"]
                 cur.execute(DatabaseExchange.__HEADER_STATEMENT, (hdr["source_date"], hdr["obsolete"], hdr["source_id"], hdr["url"]))
         self.conn.commit()
         cur.close()
@@ -241,8 +243,8 @@ class DatabaseExchange(connectDb.Database):
         if result[0][0]==None: startId=0
         else: startId=result[0][0]  #todo check if correct
         for art in articlesList:
-            if (art.setBodyComplete()):
-                todo=art.getBodyToWrite()
+            if (art.set_body_complete()):
+                todo= art.get_body_to_write()
                 if(todo["insert"]):
                     cur.execute(DatabaseExchange.__BODY_STATEMENT, (todo["body"]["article_id"], todo["body"]["headline"], todo["body"]["body"], todo["body"]["proc_timestamp"], todo["body"]["proc_counter"] + 1))
                 else:
@@ -254,23 +256,23 @@ class DatabaseExchange(connectDb.Database):
     def __writeArticleUdfs(self, articlesList:list):
         cur = self.conn.cursor()
         for art in articlesList:
-            if art.getBodyToWrite()["insert"]:
-                for udf in art.getArticle()["udfs"]:
-                    cur.execute(DatabaseExchange.__UDF_INSERT_STATEMENT, (udf[0], Article.OBJECT_TYPE, art.getArticle()["body"]["id"], udf[1]))
+            if art.get_body_to_write()["insert"]:
+                for udf in art.get_article()["udfs"]:
+                    cur.execute(DatabaseExchange.__UDF_INSERT_STATEMENT, (udf[0], Article.OBJECT_TYPE, art.get_article()["body"]["id"], udf[1]))
         self.conn.commit()
         cur.close()            
     
     def fillHeaderIds(self,articlesList:list, startId: int):
         Ids=self.fetchArticleIds(articlesList,startId)
         for art in articlesList:
-            url=art.getArticle()["header"]["url"]
+            url= art.get_article()["header"]["url"]
             if url in Ids.keys():
-                art.setHeaderId(Ids[url])
+                art.set_header_id(Ids[url])
                 
     def fillBodyIds(self,articlesList:list, startId: int):
         Ids=self.fetchBodyIds(articlesList,startId)
         for art in articlesList:
-            articleId=art.getArticle()["header"]["id"]
+            articleId= art.get_article()["header"]["id"]
             if articleId in Ids.keys():
                 art.set_body_id(Ids[articleId])
         
@@ -280,12 +282,12 @@ class DatabaseExchange(connectDb.Database):
         start=0
         while start < len(articlesList):
             worklist=list(filter(lambda x: type(x) == Article, articlesList[start:start + DatabaseExchange.SUBSET_LENGTH]))
-            headers=list(filter(lambda x: not(x.isInDb()),worklist))
+            headers=list(filter(lambda x: not(x.is_in_db()), worklist))
             self.__writeHeaders(headers)
             #headers[0].print()
             print("Article headers written and id added")
             #worklist[0].print()
-            bodies=list(filter(lambda x: x.isInDb(),worklist))
+            bodies=list(filter(lambda x: x.is_in_db(), worklist))
             self.__writeBodies(bodies)
             print("Article bodies written and id added")
             #bodies[0].print()
@@ -357,12 +359,13 @@ class DatabaseExchange(connectDb.Database):
     
 def test():
     testArticle=Article()
-    testArticle.setHeader({"url":"http://www.google.de","obsolete":False,"source_id":1,"source_date":dt.date(2020,12,1)})
+    testArticle.set_header(
+        {"url": "http://www.google.de", "obsolete": False, "source_id": 1, "source_date": dt.date(2020, 12, 1)})
     #testArticle.setBody({"proc_timestamp":dt.datetime(2020,12,2,22,0,33),"headline":"example of headline","body":"testText","proc_counter":2,"id":1})
     #testArticle.setBodyOld()
-    testArticle.setBody({"proc_timestamp":dt.datetime.today(),"headline":"example of headline","body":"testText"})
-    testArticle.addUdf("author","me")
-    testArticle.addUdf("label","smart")
+    testArticle.set_body({"proc_timestamp": dt.datetime.today(), "headline": "example of headline", "body": "testText"})
+    testArticle.add_udf("author", "me")
+    testArticle.add_udf("label", "smart")
     print("plain Article print")
     testArticle.print()
     writer=DatabaseExchange()
