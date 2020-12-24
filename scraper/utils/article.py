@@ -3,7 +3,7 @@
 #todo: open tasks marked with todo
 
 import datetime as dt
-from utils.connectDb import database as ownDBObject
+from utils.connectDb import Database as ownDBObject
 import validators      # used for url validation
 import copy            #deepcopy used for oldBody
 

@@ -1,5 +1,5 @@
 from cronJobs.cronJobs import CronJobs
-from utils.connectDb import database
+from utils.connectDb import Database
 from time import sleep
 import os
 import logging
@@ -7,7 +7,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 logger = logging.getLogger()
 
 def getFirstInitValue():
-    db = database()
+    db = Database()
     db.connect()
     dateTuple = db.retrieveValues("SELECT is_first_init FROM general_data.system_configuration WHERE news_type = 'spiegel';")
     dateObject = []

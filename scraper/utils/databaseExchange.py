@@ -10,7 +10,7 @@ import datetime as dt
 #add comments, rename to dataExchange
 #add getUdfs(), getSources() for Article and Comment object
 
-class DatabaseExchange(connectDb.database):
+class DatabaseExchange(connectDb.Database):
     SUBSET_LENGTH=100   #threshold for database flush
     ANALYZER_RESULT_DEFAULT_COLUMNS=['id','comment_id','analyzer_log_id']
     #scraper related database queries
@@ -272,7 +272,7 @@ class DatabaseExchange(connectDb.database):
         for art in articlesList:
             articleId=art.getArticle()["header"]["id"]
             if articleId in Ids.keys():
-                art.setBodyId(Ids[articleId])    
+                art.set_body_id(Ids[articleId])
         
     
     def writeArticles(self, articlesList:list):
@@ -294,7 +294,7 @@ class DatabaseExchange(connectDb.database):
             start+=DatabaseExchange.SUBSET_LENGTH
 
     def fetchCommentIds(self, commentsList:list, startId:int):
-        article_body_id_List=list(x.getComment()["data"]["article_body_id"] for x in commentsList)
+        article_body_id_List=list(x.get_comment()["data"]["article_body_id"] for x in commentsList)
         article_body_id_tuple=tuple(article_body_id_List)
         commentIds=[]       
         cur = self.conn.cursor()        
@@ -307,9 +307,9 @@ class DatabaseExchange(connectDb.database):
     def fillCommentIds(self, commentsList:list, startId:int):
         Ids=self.fetchCommentIds(commentsList,startId)
         for comm in commentsList:
-            identifier=(comm.getComment()["data"]["external_id"],comm.getComment()["data"]["article_body_id"])
+            identifier=(comm.get_comment()["data"]["external_id"], comm.get_comment()["data"]["article_body_id"])
             if identifier in Ids.keys():
-                comm.setCommentId(Ids[identifier])    
+                comm.set_comment_id(Ids[identifier])
     
     def fetchOldCommentKeys(self, sourceId: int, startdate:dt.datetime):
 # todo use view to get "not so old" comments from database
@@ -322,8 +322,8 @@ class DatabaseExchange(connectDb.database):
         if result[0][0]==None: startId=0
         else: startId=result[0]
         for comm in commentsList:
-            if (comm.setComplete()):
-                data=comm.getComment()["data"]
+            if (comm.set_complete()):
+                data= comm.get_comment()["data"]
                 cur.execute(DatabaseExchange.__COMMENT_STATEMENT, (data["article_body_id"], data["external_id"], data["parent_id"], data["level"], data["body"], data["proc_timestamp"]))
         self.conn.commit()
         cur.close()
@@ -332,11 +332,11 @@ class DatabaseExchange(connectDb.database):
     def __writeCommentUdfs(self, commentsList:list):
         cur = self.conn.cursor()
         for comm in commentsList:
-            if not('id' in comm.getComment()["data"].keys()):
+            if not('id' in comm.get_comment()["data"].keys()):
                 continue
-            if comm.getComment()["udfs"]:
-                for udf in comm.getComment()["udfs"]:
-                    cur.execute(DatabaseExchange.__UDF_INSERT_STATEMENT, (udf[0], Comment.OBJECT_TYPE, comm.getComment()["data"]["id"], udf[1]))
+            if comm.get_comment()["udfs"]:
+                for udf in comm.get_comment()["udfs"]:
+                    cur.execute(DatabaseExchange.__UDF_INSERT_STATEMENT, (udf[0], Comment.OBJECT_TYPE, comm.get_comment()["data"]["id"], udf[1]))
         self.conn.commit()
         cur.close()   
     
@@ -371,9 +371,10 @@ def test():
     writer.logStartCrawl(1)
     writer.writeArticles([testArticle])
     testComment=Comment()
-    testComment.setData({"article_body_id":141,"level":0,"body":"i'm a Comment","proc_timestamp":dt.datetime.today()})
-    testComment.addUdf("author","brilliant me")
-    testComment.setExternalId((hash("brilliant me"+testComment.getComment()["data"]["body"])))
+    testComment.set_data(
+        {"article_body_id": 141, "level": 0, "body": "i'm a Comment", "proc_timestamp": dt.datetime.today()})
+    testComment.add_udf("author", "brilliant me")
+    testComment.set_external_id((hash("brilliant me" + testComment.get_comment()["data"]["body"])))
     print("plain Comment print")
     testComment.print()
     writer.writeComments([testComment])
