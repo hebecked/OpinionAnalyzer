@@ -11,7 +11,7 @@ class Comment:
     # static data related database queries
     __UDFS_STATEMENT = """SELECT udf_name,id FROM news_meta_data.udf_header;"""
 
-    __udfDict = None
+    __udf_dict = None
     # mandatory database fields to be checked before writing
     MANDATORY_DATA = {"article_body_id", "external_id", "level", "body", "proc_timestamp"}
     KEY_DATA = {"article_body_id", "external_id"}  # unique identifier in database
@@ -31,15 +31,15 @@ class Comment:
         """
 
         self.__complete = False
-        if Comment.__udfDict is None:
-            Comment.__udfList = {}
+        if Comment.__udf_dict is None:
+            Comment.udf_dict = {}
             print("first launch, setting class variables")  # todo delete line (debugging purposes only)
             # database connection to be rewritten later
             db = ownDBObject()
             db.connect()
             udf_header = db.retrieveValues(Comment.__UDFS_STATEMENT)
-            Comment.__udfDict = dict(zip((udf[0] for udf in udf_header), (udf[1] for udf in udf_header)))
-            print("udf Dict: ", Comment.__udfDict)  # todo delete line (debugging purposes only)
+            Comment.__udf_dict = dict(zip((udf[0] for udf in udf_header), (udf[1] for udf in udf_header)))
+            print("udf Dict: ", Comment.__udf_dict)  # todo delete line (debugging purposes only)
             db.close()
         self.__data = {}
         self.__udfs = set([])
@@ -220,9 +220,9 @@ class Comment:
             returns True if successful.
 
         """
-        if type(key) == str and key in Comment.__udfDict.keys() and type(value) == str and len(
+        if type(key) == str and key in Comment.__udf_dict.keys() and type(value) == str and len(
                 value) <= Comment.MAX_UDF_LENGTH:
-            self.__udfs |= {(Comment.__udfDict[key], value)}
+            self.__udfs |= {(Comment.__udf_dict[key], value)}
             return True
         return False
 
@@ -243,7 +243,7 @@ class Comment:
         missing = Comment.MANDATORY_DATA - self.__data.keys()
         if not missing:
             return True
-        return False, missing
+        return tuple([False, missing])
 
     def set_complete(self):
         """
@@ -254,12 +254,12 @@ class Comment:
         bool
             True if complete, False if incomplete
         """
-        if self.check_comment_complete():
+        if self.check_comment_complete() == True:  # neccessary as 'if tuple' is interpreted as True
             self.__complete = True
             return True
         return False
 
-    def get_comment(self):
+    def get_comment(self) -> dict:
         """
         fetch all Comment components\n
         consists of data and udfs components
@@ -275,7 +275,7 @@ class Comment:
 
     # class Variable: Lookup table for setter functions
     # defined here because of dependency (setter functions)
-    __set_data_funct = {"article_body_id": set_body_id, "parent_id": set_parent_id, "level": set_level,
+    __set_data_functions = {"article_body_id": set_body_id, "parent_id": set_parent_id, "level": set_level,
                         "body": set_comment_text, "proc_timestamp": set_timestamp, "external_id": set_external_id}
 
     def set_data(self, data: dict):
@@ -284,7 +284,7 @@ class Comment:
         keys: "article_body_id","parent_id","level","body","proc_timestamp","external_id"\n
         keys corresponding to database table Comment
         """
-        return self.__set_by_dict(data, self.__set_data_funct)
+        return self.__set_by_dict(data, self.__set_data_functions)
 
     def __set_by_dict(self, data: dict, target: dict):
         """

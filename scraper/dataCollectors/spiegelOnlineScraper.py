@@ -79,7 +79,7 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
         for url in url_list:
             try:
                 art = Article()
-                art.setHeader(
+                art.set_header(
                     {'source_date': url['date_published'].date(), 'source_id': self.id, 'url': str(url['url'])})
                 article_return_list += [art]
             except:
@@ -103,37 +103,37 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
 
         """
         try:
-            html = spon.article.html_by_url(art.getArticle()['header']['url'])
+            html = spon.article.html_by_url(art.get_article()['header']['url'])
             content = spon.article.scrape_html(html)
         except:
             print("Article crawl error!")
             self.has_errors = True
-            art.setObsolete(True)
+            art.set_obsolete(True)
             return False
         if 'id' in content.keys():
-            art.setBody(
+            art.set_body(
                 {'headline': content['headline']['main'], 'body': content['text'], 'proc_timestamp': datetime.today(),
                  'proc_counter': 0})
             art.free_data = content['id']
         # add udfs
         if 'topics' in content.keys():
             for topic in content['topics']:
-                art.addUdf('label', topic)
+                art.add_udf('label', topic)
         if 'author' in content.keys():
             for author in content['author']['names']:
-                art.addUdf('author', author)
+                art.add_udf('author', author)
         if 'date_created' in content.keys():
-            art.addUdf('date_created', content['date_created'])
+            art.add_udf('date_created', content['date_created'])
             try:
-                art.setBodyCounter(max(
+                art.set_body_counter(max(
                     int(math.log((date.today() - date.fromisoformat(content['date_created'][0:10])).days * 24, 2)) - 1,
                     0))
             except:
                 print('Body Counter not set')
         if 'date_modified' in content.keys():
-            art.addUdf('date_modified', content['date_modified'])
+            art.add_udf('date_modified', content['date_modified'])
         if 'date_published' in content.keys():
-            art.addUdf('date_published', content['date_published'])
+            art.add_udf('date_published', content['date_published'])
         return True
 
     def get_write_articles_details(self, writer: DatabaseExchange, article_list: list,
@@ -161,12 +161,12 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
         start_list_elem = 0
         while start_list_elem < len(article_list):
             for art in article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)]:
-                print("fetching Article:", art.getArticle()['header']['url'])
+                print("fetching Article:", art.get_article()['header']['url'])
                 self.get_article_details(art)
                 time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)
             writer.writeArticles(article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)])
             for art in article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)]:
-                print("fetching comments for ", art.getArticle()['header']['url'])
+                print("fetching comments for ", art.get_article()['header']['url'])
                 comment_list = self.get_comments_for_article(art, start_date)
                 writer.writeComments(comment_list)
                 time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)
@@ -207,9 +207,9 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
             if type(cmt) != dict:
                 continue
             if cmt['body'] is not None and cmt['user'] is not None and cmt['created_at'] is not None:
-                cmt_id = calculate_comment_external_id(art.getArticle()["header"]["url"], cmt)
+                cmt_id = calculate_comment_external_id(art.get_article()["header"]["url"], cmt)
                 tmp_comment = Comment()
-                tmp_comment.set_data({"article_body_id": art.getBodyToWrite()["body"]["id"],
+                tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
                                       "parent_id": parent_external_id, "level": comment_depth, "body": cmt['body'],
                                       "proc_timestamp": datetime.today(), "external_id": cmt_id})
                 if 'user' in cmt.keys():
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     spiegel_online_scraper = SpiegelOnlineScraper()
     db = DatabaseExchange()
     db.logStartCrawl(spiegel_online_scraper.id)
-    start = max(db.fetchLastRun(spiegel_online_scraper.id).date(), date(2020, 12, 22))
+    start = max(db.fetchLastRun(spiegel_online_scraper.id).date(), date(2020, 12, 20))
     end = date.today()
     article_header_list = spiegel_online_scraper.get_article_list(start, end)
     db.writeArticles(article_header_list)
