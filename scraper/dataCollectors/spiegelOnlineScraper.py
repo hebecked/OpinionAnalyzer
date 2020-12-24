@@ -209,16 +209,16 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
             if cmt['body'] is not None and cmt['user'] is not None and cmt['created_at'] is not None:
                 cmt_id = calculate_comment_external_id(art.getArticle()["header"]["url"], cmt)
                 tmp_comment = Comment()
-                tmp_comment.setData({"article_body_id": art.getBodyToWrite()["body"]["id"],
-                                     "parent_id": parent_external_id, "level": comment_depth, "body": cmt['body'],
-                                     "proc_timestamp": datetime.today(), "external_id": cmt_id})
+                tmp_comment.set_data({"article_body_id": art.getBodyToWrite()["body"]["id"],
+                                      "parent_id": parent_external_id, "level": comment_depth, "body": cmt['body'],
+                                      "proc_timestamp": datetime.today(), "external_id": cmt_id})
                 if 'user' in cmt.keys():
-                    tmp_comment.addUdf("author", cmt['user']['username'])
-                tmp_comment.addUdf("date_created", cmt['created_at'])
+                    tmp_comment.add_udf("author", cmt['user']['username'])
+                tmp_comment.add_udf("date_created", cmt['created_at'])
                 if start_date <= date.fromisoformat(cmt['created_at'][0:10]) <= end_date:
                     comment_return_list += [tmp_comment]
                 if 'replies' in cmt.keys():
-                    tmp_comment.addUdf("replies", str(len(cmt['replies'])))
+                    tmp_comment.add_udf("replies", str(len(cmt['replies'])))
                     comment_return_list += self.flatten_comments(art, cmt['replies'], cmt_id, comment_depth + 1,
                                                                  start_date, end_date)
         return comment_return_list
