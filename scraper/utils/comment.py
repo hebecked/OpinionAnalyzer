@@ -34,7 +34,7 @@ class Comment:
         if Comment.__udf_dict is None:
             Comment.udf_dict = {}
             print("first launch, setting class variables")  # todo delete line (debugging purposes only)
-            # database connection to be rewritten later
+            # todo  database connection to be rewritten later
             db = ownDBObject()
             db.connect()
             udf_header = db.retrieveValues(Comment.__UDFS_STATEMENT)
@@ -278,15 +278,26 @@ class Comment:
     __set_data_functions = {"article_body_id": set_body_id, "parent_id": set_parent_id, "level": set_level,
                         "body": set_comment_text, "proc_timestamp": set_timestamp, "external_id": set_external_id}
 
-    def set_data(self, data: dict):
+    def set_data(self, data: dict) -> bool:
         """
         more comfortable bulk setter for mandatory data with dictionary
         keys: "article_body_id","parent_id","level","body","proc_timestamp","external_id"\n
         keys corresponding to database table Comment
+
+        Parameters
+        ----------
+        data : dict
+            dict of fields to set.
+
+        Returns
+        -------
+        bool
+            returns True if ALL successful.
+
         """
         return self.__set_by_dict(data, self.__set_data_functions)
 
-    def __set_by_dict(self, data: dict, target: dict):
+    def __set_by_dict(self, data: dict, target: dict) -> bool:
         """
         goal: setting all Comment data fields at once \n
         lookup of setter function in target dict and calling setter function with input parameters from data dict
