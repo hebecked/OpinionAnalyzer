@@ -32,7 +32,7 @@ def calculate_comment_external_id(url: str, username: str, body: str) -> int:
 
 class Comment:
     # static data related database queries
-    __UDFS_STATEMENT = """SELECT udf_name,id FROM news_meta_data.udf_header;"""
+    __SQL_UDFS_FETCH_FEASIBLE = """SELECT udf_name,id FROM news_meta_data.udf_header;"""
 
     __udf_dict = None
     # mandatory database fields to be checked before writing
@@ -60,7 +60,7 @@ class Comment:
             # todo  database connection to be rewritten later
             db = ownDBObject()
             db.connect()
-            udf_header = db.retrieveValues(Comment.__UDFS_STATEMENT)
+            udf_header = db.retrieveValues(Comment.__SQL_UDFS_FETCH_FEASIBLE)
             Comment.__udf_dict = dict(zip((udf[0] for udf in udf_header), (udf[1] for udf in udf_header)))
             print("udf Dict: ", Comment.__udf_dict)  # todo delete line (debugging purposes only)
             db.close()
