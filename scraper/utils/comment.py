@@ -3,8 +3,31 @@
 # todo: open tasks marked with todo
 
 import datetime as dt
-
+import hashlib
 from utils.connectDb import Database as ownDBObject  # to be recreated with article specific functionality
+
+
+def calculate_comment_external_id(url: str, username: str, body: str) -> int:
+    """
+    calculate Comment external id as hash
+
+    Parameters
+    ----------
+    url : str
+        Article url where the Comment has been found
+    username : str
+
+    body : str
+
+    Returns
+    -------
+    external_id : int
+        external_id as 8 byte integer
+
+    """
+    key = url + username + body
+    external_id = int.from_bytes(hashlib.md5(key.encode()).digest()[0:8], "big", signed=True)
+    return external_id
 
 
 class Comment:
@@ -254,7 +277,7 @@ class Comment:
         bool
             True if complete, False if incomplete
         """
-        if self.check_comment_complete() is True:  # neccessary as 'if tuple' is interpreted as True
+        if self.check_comment_complete() is True:  # necessary as 'if tuple' is interpreted as True
             self.__complete = True
             return True
         return False

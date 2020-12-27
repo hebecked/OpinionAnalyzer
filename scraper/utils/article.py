@@ -46,7 +46,7 @@ class Article:
             Article.__source_list = []
             Article.__udf_dict = {}
             print("first launch, setting class variables")  # todo delete line (debugging purposes only)
-            #todo database connection to be rewritten later
+            # todo database connection to be rewritten later
             db = ownDBObject()
             db.connect()
             udf_header = db.retrieveValues(Article.__UDFS_STATEMENT)

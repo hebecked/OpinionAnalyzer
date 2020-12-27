@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import hashlib
 import math
 import time
 from datetime import datetime, date, timedelta
@@ -10,29 +9,8 @@ import spiegel_scraper as spon
 import dataCollectors.templateScraper
 from utils.article import Article
 from utils.comment import Comment
+from utils.comment import calculate_comment_external_id
 from utils.databaseExchange import DatabaseExchange
-
-
-def calculate_comment_external_id(url, cmt: spon.comments) -> int:
-    """
-    calculate Comment external id as hash
-
-    Parameters
-    ----------
-    url : TYPE
-        Article url where the Comment has been found
-    cmt : spon.comments
-        spon.Comment object for which we calculate the external_id
-
-    Returns
-    -------
-    external_id : int
-        external_id as 8 byte integer
-
-    """
-    key = url + cmt['user']['username'] + cmt['body']
-    external_id = int.from_bytes(hashlib.md5(key.encode()).digest()[0:8], "big", signed=True)
-    return external_id
 
 
 class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
@@ -207,11 +185,13 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
             if type(cmt) != dict:
                 continue
             if cmt['body'] is not None and cmt['user'] is not None and cmt['created_at'] is not None:
-                cmt_id = calculate_comment_external_id(art.get_article()["header"]["url"], cmt)
+                cmt_ext_id = calculate_comment_external_id(
+                    art.get_article()["header"]["url"], cmt['user']['username'], cmt['body']
+                )
                 tmp_comment = Comment()
                 tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
                                       "parent_id": parent_external_id, "level": comment_depth, "body": cmt['body'],
-                                      "proc_timestamp": datetime.today(), "external_id": cmt_id})
+                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id})
                 if 'user' in cmt.keys():
                     tmp_comment.add_udf("author", cmt['user']['username'])
                 tmp_comment.add_udf("date_created", cmt['created_at'])
@@ -219,7 +199,7 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
                     comment_return_list += [tmp_comment]
                 if 'replies' in cmt.keys():
                     tmp_comment.add_udf("replies", str(len(cmt['replies'])))
-                    comment_return_list += self.flatten_comments(art, cmt['replies'], cmt_id, comment_depth + 1,
+                    comment_return_list += self.flatten_comments(art, cmt['replies'], cmt_ext_id, comment_depth + 1,
                                                                  start_date, end_date)
         return comment_return_list
 
