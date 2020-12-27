@@ -3,14 +3,16 @@
 import math
 import time
 from datetime import datetime, date, timedelta
-
 import spiegel_scraper as spon
-
 import dataCollectors.templateScraper
 from utils.article import Article
 from utils.comment import Comment
 from utils.comment import calculate_comment_external_id
 from utils.databaseExchange import DatabaseExchange
+import logging
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO,
+                    datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger()
 
 
 class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
@@ -22,7 +24,6 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
         super(SpiegelOnlineScraper, self).__init__()
         self.id = 1  # set corresponding datasource id here
         self.has_errors = False
-        pass
 
     def get_article_list(self, start_date: date = date(1900, 1, 1), end_date: date = date.today()) -> list:
         """
@@ -46,11 +47,12 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
         date_list = [(timedelta(i) + date.today()) for i in range(num_of_days, 1)]
         full_list = []
         for dt in date_list:
-            print("fetching date:", dt)
+            logger.info("fetching article list for date " + str(dt))
             try:
                 full_list += (spon.archive.scrape_html(spon.archive.html_by_date(dt)))
+                pass
             except:
-                print("Article List crawl error!")
+                logger.warning("Article List crawl error!")
                 self.has_errors = True
             time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)  # remove Comment for crawler delay
         url_list = list(filter(lambda x: x['is_paid'] is False, full_list))  # remove paid articles without access
@@ -61,6 +63,7 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
                     {'source_date': url['date_published'].date(), 'source_id': self.id, 'url': str(url['url'])})
                 article_return_list += [art]
             except:
+                logger.warning("Article incomplete: " + str(url))
                 self.has_errors = True
         return article_return_list
 
@@ -84,7 +87,8 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
             html = spon.article.html_by_url(art.get_article()['header']['url'])
             content = spon.article.scrape_html(html)
         except:
-            print("Article crawl error!")
+            logger.warning("Article crawl error fetching details: article url = "
+                           + str(art.get_article()['header']['url']))
             self.has_errors = True
             art.set_obsolete(True)
             return False
@@ -107,7 +111,8 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
                     int(math.log((date.today() - date.fromisoformat(content['date_created'][0:10])).days * 24, 2)) - 1,
                     0))
             except:
-                print('Body Counter not set')
+                # use default
+                pass
         if 'date_modified' in content.keys():
             art.add_udf('date_modified', content['date_modified'])
         if 'date_published' in content.keys():
@@ -139,12 +144,12 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
         start_list_elem = 0
         while start_list_elem < len(article_list):
             for art in article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)]:
-                print("fetching Article:", art.get_article()['header']['url'])
+                logger.info("fetching article: " + str(art.get_article()['header']['url']))
                 self.get_article_details(art)
                 time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)
             writer.write_articles(article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)])
             for art in article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)]:
-                print("fetching comments for ", art.get_article()['header']['url'])
+                logger.info("fetching comments for " + str(art.get_article()['header']['url']))
                 comment_list = self.get_comments_for_article(art, start_date)
                 writer.write_comments(comment_list)
                 time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)
@@ -234,7 +239,7 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
             comments = spon.comments.by_article_id(article_id)
             comment_return_list += self.flatten_comments(art, comments, None, 0, start_date, end_date)
         except:
-            print("Comment crawl error!")
+            logger.warning("Comment crawl error for article_id : " + str(article_id))
             self.has_errors = True
         return comment_return_list
 
@@ -247,11 +252,13 @@ if __name__ == '__main__':
     print("-------------------------------------------------\n")
     print("Starting SpiegelOnlineScraper testcases here:\n\n")
     start_time = datetime.today()
-    print("started at ", start_time)
+
+
+    logger.info("started at " + str(start_time))
     spiegel_online_scraper = SpiegelOnlineScraper()
     db = DatabaseExchange()
     db.log_scraper_start(spiegel_online_scraper.id)
-    start = max(db.fetch_scraper_last_run(spiegel_online_scraper.id).date(), date(2020, 12, 20))
+    start = max(db.fetch_scraper_last_run(spiegel_online_scraper.id).date(), date(2020, 12, 01))
     end = date.today()
     article_header_list = spiegel_online_scraper.get_article_list(start, end)
     db.write_articles(article_header_list)
@@ -264,5 +271,5 @@ if __name__ == '__main__':
     #       time.sleep(1)
 
     db.log_scraper_end(not spiegel_online_scraper.has_errors)
-    print("Laufzeit= ", datetime.today() - start_time)
+    logger.info("Laufzeit = " + str(datetime.today() - start_time))
     db.close()
