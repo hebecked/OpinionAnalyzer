@@ -378,7 +378,7 @@ class Article:
             True if complete, False if incomplete
 
         """
-        if self.check_header_complete() == True:  # neccessary as 'if tuple' is interpreted as True
+        if self.check_header_complete() is True:  # neccessary as 'if tuple' is interpreted as True
             self.__header_complete = True
             return True
         return False
@@ -410,7 +410,7 @@ class Article:
             True if complete, False if incomplete
 
         """
-        if self.check_body_complete() == True:  # neccessary as 'if tuple' is interpreted as True
+        if self.check_body_complete() is True:  # neccessary as 'if tuple' is interpreted as True
             self.__body_complete = True
             return True
         return False

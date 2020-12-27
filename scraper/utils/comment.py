@@ -254,7 +254,7 @@ class Comment:
         bool
             True if complete, False if incomplete
         """
-        if self.check_comment_complete() == True:  # neccessary as 'if tuple' is interpreted as True
+        if self.check_comment_complete() is True:  # neccessary as 'if tuple' is interpreted as True
             self.__complete = True
             return True
         return False
