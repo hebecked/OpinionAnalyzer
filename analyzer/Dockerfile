@@ -1,5 +1,5 @@
 # Inspired by https://github.com/poteha/docker-nlp/
-FROM python:3.7-slim-buster
+FROM python:3.8-slim-buster
 
 # Set root as default usr
 USER root
@@ -15,6 +15,13 @@ COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+
+#load required models for nlp (reduces startup time)
+COPY loadRequiredModels.py .
+RUN python3 -m textblob.download_corpora
+RUN python3 loadRequiredModels.py
+#RUN python3 -m spacy download de
 
 # Just generically copy everything to avoid conflicts later when adding new moduls
 COPY . .

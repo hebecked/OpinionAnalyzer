@@ -9,8 +9,10 @@ class CronJobs:
 
     def __init__(self):
         self.jobs = [
-            {"schedule": '* * * * *', "module": 'test.py'},  # Execute every minute "test.py"
-            {"schedule": '*/2 * * * *', "module": 'test1.py'},  # Execute every two minute "test1.py"
+            {"schedule": '0 0 * * *', "module": 'AnalyseComments.py'}, #daily runs at midnight 
+#            {"schedule": '@reboot', "module": 'AnnalyseComments.py'}, #run on reboot
+            {"schedule": '0 1 * * *', "module": 'AnalyseArticles.py'} #daily runs at 1 am
+#            {"schedule": '@reboot', "module": 'AnnalyseArticles.py'} #run on reboot 
         ]
 
     def cronInit(self):

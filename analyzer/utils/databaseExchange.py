@@ -168,6 +168,7 @@ class databaseExchange(connectDb.database):
                 art.setBodyOld()
             returnList+=[art]
         return returnList
+
     def fetchLastRun(self,sourceId:int):
         cur = self.conn.cursor()
         cur.execute(databaseExchange.__SCRAPER_FETCH_LAST_RUN,(sourceId,))
@@ -194,7 +195,6 @@ class databaseExchange(connectDb.database):
         cur.execute(databaseExchange.__LOG_ENDCRAWL,argument_tuple)
         self.conn.commit()        
         cur.close()
-        
 
     def fetchArticleIds(self, articlesList:list, startId:int):
         articleIds=[]
