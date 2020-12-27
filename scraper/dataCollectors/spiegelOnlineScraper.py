@@ -164,11 +164,11 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
                 print("fetching Article:", art.get_article()['header']['url'])
                 self.get_article_details(art)
                 time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)
-            writer.writeArticles(article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)])
+            writer.write_articles(article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)])
             for art in article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)]:
                 print("fetching comments for ", art.get_article()['header']['url'])
                 comment_list = self.get_comments_for_article(art, start_date)
-                writer.writeComments(comment_list)
+                writer.write_comments(comment_list)
                 time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)
             start_list_elem += SpiegelOnlineScraper.SUBSET_LENGTH
             time.sleep(SpiegelOnlineScraper.DELAY_SUBSET)
@@ -270,12 +270,12 @@ if __name__ == '__main__':
     print("started at ", start_time)
     spiegel_online_scraper = SpiegelOnlineScraper()
     db = DatabaseExchange()
-    db.logStartCrawl(spiegel_online_scraper.id)
-    start = max(db.fetchLastRun(spiegel_online_scraper.id).date(), date(2020, 12, 20))
+    db.log_scraper_start(spiegel_online_scraper.id)
+    start = max(db.fetch_scraper_last_run(spiegel_online_scraper.id).date(), date(2020, 12, 20))
     end = date.today()
     article_header_list = spiegel_online_scraper.get_article_list(start, end)
-    db.writeArticles(article_header_list)
-    todo_list = db.fetchTodoListScraper(spiegel_online_scraper.id)
+    db.write_articles(article_header_list)
+    todo_list = db.fetch_scraper_todo_list(spiegel_online_scraper.id)
     spiegel_online_scraper.get_write_articles_details(db, todo_list)
     #   for art in todo_list:
     #       print("fetching comments for Article:",art)
@@ -283,6 +283,6 @@ if __name__ == '__main__':
     #       db.writeComments(cmts)
     #       time.sleep(1)
 
-    db.logEndCrawl(not spiegel_online_scraper.has_errors)
+    db.log_scraper_end(not spiegel_online_scraper.has_errors)
     print("Laufzeit= ", datetime.today() - start_time)
     db.close()
