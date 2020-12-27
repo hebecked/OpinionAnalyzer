@@ -17,9 +17,12 @@ Get Personalities: 	https://github.com/jkwieser/personality-detection-text
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from textblob_de import TextBlobDE as TextBlob
 from scipy.special import softmax
+import torch
 #import tensorflow as tf
 import numpy as np
 import json
+import math
+#from IPython import embed; embed()
 
 
 class multilang_bert_sentiment: 
@@ -34,7 +37,7 @@ class multilang_bert_sentiment:
 	
 	def analyze(self, text):
 		try:
-			inputs = self.tokenizer(text, return_tensors = "pt")
+			inputs = self.tokenizer(text, return_tensors = "pt") # , max_length=512
 			proOrCon = self.model(**inputs)
 			weights = proOrCon[0].detach().numpy()[0]
 			weights = softmax(weights)
@@ -54,23 +57,37 @@ class german_bert_sentiment:
 	https://huggingface.co/oliverguhr/german-sentiment-bert?text = Du+Arsch%21
 	"""
 
-	def __init__(self):
+	def __init__(self, truncate=False):
 		self.tokenizer = AutoTokenizer.from_pretrained("oliverguhr/german-sentiment-bert")
 		self.model = AutoModelForSequenceClassification.from_pretrained("oliverguhr/german-sentiment-bert")
-	
+		self.truncate=truncate
+
 	def analyze(self, text):
-		try:
-			inputs = self.tokenizer(text, return_tensors = "pt")
+		#inputs = self.tokenizer(text, return_tensors = "pt")# , max_length=512
+		averages=[]
+		errors=[]
+		while True:
+			inputs = self.tokenizer(text, return_tensors = "pt", max_length=512, stride=0, return_overflowing_tokens=True, truncation=True, padding=True)
+			print(inputs)
+			text=inputs.pop('overflow_to_sample_mapping')
 			proOrCon = self.model(**inputs)
 			weights = proOrCon[0].detach().numpy()[0]
 			weights[2], weights[1] = weights[1], weights[2]
 			weights = softmax(weights)
-			average = np.average(np.linspace(1, -1, 3), weights = weights)
-			error = np.sqrt(np.average((np.linspace(1, -1, 3)-average)**2, weights = weights))
-		except:
-			average=0
-			error=1
-			print("Error caught in analyzer.")
+			average=np.average(np.linspace(1, -1, 3), weights = weights)
+			averages.append(average)
+			errors.append(
+				np.sqrt(np.average(np.array(np.linspace(1, -1, 3)-average)**2, weights = weights))
+				)
+			#from IPython import embed; embed()
+			if self.truncate:
+				break
+			if text.nelement() > 1:
+				print(text, "more", text.nelement(), flush=True)
+			else:
+				break
+		average = np.average(averages, weights = 1./np.array(errors)**2)
+		error = np.sqrt(1./np.sum(1./np.array(errors)**2))
 		return [average, error]
 
 
@@ -108,8 +125,8 @@ class EnsembleSentiment():
 		result1 = self.sentiment_model_1.analyze(text)
 		result2 = self.sentiment_model_2.analyze(text)
 		results = np.array([result1, result2])
-		result = np.average(results.T[0], weights = 1/results.T[1]**2)
-		error = np.sqrt(1/np.sum(1/results.T[1]**2))
+		result = np.average(results.T[0], weights = 1./results.T[1]**2)
+		error = np.sqrt(1./np.sum(1./results.T[1]**2))
 		return [result, error]
 
 
@@ -130,11 +147,12 @@ if __name__ ==  "__main__":
 
 	print("Loading NLP models.")
 	SentimentModel1 = multilang_bert_sentiment()
-	SentimentModel2 = german_bert_sentiment()
+	SentimentModel2 = german_bert_sentiment(truncate=True)
 	SentimentModel3 = EnsembleSentiment()
 
 
 	print("Running ", Test_cases, " tests.")
+	accu=[]
 	for i, comment in enumerate(testComments):
 		if comment["user"] is not None and comment["body"] is not None:
 			#sentence = Sentence(comment["body"])
@@ -144,8 +162,11 @@ if __name__ ==  "__main__":
 			result2 = SentimentModel2.analyze(comment["body"])
 			result3 = SentimentModel3.analyze(comment["body"])
 			result4 = TextblobSentiment().analyze(comment["body"])
+			accu.extend(comment["body"])
 			print("Comment: ", i, " Results 1,2,3,4: ", result1, result2, result3, result4)
 		if i >= Test_cases:
 			break
+	print(len(accu))
+	print(SentimentModel3.analyze(accu))
 	print("Tests completed successfully.")
 	
