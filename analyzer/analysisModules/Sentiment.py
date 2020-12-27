@@ -33,13 +33,18 @@ class multilang_bert_sentiment:
 		self.model = AutoModelForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
 	
 	def analyze(self, text):
-		inputs = self.tokenizer(text, return_tensors = "pt")
-		proOrCon = self.model(**inputs)
-		weights = proOrCon[0].detach().numpy()[0]
-		weights = softmax(weights)
-		average = np.average(np.linspace(1, 5, 5), weights = weights)
-		error = np.sqrt(np.average((np.linspace(1, 5, 5)-average)**2, weights = weights))*2./5.
-		average = average*2./5.-1
+		try:
+			inputs = self.tokenizer(text, return_tensors = "pt")
+			proOrCon = self.model(**inputs)
+			weights = proOrCon[0].detach().numpy()[0]
+			weights = softmax(weights)
+			average = np.average(np.linspace(1, 5, 5), weights = weights)
+			error = np.sqrt(np.average((np.linspace(1, 5, 5)-average)**2, weights = weights))*2./5.
+			average = average*2./5.-1
+		except:
+			average=0
+			error=1
+			print("Error caught in analyzer.")
 		return [average, error]
 
 
@@ -54,13 +59,18 @@ class german_bert_sentiment:
 		self.model = AutoModelForSequenceClassification.from_pretrained("oliverguhr/german-sentiment-bert")
 	
 	def analyze(self, text):
-		inputs = self.tokenizer(text, return_tensors = "pt")
-		proOrCon = self.model(**inputs)
-		weights = proOrCon[0].detach().numpy()[0]
-		weights[2], weights[1] = weights[1], weights[2]
-		weights = softmax(weights)
-		average = np.average(np.linspace(1, -1, 3), weights = weights)
-		error = np.sqrt(np.average((np.linspace(1, -1, 3)-average)**2, weights = weights))
+		try:
+			inputs = self.tokenizer(text, return_tensors = "pt")
+			proOrCon = self.model(**inputs)
+			weights = proOrCon[0].detach().numpy()[0]
+			weights[2], weights[1] = weights[1], weights[2]
+			weights = softmax(weights)
+			average = np.average(np.linspace(1, -1, 3), weights = weights)
+			error = np.sqrt(np.average((np.linspace(1, -1, 3)-average)**2, weights = weights))
+		except:
+			average=0
+			error=1
+			print("Error caught in analyzer.")
 		return [average, error]
 
 
@@ -99,7 +109,7 @@ class EnsembleSentiment():
 		result2 = self.sentiment_model_2.analyze(text)
 		results = np.array([result1, result2])
 		result = np.average(results.T[0], weights = 1/results.T[1]**2)
-		error = np.sqrt(1/np.mean(1/results.T[1]**2))
+		error = np.sqrt(1/np.sum(1/results.T[1]**2))
 		return [result, error]
 
 
