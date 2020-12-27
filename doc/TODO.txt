@@ -1,0 +1,7 @@
+Topic detection - Dustin
+token length limitation bug fix - Dustin
+deployment - Martin
+improve code on DBExchange - Philipp
+Contact twitter - Martin
+Another additional scraper
+Write proper documentation
