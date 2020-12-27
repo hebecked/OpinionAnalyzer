@@ -56,13 +56,13 @@ class Comment:
         self.__complete = False
         if Comment.__udf_dict is None:
             Comment.udf_dict = {}
-            print("first launch, setting class variables")  # todo delete line (debugging purposes only)
+#            print("first launch, setting class variables")  # todo delete line (debugging purposes only)
             # todo  database connection to be rewritten later
             db = ownDBObject()
             db.connect()
             udf_header = db.retrieveValues(Comment.__SQL_UDFS_FETCH_FEASIBLE)
             Comment.__udf_dict = dict(zip((udf[0] for udf in udf_header), (udf[1] for udf in udf_header)))
-            print("udf Dict: ", Comment.__udf_dict)  # todo delete line (debugging purposes only)
+#            print("udf Dict: ", Comment.__udf_dict)  # todo delete line (debugging purposes only)
             db.close()
         self.__data = {}
         self.__udfs = set([])
