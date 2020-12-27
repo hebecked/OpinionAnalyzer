@@ -13,6 +13,14 @@ class DatabaseExchange(connectDb.Database):
     SUBSET_LENGTH = 100  # threshold for database flush
     ANALYZER_RESULT_DEFAULT_COLUMNS = ['id', 'comment_id', 'analyzer_log_id']
 
+    # class variable representing database architecture for analyzers
+    __analyzer_data = {}
+
+    # class variables representing current logfile state in db
+    __analyzer_ids = {}
+    __scraper_log_id = None
+
+    # database queries
     # scraper related database queries
     __SCRAPER_FETCH_LAST_RUN = """SELECT MAX(start_timestamp) 
                                         FROM news_meta_data.crawl_log 
@@ -125,13 +133,6 @@ class DatabaseExchange(connectDb.Database):
                                         {} 
                                         VALUES %s;"""
 
-    # class variable representing database architecture for analyzers
-    __analyzer_data = {}
-
-    # class variables representing current logfile state in db
-    __analyzer_ids = {}
-    __scraper_log_id = None
-
     def __init__(self):
         super().__init__()
         print("initializing...")
@@ -148,7 +149,16 @@ class DatabaseExchange(connectDb.Database):
     def connect(self):
         super().connect()
 
-    def __fetch_analyzer_tables(self):
+    def __fetch_analyzer_tables(self) -> dict:
+        """
+        fetches all analyzer related tables from news_meta_data.analyzer_header
+
+        Returns
+        -------
+        dict
+            { analyzer_id : {analyzer_view_name: str, analyzer_table_name : str} }
+
+        """
         # fetch table data for analyzers from header table (which view and target table to use)
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__ANALYZER_FETCH_HEADER)
@@ -161,7 +171,21 @@ class DatabaseExchange(connectDb.Database):
             analyzer_dict[res[0]] = {'analyzer_view_name': res[1], 'analyzer_table_name': res[2]}
         return analyzer_dict
 
-    def fetch_analyzer_todo_list(self, analyzer_id: int):
+    def fetch_analyzer_todo_list(self, analyzer_id: int) -> list:
+        """
+        
+
+        Parameters
+        ----------
+        analyzer_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        list
+            DESCRIPTION.
+
+        """
         if analyzer_id not in DatabaseExchange.__analyzer_data.keys():
             return []
         cur = self.conn.cursor()
@@ -180,6 +204,22 @@ class DatabaseExchange(connectDb.Database):
         return todo_list
 
     def __log_analyzer_start(self, analyzer_id: int, analyzer_todo_list: list):
+        """
+        
+
+        Parameters
+        ----------
+        analyzer_id : int
+            DESCRIPTION.
+        analyzer_todo_list : list
+            DESCRIPTION.
+
+        Returns
+        -------
+        bool
+            DESCRIPTION.
+
+        """
         if analyzer_id not in DatabaseExchange.__analyzer_data.keys():
             return False
         self.__analyzer_start_timestamp = dt.datetime.today()
@@ -195,7 +235,23 @@ class DatabaseExchange(connectDb.Database):
         self.conn.commit()
         cur.close()
 
-    def __fetch_analyzer_log_ids(self, analyzer_id: int, comment_ids: list):
+    def __fetch_analyzer_log_ids(self, analyzer_id: int, comment_ids: list) -> dict:
+        """
+        
+
+        Parameters
+        ----------
+        analyzer_id : int
+            DESCRIPTION.
+        comment_ids : list
+            DESCRIPTION.
+
+        Returns
+        -------
+        dict
+            DESCRIPTION.
+
+        """
         cur = self.conn.cursor()
         cur.execute(
             DatabaseExchange.__ANALYZER_FETCH_LOG_IDs,
@@ -207,7 +263,21 @@ class DatabaseExchange(connectDb.Database):
             return {}
         return dict(ids)
 
-    def __fetch_analyzer_columns(self, analyzer_id: int):
+    def __fetch_analyzer_columns(self, analyzer_id: int) -> list:
+        """
+        
+
+        Parameters
+        ----------
+        analyzer_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        list
+            DESCRIPTION.
+
+        """
         cur = self.conn.cursor()
         cur.execute(
             DatabaseExchange.__ANALYZER_GET_TARGET_COLUMNS,
@@ -216,12 +286,28 @@ class DatabaseExchange(connectDb.Database):
         table_fields = cur.fetchall()
         if len(table_fields) == 0:
             cur.close()
-            return set([])
+            return []
         columns = set(f[0] for f in table_fields) - set(DatabaseExchange.ANALYZER_RESULT_DEFAULT_COLUMNS)
         cur.close()
         return list(columns)
 
-    def write_analyzer_results(self, analyzer_id: int, analyzer_result: list):
+    def write_analyzer_results(self, analyzer_id: int, analyzer_result: list) -> bool:
+        """
+        
+
+        Parameters
+        ----------
+        analyzer_id : int
+            DESCRIPTION.
+        analyzer_result : list
+            DESCRIPTION.
+
+        Returns
+        -------
+        bool
+            DESCRIPTION.
+
+        """
         if not type(analyzer_result) == list:
             return False
         if analyzer_id not in DatabaseExchange.__analyzer_data.keys():
@@ -257,7 +343,21 @@ class DatabaseExchange(connectDb.Database):
                 del DatabaseExchange.__analyzer_ids[result['comment_id']]
         return True
 
-    def fetch_scraper_todo_list(self, source_id: int):
+    def fetch_scraper_todo_list(self, source_id: int) -> list:
+        """
+        
+
+        Parameters
+        ----------
+        source_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        list
+            DESCRIPTION.
+
+        """
         cur = self.conn.cursor()
         cur.execute(
             DatabaseExchange.__SCRAPER_FETCH_TODO,
@@ -279,7 +379,21 @@ class DatabaseExchange(connectDb.Database):
             todo_list += [art]
         return todo_list
 
-    def fetch_scraper_last_run(self, source_id: int):
+    def fetch_scraper_last_run(self, source_id: int) -> dt.datetime:
+        """
+        
+
+        Parameters
+        ----------
+        source_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        TYPE
+            DESCRIPTION.
+
+        """
         cur = self.conn.cursor()
         cur.execute(
             DatabaseExchange.__SCRAPER_FETCH_LAST_RUN,
@@ -291,7 +405,21 @@ class DatabaseExchange(connectDb.Database):
             return dt.datetime(1990, 1, 1)
         return result[0][0]
 
-    def log_scraper_start(self, source_id: int):
+    def log_scraper_start(self, source_id: int) -> bool:
+        """
+        
+
+        Parameters
+        ----------
+        source_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        bool
+            DESCRIPTION.
+
+        """
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__LOG_STARTCRAWL,
                     (source_id, dt.datetime.today().replace(microsecond=0).isoformat()))
@@ -306,6 +434,19 @@ class DatabaseExchange(connectDb.Database):
         return True
 
     def log_scraper_end(self, success: bool = True):
+        """
+        
+
+        Parameters
+        ----------
+        success : bool, optional
+            DESCRIPTION. The default is True.
+
+        Returns
+        -------
+        None.
+
+        """
         cur = self.conn.cursor()
         argument_tuple = (
             dt.datetime.today().replace(microsecond=0).isoformat(), success, DatabaseExchange.__scraper_log_id
@@ -317,7 +458,23 @@ class DatabaseExchange(connectDb.Database):
         self.conn.commit()
         cur.close()
 
-    def __fetch_article_ids(self, articles_list: list, start_id: int):
+    def __fetch_article_ids(self, articles_list: list, start_id: int) -> dict:
+        """
+        
+
+        Parameters
+        ----------
+        articles_list : list
+            DESCRIPTION.
+        start_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        dict
+            DESCRIPTION.
+
+        """
         article_ids = []
         cur = self.conn.cursor()
         for source_dates in set(
@@ -332,7 +489,21 @@ class DatabaseExchange(connectDb.Database):
         cur.close()
         return dict(article_ids)
 
-    def __fetch_body_ids(self, start_id: int):
+    def __fetch_body_ids(self, start_id: int) -> dict:
+        """
+        
+
+        Parameters
+        ----------
+        start_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        dict
+            DESCRIPTION.
+
+        """
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__BODY_ID_FETCH_STATEMENT, (start_id,))
         result = cur.fetchall()
@@ -342,6 +513,19 @@ class DatabaseExchange(connectDb.Database):
         return dict(body_ids)
 
     def __write_article_headers(self, article_list: list):
+        """
+        
+
+        Parameters
+        ----------
+        article_list : list
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__HEADER_MIN_STATEMENT)
         result = cur.fetchall()
@@ -361,13 +545,26 @@ class DatabaseExchange(connectDb.Database):
         self.__fill_header_ids(article_list, start_id)
 
     def __write_article_bodies(self, article_list: list):
+        """
+        
+
+        Parameters
+        ----------
+        article_list : list
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__BODY_MIN_STATEMENT)
         result = cur.fetchall()
         if result[0][0] is None:
             start_id = 0
         else:
-            start_id = result[0][0]  # todo check if correct
+            start_id = result[0][0]   # todo check if correct
         for art in article_list:
             if art.set_body_complete():
                 body_to_use = art.get_body_to_write()
@@ -383,6 +580,19 @@ class DatabaseExchange(connectDb.Database):
         self.__fill_body_ids(article_list, start_id)
 
     def __write_article_udfs(self, article_list: list):
+        """
+        
+
+        Parameters
+        ----------
+        article_list : list
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         cur = self.conn.cursor()
         for art in article_list:
             if art.get_body_to_write()["insert"]:
@@ -395,6 +605,21 @@ class DatabaseExchange(connectDb.Database):
         cur.close()
 
     def __fill_header_ids(self, article_list: list, start_id: int):
+        """
+        
+
+        Parameters
+        ----------
+        article_list : list
+            DESCRIPTION.
+        start_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         id_lookup_dict = self.__fetch_article_ids(article_list, start_id)
         for art in article_list:
             url = art.get_article()["header"]["url"]
@@ -402,16 +627,46 @@ class DatabaseExchange(connectDb.Database):
                 art.set_header_id(id_lookup_dict[url])
 
     def __fill_body_ids(self, article_list: list, start_id: int):
+        """
+        
+
+        Parameters
+        ----------
+        article_list : list
+            DESCRIPTION.
+        start_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         id_lookup_dict = self.__fetch_body_ids(start_id)
         for art in article_list:
             article_id = art.get_article()["header"]["id"]
             if article_id in id_lookup_dict.keys():
                 art.set_body_id(id_lookup_dict[article_id])
 
-    def write_articles(self, article_list: list):
+    def write_articles(self, article_list: list) -> bool:
+        """
+        
+
+        Parameters
+        ----------
+        article_list : list
+            DESCRIPTION.
+
+        Returns
+        -------
+        bool
+            DESCRIPTION.
+
+        """
         if type(article_list) != list:
             return False
         start = 0
+        return_value = True  # todo add error handling
         while start < len(article_list):
             work_list = list(
                 filter(lambda x: type(x) == Article,
@@ -425,8 +680,25 @@ class DatabaseExchange(connectDb.Database):
             self.__write_article_udfs(bodies)
             print("Article udfs written")
             start += DatabaseExchange.SUBSET_LENGTH
+        return return_value
 
-    def __fetch_comment_ids(self, comment_list: list, start_id: int):
+    def __fetch_comment_ids(self, comment_list: list, start_id: int) -> dict:
+        """
+        
+
+        Parameters
+        ----------
+        comment_list : list
+            DESCRIPTION.
+        start_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        dict
+            DESCRIPTION.
+
+        """
         article_body_id_list = list(x.get_comment()["data"]["article_body_id"] for x in comment_list)
         article_body_id_tuple = tuple(article_body_id_list)
         cur = self.conn.cursor()
@@ -438,6 +710,21 @@ class DatabaseExchange(connectDb.Database):
         return dict(comment_ids)
 
     def __fill_comment_ids(self, comment_list: list, start_id: int):
+        """
+        
+
+        Parameters
+        ----------
+        comment_list : list
+            DESCRIPTION.
+        start_id : int
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         id_lookup_dict = self.__fetch_comment_ids(comment_list, start_id)
         for comm in comment_list:
             identifier = (comm.get_comment()["data"]["external_id"], comm.get_comment()["data"]["article_body_id"])
@@ -445,10 +732,38 @@ class DatabaseExchange(connectDb.Database):
                 comm.set_comment_id(id_lookup_dict[identifier])
 
     def __fetch_old_comment_keys(self, source_id: int, start_date: dt.datetime):
+        """
+        
+
+        Parameters
+        ----------
+        source_id : int
+            DESCRIPTION.
+        start_date : dt.datetime
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         # todo use view to get "not so old" comments from database
         pass
 
     def __write_comment_data(self, comment_list: list):
+        """
+        
+
+        Parameters
+        ----------
+        comment_list : list
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__COMMENT_MIN_STATEMENT)
         result = cur.fetchall()
@@ -469,6 +784,19 @@ class DatabaseExchange(connectDb.Database):
         self.__fill_comment_ids(comment_list, start_id)
 
     def __write_comment_udfs(self, comment_list: list):
+        """
+        
+
+        Parameters
+        ----------
+        comment_list : list
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         cur = self.conn.cursor()
         for cmt in comment_list:
             if not ('id' in cmt.get_comment()["data"].keys()):
@@ -482,10 +810,25 @@ class DatabaseExchange(connectDb.Database):
         self.conn.commit()
         cur.close()
 
-    def write_comments(self, comment_list: list):
+    def write_comments(self, comment_list: list) -> bool:
+        """
+        
+
+        Parameters
+        ----------
+        comment_list : list
+            DESCRIPTION.
+
+        Returns
+        -------
+        bool
+            DESCRIPTION.
+
+        """
         if type(comment_list) != list:
             return False
         start = 0
+        return_value = True  # todo add error handling
         while start < len(comment_list):
             work_list = list(
                 filter(lambda x: type(x) == Comment,
@@ -498,9 +841,18 @@ class DatabaseExchange(connectDb.Database):
             self.__write_comment_udfs(comments)
             print("Comment udfs written:", start, " - ", start + DatabaseExchange.SUBSET_LENGTH)
             start += DatabaseExchange.SUBSET_LENGTH
+        return return_value
 
 
 def test():
+    """
+    
+
+    Returns
+    -------
+    None.
+
+    """
     test_article = Article()
     test_article.set_header(
         {"url": "http://www.google.de", "obsolete": False, "source_id": 1, "source_date": dt.date(2020, 12, 1)})
@@ -536,8 +888,8 @@ if __name__ == '__main__':
     print("-------------------------------------------------\n")
     print("Starting DatabaseExchange testcases here:\n\n")
     writer = DatabaseExchange()
-    # print(writer.fetchTodoListAnalyzer(1))
-    #    todo=writer.fetchTodoListAnalyzer(1)
-    #    writer.writeAnalyzerResults(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in todo])
+    # print(writer.fetch_analyzer_todo_list(1))
+    # to_do_list=writer.fetch_analyzer_todo_list(1)
+    #    writer.write_analyzer_results(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in to_do_list])
     writer.close()
     print("further test deactivated")
