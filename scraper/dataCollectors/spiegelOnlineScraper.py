@@ -258,7 +258,7 @@ if __name__ == '__main__':
     spiegel_online_scraper = SpiegelOnlineScraper()
     db = DatabaseExchange()
     db.log_scraper_start(spiegel_online_scraper.id)
-    start = max(db.fetch_scraper_last_run(spiegel_online_scraper.id).date(), date(2020, 12, 01))
+    start = max(db.fetch_scraper_last_run(spiegel_online_scraper.id).date(), date(2020, 12, 1))
     end = date.today()
     article_header_list = spiegel_online_scraper.get_article_list(start, end)
     db.write_articles(article_header_list)
