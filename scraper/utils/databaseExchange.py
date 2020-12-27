@@ -133,10 +133,10 @@ class DatabaseExchange(connectDb.Database):
 
     def __init__(self):
         super().__init__()
-        print("initializing...")
+        print("initializing database exchange...")
         self.connect()
         DatabaseExchange.__analyzer_database_structure = self.__fetch_analyzer_tables()
-        print("Analyzer tables: ", DatabaseExchange.__analyzer_database_structure)
+#        print("Analyzer tables: ", DatabaseExchange.__analyzer_database_structure)
 
     def close(self):
         super().close()
@@ -434,7 +434,7 @@ class DatabaseExchange(connectDb.Database):
         if result[0][0] is None:
             return False
         DatabaseExchange.__scraper_log_id = result[0][0]
-        print("logId: ", DatabaseExchange.__scraper_log_id)
+#        print("logId: ", DatabaseExchange.__scraper_log_id)
         return True
 
     def log_scraper_end(self, success: bool = True):
@@ -684,12 +684,12 @@ class DatabaseExchange(connectDb.Database):
                        article_list[start:start + DatabaseExchange.SUBSET_LENGTH]))
             headers = list(filter(lambda x: not (x.is_in_db()), work_list))
             self.__write_article_headers(headers)
-            print("Article headers written and id added")
+#            print("Article headers written and id added") # todo delete line (debugging purposes only)
             bodies = list(filter(lambda x: x.is_in_db(), work_list))
             self.__write_article_bodies(bodies)
-            print("Article bodies written and id added")
+#            print("Article bodies written and id added") # todo delete line (debugging purposes only)
             self.__write_article_udfs(bodies)
-            print("Article udfs written")
+#            print("Article udfs written") # todo delete line (debugging purposes only)
             start += DatabaseExchange.SUBSET_LENGTH
         return return_value
 
@@ -841,9 +841,9 @@ class DatabaseExchange(connectDb.Database):
             # todo filter by not in db (use fetchOldCommentKeys)
             comments = work_list
             self.__write_comment_data(comments)
-            print("Comment data written:", start, " - ", start + DatabaseExchange.SUBSET_LENGTH)
+#            print("Comment data written:", start, " - ", start + DatabaseExchange.SUBSET_LENGTH) # todo delete line (debugging purposes only)
             self.__write_comment_udfs(comments)
-            print("Comment udfs written:", start, " - ", start + DatabaseExchange.SUBSET_LENGTH)
+#            print("Comment udfs written:", start, " - ", start + DatabaseExchange.SUBSET_LENGTH) # todo delete line (debugging purposes only)
             start += DatabaseExchange.SUBSET_LENGTH
         return return_value
 
@@ -892,7 +892,7 @@ def test():
 if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
-    print("Starting DatabaseExchange testcases here:\n\n")
+    print("Starting DatabaseExchange showcase here:\n\n")
     writer = DatabaseExchange()
     # print(writer.fetch_analyzer_todo_list(1))
     # to_do_list=writer.fetch_analyzer_todo_list(1)

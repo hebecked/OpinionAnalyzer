@@ -4,9 +4,7 @@
 
 import copy  # deepcopy used for oldBody
 import datetime as dt
-
 import validators  # used for url validation
-
 from utils.connectDb import Database as ownDBObject
 
 
@@ -45,16 +43,16 @@ class Article:
         if Article.__udf_dict is None or Article.__source_list is None:
             Article.__source_list = []
             Article.__udf_dict = {}
-            print("first launch, setting class variables")  # todo delete line (debugging purposes only)
+#            print("first launch, setting class variables")  # todo delete line (debugging purposes only)
             # todo database connection to be rewritten later
             db = ownDBObject()
             db.connect()
             udf_header = db.retrieveValues(Article.__SQL_UDFS_FETCH_FEASIBLE)
             Article.__udf_dict = dict(zip((udf[0] for udf in udf_header), (udf[1] for udf in udf_header)))
-            print("udf Dict: ", Article.__udf_dict)  # todo delete line (debugging purposes only)
+#            print("udf Dict: ", Article.__udf_dict)  # todo delete line (debugging purposes only)
             sources = db.retrieveValues(Article.__SQL_SOURCES_FETCH_FEASIBLE)
             Article.__source_list = list(source[0] for source in sources)
-            print("sourceList ", Article.__source_list)  # todo delete line (debugging purposes only)
+#            print("sourceList ", Article.__source_list)  # todo delete line (debugging purposes only)
             db.close()
         self.__header = {"obsolete": False, "source_date": None}
         self.__body = {"proc_counter": 0}
