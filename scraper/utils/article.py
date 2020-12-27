@@ -46,7 +46,7 @@ class Article:
             Article.__source_list = []
             Article.__udf_dict = {}
             print("first launch, setting class variables")  # todo delete line (debugging purposes only)
-            # database connection to be rewritten later
+            #todo database connection to be rewritten later
             db = ownDBObject()
             db.connect()
             udf_header = db.retrieveValues(Article.__UDFS_STATEMENT)
@@ -477,25 +477,44 @@ class Article:
                             "body": set_body_text, "proc_timestamp": set_body_timestamp,
                             "proc_counter": set_body_counter}
 
-    def set_header(self, data: dict):
+    def set_header(self, data: dict) -> bool:
         """
         more comfortable bulk setter for header information with dictionary\n
         keys: "id","url","obslete","source_id","source_date"\n
         keys corresponding to database table article_header
-        
+
+        Parameters
+        ----------
+        data : dict
+            dict of fields to set.
+
+        Returns
+        -------
+        bool
+            returns True if ALL successful.
         
         """
         return self.__set_by_dict(data, Article.__set_header_functions)
 
-    def set_body(self, data: dict):
+    def set_body(self, data: dict) -> bool:
         """
         more comfortable bulk setter for header information with dictionary\n
         keys: "id","article_id","headline","body","proc_timestamp","proc_counter"\n
         keys corresponding to database table article_body
+
+        Parameters
+        ----------
+        data : dict
+            dict of fields to set.
+
+        Returns
+        -------
+        bool
+            returns True if ALL successful.
         """
         return self.__set_by_dict(data, Article.__set_body_functions)
 
-    def __set_by_dict(self, data: dict, target: dict):
+    def __set_by_dict(self, data: dict, target: dict) -> bool:
         """
         goal: setting all Article sub-object fields (body or header) at once \n
         lookup of setter function in target dict and calling setter function with input parameters from data dict
