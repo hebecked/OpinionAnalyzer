@@ -12,8 +12,8 @@ from utils.connectDb import Database as ownDBObject
 
 class Article:
     # static data related database queries
-    __UDFS_STATEMENT = """SELECT udf_name,id FROM news_meta_data.udf_header;"""
-    __SOURCES_STATEMENT = """SELECT id,source FROM news_meta_data.source_header;"""
+    __SQL_UDFS_FETCH_FEASIBLE = """SELECT udf_name,id FROM news_meta_data.udf_header;"""
+    __SQL_SOURCES_FETCH_FEASIBLE = """SELECT id,source FROM news_meta_data.source_header;"""
 
     __source_list = None
     __udf_dict = None
@@ -49,10 +49,10 @@ class Article:
             # todo database connection to be rewritten later
             db = ownDBObject()
             db.connect()
-            udf_header = db.retrieveValues(Article.__UDFS_STATEMENT)
+            udf_header = db.retrieveValues(Article.__SQL_UDFS_FETCH_FEASIBLE)
             Article.__udf_dict = dict(zip((udf[0] for udf in udf_header), (udf[1] for udf in udf_header)))
             print("udf Dict: ", Article.__udf_dict)  # todo delete line (debugging purposes only)
-            sources = db.retrieveValues(Article.__SOURCES_STATEMENT)
+            sources = db.retrieveValues(Article.__SQL_SOURCES_FETCH_FEASIBLE)
             Article.__source_list = list(source[0] for source in sources)
             print("sourceList ", Article.__source_list)  # todo delete line (debugging purposes only)
             db.close()
