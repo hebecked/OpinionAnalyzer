@@ -266,8 +266,8 @@ if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
     print("Starting SpiegelOnlineScraper testcases here:\n\n")
-    starttime = datetime.today()
-    print("started at ", starttime)
+    start_time = datetime.today()
+    print("started at ", start_time)
     spiegel_online_scraper = SpiegelOnlineScraper()
     db = DatabaseExchange()
     db.logStartCrawl(spiegel_online_scraper.id)
@@ -284,5 +284,5 @@ if __name__ == '__main__':
     #       time.sleep(1)
 
     db.logEndCrawl(not spiegel_online_scraper.has_errors)
-    print("Laufzeit= ", datetime.today() - starttime)
+    print("Laufzeit= ", datetime.today() - start_time)
     db.close()
