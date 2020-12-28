@@ -92,7 +92,7 @@ class german_bert_sentiment:
 				inputs={k: (i[0][:self.max_length]).reshape(1,len(i[0][:self.max_length])) for k, i in inputs.items()}
 			else:
 				next_inputs=False
-			proOrCon = self.model(input_ids=inputs['input_ids'][0][:10].reshape(1,10), token_type_ids=inputs['token_type_ids'][0][:10].reshape(1,10), attention_mask=inputs['attention_mask'][0][:10].reshape(1,10))
+			proOrCon = self.model(**inputs)
 			weights = proOrCon[0].detach().numpy()[0]
 			weights[2], weights[1] = weights[1], weights[2]
 			weights = softmax(weights)
