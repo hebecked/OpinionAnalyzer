@@ -13,5 +13,5 @@ Common docker commands for a succesfull build:
 "docker ps": To see which containers are running <br>
 "docker volume list": To see the volumes created <br>
 "docker logs {$container_name}": To see a snapshot of the current and past logs <br>
-"docker logs --follow {$container_name}": To see all logs including the ones which are newly creating in the past, present and future <br>
+"docker logs --follow {$container_name}": To see all logs from the past, present and future <br>
  
