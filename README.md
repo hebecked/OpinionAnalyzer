@@ -15,5 +15,5 @@ Common docker commands for a succesfull build:
 "docker logs {$container_name}": To see a snapshot of the current and past logs <br>
 "docker logs --follow {$container_name}": To see all logs from the past, present and future <br>
 "docker volume prune": To reset the database <br>
-"docker system prune" To reset the network
+"docker system prune": To reset the network
  
