@@ -1,4 +1,5 @@
-from utils.connectDb import database
+from utils.connectDb import Database
+
 
 def main():
         db = Database()
