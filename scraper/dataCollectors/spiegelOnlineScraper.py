@@ -253,7 +253,6 @@ if __name__ == '__main__':
     print("Starting SpiegelOnlineScraper testcases here:\n\n")
     start_time = datetime.today()
 
-
     logger.info("started at " + str(start_time))
     spiegel_online_scraper = SpiegelOnlineScraper()
     db = DatabaseExchange()
