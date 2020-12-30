@@ -1,6 +1,6 @@
 # OpinionAnalyzer
 
-In order to run the project you need to have docker and docker-compose installed on your local machine. If this pre-conditions are true, just run "./run.sh" inside the project folder from the command line, and the project should build itself and run dockerized on your machine.
+In order to run the project you need to have docker and docker-compose installed on your local machine. If this pre-conditions are true, just run "./run.sh" inside the project folder from the command line, and the project should build itself and run dockerized on your machine. If you want to shutdown the system again use "./shutdown.sh" inside the project folder from the command line.
 
 Ports :8080 and :5432 need to be freed before building the project in order for Grafana and Postgres to be allocated in those ports. If you cannot free this ports, you need to change the ports then inside the docker-compose.yml so that the project can be started correctly. 
 
