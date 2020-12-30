@@ -1,7 +1,8 @@
 Topic detection - Dustin
-token length limitation bug fix - Dustin
+Additional analyzer - Dustin
+Implement batch processing - Dustin
 deployment - Martin
 improve code on DBExchange - Philipp
 Contact twitter - Martin
-Another additional scraper
-Write proper documentation
+Another additional scraper - Martin, Philipp
+Write proper documentation - Martin, Dustin
