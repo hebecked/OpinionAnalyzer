@@ -34,8 +34,7 @@ class multilang_bert_sentiment:
 
     def __init__(self, truncate=False):
         self.tokenizer = AutoTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            "nlptown/bert-base-multilingual-uncased-sentiment")
+        self.model = AutoModelForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
         self.truncate = truncate
         self.max_length = 512
 
@@ -47,10 +46,8 @@ class multilang_bert_sentiment:
         length = len(inputs['input_ids'][0])
         while length > 0:
             if length > self.max_length:
-                next_inputs = {k: (i[0][self.max_length:]).reshape(1, len(i[0][self.max_length:])) for k, i in
-                               inputs.items()}
-                inputs = {k: (i[0][:self.max_length]).reshape(1, len(i[0][:self.max_length])) for k, i in
-                          inputs.items()}
+                next_inputs = {k: (i[0][self.max_length:]).reshape(1, len(i[0][self.max_length:])) for k, i in inputs.items()}
+                inputs = {k: (i[0][:self.max_length]).reshape(1, len(i[0][:self.max_length])) for k, i in inputs.items()}
             else:
                 next_inputs = False
             proOrCon = self.model(**inputs)
@@ -89,15 +86,12 @@ class german_bert_sentiment:
     def analyze(self, text):
         averages = []
         errors = []
-        inputs = self.tokenizer(text,
-                                return_tensors="pt")  # , max_length=512, stride=0, return_overflowing_tokens=True, truncation=True, padding=True)
+        inputs = self.tokenizer(text, return_tensors="pt")  # , max_length=512, stride=0, return_overflowing_tokens=True, truncation=True, padding=True)
         length = len(inputs['input_ids'][0])
         while length > 0:
             if length > self.max_length:
-                next_inputs = {k: (i[0][self.max_length:]).reshape(1, len(i[0][self.max_length:])) for k, i in
-                               inputs.items()}
-                inputs = {k: (i[0][:self.max_length]).reshape(1, len(i[0][:self.max_length])) for k, i in
-                          inputs.items()}
+                next_inputs = {k: (i[0][self.max_length:]).reshape(1, len(i[0][self.max_length:])) for k, i in inputs.items()}
+                inputs = {k: (i[0][:self.max_length]).reshape(1, len(i[0][:self.max_length])) for k, i in inputs.items()}
             else:
                 next_inputs = False
             proOrCon = self.model(**inputs)
@@ -168,9 +162,9 @@ if __name__ == "__main__":
 
     Test_cases = 10
     with open('../Testdata/TestArticle.json') as f:
+        # dict_keys(['url', 'id', 'channel', 'subchannel', 'headline', 'intro', 'text', 'topics', 'author', 'comments_enabled', 'date_created', 'date_modified', 'date_published', 'breadcrumbs'])
         testArticle = json.load(f)
-    # dict_keys(['url', 'id', 'channel', 'subchannel', 'headline', 'intro', 'text', 'topics', 'author', 'comments_enabled', 'date_created', 'date_modified', 'date_published', 'breadcrumbs'])
-
+        
     with open('../Testdata/TestComments.json') as f:
         testComments = json.load(f)
 
