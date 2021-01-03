@@ -10,6 +10,8 @@ import json
 import string
 import re
 import csv
+import nltk
+from HanTa import HanoverTagger as ht
 #import spacy
 #nlp = spacy.load('de')
 
@@ -24,6 +26,25 @@ import csv
 #requires setup of a mongo db :(  (Usage:print(gn.lemmatise(word)))
 #from pygermanet import load_germanet
 #gn = load_germanet()
+
+
+
+
+
+
+
+class Word2Vector:
+	import gensim
+
+	def __init__(self):
+		#source: https://devmount.github.io/GermanWordEmbeddings/ (http://cloud.devmount.de/d2bc5672c523b086) 
+		#problem with words not in the model, requires the use of preprocessing.py functions.
+		self.model = gensim.models.KeyedVectors.load_word2vec_format("../Testdata/german_word2vec.model", binary=True) 
+		#Alternative is FastText in other file 
+
+
+
+tagger = ht.HanoverTagger('morphmodel_ger.pgz')
 
 
 with open('../Testdata/TestArticle.json') as f:
@@ -41,7 +62,16 @@ with open('../Testdata/CommonGerWords.csv', newline='') as csvfile:
 	spamreader.__next__()
 	spamreader.__next__()
 	for row in spamreader:
-		commonGerWords.append(str(nlp(re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', row[1]).lower())))
+		tokenized_sent = nltk.tokenize.word_tokenize(row[1], language='german')
+		if len(tokenized_sent) == 0:
+			commonGerWords.append("")
+			continue
+		word = tagger.tag_sent(tokenized_sent)[0][1]
+		word = re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', word).lower()
+		commonGerWords.append(word)
+		word2 = re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', row[1]).lower()
+		if word != word2:
+			commonGerWords.append(word2)
 
 wordlist = testArticle["text"].split()
 
@@ -49,7 +79,10 @@ wordlist = testArticle["text"].split()
 wordfreq = dict()
 for word in wordlist:
 	#clean up the strings from punctuations
-	word=re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', word).lower() #remove numbers?
+	tokenized_sent = nltk.tokenize.word_tokenize(word, language='german')
+	word = tagger.tag_sent(tokenized_sent)[0][1]
+	word = re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', word).lower() #remove numbers?
+
 
 	# Check if the word is already in dictionary 
 	if word in wordfreq:  
