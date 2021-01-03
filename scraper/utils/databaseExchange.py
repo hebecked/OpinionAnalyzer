@@ -235,6 +235,23 @@ class DatabaseExchange(connectDb.Database):
                                       VALUES %s;
                                    """  # {} needed to add data not wrapped in ''
 
+    __SQL_TOPICIZER_FETCH_TODO = """
+                                    SELECT 
+                                        b.id, 
+                                        b.body, 
+                                        b.headline, 
+                                        u.udf_value 
+                                    FROM 
+                                        news_meta_data.article_body as b,
+                                        news_meta_data.udf_values as u
+                                    WHERE
+                                        b.id=u.object_id
+                                        AND u.object_type=1
+                                        AND u.udf_id=2
+                                        AND NOT b.body=''
+                                    FETCH FIRST 1000 ROWS ONLY;
+                                    """  # rewrite with VIEW
+
     def __init__(self):
         super().__init__()
         print("initializing database exchange...")
@@ -250,6 +267,31 @@ class DatabaseExchange(connectDb.Database):
 
     def connect(self):
         super().connect()
+
+    def fetch_topicizer_data(self) -> dict:
+        """
+        fetches topic builder related data from database
+
+        Returns
+        -------
+        dict
+            { analyzer_id : {analyzer_view_name: str, analyzer_table_name : str} }
+
+        """
+        # todo all provisorical - rework later!
+        cur = self.conn.cursor()
+        cur.execute(DatabaseExchange.__SQL_TOPICIZER_FETCH_TODO)
+        result = cur.fetchall()
+        cur.close()
+        if len(result) == 0:
+            return {}
+        topicizer_data = {}
+        for res in result:
+            if res[0] in topicizer_data.keys():
+                topicizer_data[res[0]]['udfs'].append(res[3])
+            else:
+                topicizer_data[res[0]] = {'body' : res[1], 'headline' : res[2], 'udfs' : [res[3]]}
+        return topicizer_data
 
     def __fetch_analyzer_tables(self) -> dict:
         """
@@ -1001,5 +1043,6 @@ if __name__ == '__main__':
     # print(writer.fetch_analyzer_todo_list(1))
     # to_do_list=writer.fetch_analyzer_todo_list(1)
     #    writer.write_analyzer_results(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in to_do_list])
+    print(writer.fetch_topicizer_data())
     writer.close()
     print("further test deactivated")

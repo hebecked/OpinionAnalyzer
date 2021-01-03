@@ -22,114 +22,235 @@ class DatabaseExchange(connectDb.Database):
 
     # database queries
     # scraper related database queries
-    __SQL_SCRAPER_FETCH_LAST_RUN = """SELECT MAX(start_timestamp) 
-                                        FROM news_meta_data.crawl_log 
-                                        WHERE success = True 
-                                            AND source_id = %s;"""
+    __SQL_SCRAPER_FETCH_LAST_RUN = """
+                                      SELECT 
+                                        MAX(start_timestamp) 
+                                      FROM 
+                                        news_meta_data.crawl_log 
+                                      WHERE 
+                                        success = True 
+                                        AND source_id = %s;
+                                   """
 
-    __SQL_SCRAPER_FETCH_TODO = """SELECT article_id, url, article_body_id, headline, body, proc_timestamp, proc_counter 
-                                        FROM news_meta_data.v_todo_crawl
-                                        WHERE src_id = %s;"""
+    __SQL_SCRAPER_FETCH_TODO = """
+                                  SELECT 
+                                    article_id, 
+                                    url, 
+                                    article_body_id, 
+                                    headline, 
+                                    body, 
+                                    proc_timestamp, 
+                                    proc_counter 
+                                  FROM 
+                                    news_meta_data.v_todo_crawl
+                                  WHERE 
+                                    src_id = %s;
+                               """
 
-    __SQL_SCRAPER_LOG_START = """INSERT INTO news_meta_data.crawl_log 
-                                        (source_id, start_timestamp, success) 
-                                        VALUES (%s, %s, False);"""
+    __SQL_SCRAPER_LOG_START = """
+                                 INSERT INTO 
+                                   news_meta_data.crawl_log (source_id, start_timestamp, success) 
+                                 VALUES (%s, %s, False);
+                              """
 
-    __SQL_SCRAPER_LOG_END = """UPDATE news_meta_data.crawl_log 
-                                        SET end_timestamp = %s, 
-                                            success = %s 
-                                        WHERE id = %s;"""
+    __SQL_SCRAPER_LOG_END = """
+                               UPDATE 
+                                 news_meta_data.crawl_log 
+                               SET 
+                                 end_timestamp = %s, 
+                                 success = %s 
+                               WHERE id = %s;
+                            """
 
-    __SQL_SCRAPER_FETCH_MAX_LOG_ID = """SELECT MAX(id) 
-                                        FROM news_meta_data.crawl_log 
-                                        WHERE source_id = %s;"""
+    __SQL_SCRAPER_FETCH_MAX_LOG_ID = """
+                                        SELECT 
+                                          MAX(id) 
+                                        FROM 
+                                          news_meta_data.crawl_log 
+                                        WHERE 
+                                          source_id = %s;
+                                     """
 
     # Article related database queries
-    __SQL_ARTICLE_HEADER_FETCH_START_ID = """SELECT MAX(id) 
-                                        FROM news_meta_data.article_header;"""
+    __SQL_ARTICLE_HEADER_FETCH_START_ID = """
+                                             SELECT 
+                                               MAX(id) 
+                                             FROM 
+                                               news_meta_data.article_header;
+                                          """
 
-    __SQL_ARTICLE_HEADER_INSERT = """INSERT INTO news_meta_data.article_header 
-                                        (source_date, obsolete, source_id, url) 
-                                        VALUES (%s, %s, %s, %s) 
-                                        ON CONFLICT DO NOTHING;"""
+    __SQL_ARTICLE_HEADER_INSERT = """
+                                     INSERT INTO 
+                                       news_meta_data.article_header (source_date, obsolete, source_id, url) 
+                                     VALUES (%s, %s, %s, %s) 
+                                     ON CONFLICT DO NOTHING;
+                                  """
 
-    __SQL_ARTICLE_HEADER_FETCH_ID = """SELECT url, id 
-                                        FROM news_meta_data.article_header 
-                                        WHERE id > %s 
-                                            AND source_id = %s 
-                                            AND source_date = %s;"""
+    __SQL_ARTICLE_HEADER_FETCH_ID = """
+                                       SELECT 
+                                         url, 
+                                         id 
+                                       FROM 
+                                         news_meta_data.article_header 
+                                       WHERE 
+                                         id > %s 
+                                         AND source_id = %s 
+                                         AND source_date = %s;
+                                    """
 
-    __SQL_ARTICLE_BODY_FETCH_START_ID = """SELECT MAX(id) 
-                                        FROM news_meta_data.article_body;"""
+    __SQL_ARTICLE_BODY_FETCH_START_ID = """
+                                           SELECT 
+                                             MAX(id) 
+                                           FROM 
+                                             news_meta_data.article_body;
+                                        """
 
-    __SQL_ARTICLE_BODY_INSERT = """INSERT INTO news_meta_data.article_body 
-                                        (article_id, headline, body, proc_timestamp, proc_counter) 
-                                        VALUES (%s, %s, %s, %s, %s) 
-                                        ON CONFLICT DO NOTHING;"""
+    __SQL_ARTICLE_BODY_INSERT = """
+                                   INSERT INTO 
+                                     news_meta_data.article_body (article_id, headline, body, proc_timestamp, proc_counter) 
+                                   VALUES (%s, %s, %s, %s, %s) 
+                                   ON CONFLICT DO NOTHING;
+                                """
 
-    __SQL_ARTICLE_BODY_UPDATE = """UPDATE news_meta_data.article_body 
-                                        SET proc_counter = %s 
-                                        WHERE id = %s;"""
+    __SQL_ARTICLE_BODY_UPDATE = """
+                                   UPDATE 
+                                     news_meta_data.article_body 
+                                   SET 
+                                     proc_counter = %s 
+                                   WHERE 
+                                     id = %s;
+                                """
 
-    __SQL_ARTICLE_BODY_FETCH_ID = """select article_id, max(id) as id 
-                                        FROM  news_meta_data.article_body 
-                                        WHERE id > %s 
-                                        GROUP BY article_id;"""
+    __SQL_ARTICLE_BODY_FETCH_ID = """
+                                     SELECT 
+                                       article_id, 
+                                       MAX(id) AS id 
+                                     FROM  
+                                       news_meta_data.article_body 
+                                     WHERE 
+                                       id > %s 
+                                     GROUP BY 
+                                       article_id;
+                                  """
 
     # udf related database queries
-    __SQL_UDF_INSERT = """INSERT INTO news_meta_data.udf_values 
-                                        (udf_id, object_type, object_id, udf_value) 
-                                        VALUES(%s, %s, %s, %s) 
-                                        ON CONFLICT DO NOTHING;"""
+    __SQL_UDF_INSERT = """
+                          INSERT INTO 
+                            news_meta_data.udf_values (udf_id, object_type, object_id, udf_value) 
+                          VALUES (%s, %s, %s, %s) 
+                          ON CONFLICT DO NOTHING;
+                       """
 
     # Comment related database queries
-    __SQL_COMMENT_FETCH_START_ID = """SELECT MAX(id) 
-                                        FROM news_meta_data.Comment;"""
+    __SQL_COMMENT_FETCH_START_ID = """
+                                      SELECT 
+                                        MAX(id) 
+                                      FROM 
+                                        news_meta_data.comment;
+                                   """
 
-    __SQL_COMMENT_INSERT = """INSERT INTO news_meta_data.Comment 
-                                        (article_body_id, external_id, parent_id, level, body,proc_timestamp) 
-                                        VALUES (%s, %s, %s, %s, %s, %s) 
-                                        ON CONFLICT DO NOTHING;"""
+    __SQL_COMMENT_INSERT = """
+                              INSERT INTO 
+                                news_meta_data.Comment (article_body_id, external_id, parent_id, level, body,proc_timestamp) 
+                              VALUES (%s, %s, %s, %s, %s, %s) 
+                              ON CONFLICT DO NOTHING;
+                           """
 
-    __SQL_COMMENT_FETCH_ID = """SELECT external_id, article_body_id, id 
-                                        FROM news_meta_data.Comment 
-                                        WHERE id > %s 
-                                        AND article_body_id IN %s;"""
+    __SQL_COMMENT_FETCH_ID = """
+                                SELECT 
+                                  external_id, 
+                                  article_body_id, 
+                                  id 
+                                FROM 
+                                  news_meta_data.comment 
+                                WHERE 
+                                  id > %s 
+                                  AND article_body_id IN %s;
+                             """
 
     # todo get recent comments from view (by source_id and proc_timestamp)
 
     # analyzer related database queries
-    __SQL_ANALYZER_FETCH_HEADER = """SELECT id, analyzer_view_name, analyzer_table_name 
-                                        FROM news_meta_data.analyzer_header;"""
+    __SQL_ANALYZER_FETCH_HEADER = """
+                                     SELECT 
+                                       id, 
+                                       analyzer_view_name, 
+                                       analyzer_table_name 
+                                     FROM 
+                                       news_meta_data.analyzer_header;
+                                  """
 
-    __SQL_ANALYZER_FETCH_TODO = """SELECT comment_id, comment_body 
-                                        FROM news_meta_data.{}"""  # {} needed to add data not wrapped in ''
+    __SQL_ANALYZER_FETCH_TODO = """
+                                   SELECT 
+                                     comment_id, 
+                                     comment_body 
+                                   FROM 
+                                     news_meta_data.{}
+                                """  # {} needed to add data not wrapped in ''
 
-    __SQL_ANALYZER_LOG_START = """INSERT INTO news_meta_data.analyzer_log 
-                                        (analyzer_id, comment_id, start_timestamp) 
-                                        VALUES (%s, %s, %s);"""
+    __SQL_ANALYZER_LOG_START = """
+                                  INSERT INTO 
+                                    news_meta_data.analyzer_log (analyzer_id, comment_id, start_timestamp) 
+                                  VALUES (%s, %s, %s);
+                               """
 
-    __SQL_ANALYZER_FETCH_LOG_IDs = """SELECT comment_id, max(id) AS id  
-                                        FROM news_meta_data.analyzer_log 
-                                        WHERE start_timestamp = %s 
+    __SQL_ANALYZER_FETCH_LOG_IDs = """
+                                      SELECT 
+                                        comment_id, 
+                                        MAX(id) AS id  
+                                      FROM 
+                                        news_meta_data.analyzer_log 
+                                      WHERE 
+                                        start_timestamp = %s 
                                         AND analyzer_id = %s 
                                         AND comment_id IN %s 
-                                        GROUP BY comment_id;"""
+                                      GROUP BY 
+                                        comment_id;
+                                   """
 
-    __SQL_ANALYZER_FETCH_TARGET_COLUMNS = """SELECT column_name 
-                                        FROM information_schema.columns 
-                                        WHERE table_schema = 'news_meta_data' 
-                                        AND table_name = %s;"""
+    __SQL_ANALYZER_FETCH_TARGET_COLUMNS = """
+                                             SELECT 
+                                               column_name 
+                                             FROM 
+                                               information_schema.columns 
+                                             WHERE 
+                                               table_schema = 'news_meta_data' 
+                                               AND table_name = %s;
+                                          """
 
-    __SQL_ANALYZER_LOG_END = """UPDATE news_meta_data.analyzer_log 
-                                        SET end_timestamp = %s, 
-                                            success=True 
-                                        WHERE id = %s 
-                                        AND comment_id = %s;"""
+    __SQL_ANALYZER_LOG_END = """
+                                UPDATE 
+                                  news_meta_data.analyzer_log 
+                                SET 
+                                  end_timestamp = %s, 
+                                  success=True 
+                                WHERE 
+                                  id = %s 
+                                  AND comment_id = %s;
+                             """
 
-    __SQL_ANALYZER_INSERT_RESULT = """INSERT INTO news_meta_data.{}
-                                        {} 
-                                        VALUES %s;"""  # {} needed to add data not wrapped in ''
+    __SQL_ANALYZER_INSERT_RESULT = """
+                                      INSERT INTO 
+                                        news_meta_data.{} {} 
+                                      VALUES %s;
+                                   """  # {} needed to add data not wrapped in ''
+
+    __SQL_TOPICIZER_FETCH_TODO = """
+                                    SELECT 
+                                        b.id, 
+                                        b.body, 
+                                        b.headline, 
+                                        u.udf_value 
+                                    FROM 
+                                        news_meta_data.article_body as b,
+                                        news_meta_data.udf_values as u
+                                    WHERE
+                                        b.id=u.object_id
+                                        AND u.object_type=1
+                                        AND u.udf_id=2
+                                        AND NOT b.body=''
+                                    FETCH FIRST 1000 ROWS ONLY;
+                                    """  # rewrite with VIEW
 
     def __init__(self):
         super().__init__()
@@ -146,6 +267,31 @@ class DatabaseExchange(connectDb.Database):
 
     def connect(self):
         super().connect()
+
+    def fetch_topicizer_data(self) -> dict:
+        """
+        fetches topic builder related data from database
+
+        Returns
+        -------
+        dict
+            { analyzer_id : {analyzer_view_name: str, analyzer_table_name : str} }
+
+        """
+        # todo all provisorical - rework later!
+        cur = self.conn.cursor()
+        cur.execute(DatabaseExchange.__SQL_TOPICIZER_FETCH_TODO)
+        result = cur.fetchall()
+        cur.close()
+        if len(result) == 0:
+            return {}
+        topicizer_data = {}
+        for res in result:
+            if res[0] in topicizer_data.keys():
+                topicizer_data[res[0]]['udfs'].append(res[3])
+            else:
+                topicizer_data[res[0]] = {'body' : res[1], 'headline' : res[2], 'udfs' : [res[3]]}
+        return topicizer_data
 
     def __fetch_analyzer_tables(self) -> dict:
         """
@@ -897,5 +1043,6 @@ if __name__ == '__main__':
     # print(writer.fetch_analyzer_todo_list(1))
     # to_do_list=writer.fetch_analyzer_todo_list(1)
     #    writer.write_analyzer_results(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in to_do_list])
+    print(writer.fetch_topicizer_data())
     writer.close()
     print("further test deactivated")
