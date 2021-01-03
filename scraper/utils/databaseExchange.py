@@ -290,7 +290,7 @@ class DatabaseExchange(connectDb.Database):
             if res[0] in topicizer_data.keys():
                 topicizer_data[res[0]]['udfs'].append(res[3])
             else:
-                topicizer_data[res[0]] = {'body' : res[1], 'headline' : res[2], 'udfs' : [res[3]]}
+                topicizer_data[res[0]] = {'body': res[1], 'headline': res[2], 'topics': [res[3]]}
         return topicizer_data
 
     def __fetch_analyzer_tables(self) -> dict:
