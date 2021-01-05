@@ -23,11 +23,9 @@ class FazApi:
 
     def get_all_articles_from_dates(self, start: str, end: str) -> []:
         if not is_date(start):
-            print("Error: " + start + " has not the correct format. Please use format \'%YYYY-mm-dd\' as input format!")
-            raise Exception("DateError")
+            raise Exception("Error: " + start + " incorrect format. Please use format \'%YYYY-mm-dd\' as input format!")
         elif not is_date(end):
-            print("Error: " + end + " has not the correct format. Please use format \'%YYYY-mm-dd\' as input format!")
-            raise Exception("DateError")
+            raise Exception("Error: " + end + " incorrect format. Please use format \'%YYYY-mm-dd\' as input format!")
 
         link_array = []
         start_date = datetime.datetime.strptime(start, '%Y-%m-%d').strftime('%d.%m.%Y')
@@ -50,11 +48,32 @@ class FazApi:
 
             page += 1
 
-        print(link_array)
         return link_array
+
+    def get_article_meta(self, url) -> {}:
+        print(url)
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, 'lxml')
+        print(soup)
+
+        #<p class="First atc-TextParagraph" id="pageIndex_1"
+        #<p class="atc-TextParagraph"
+        #<h3 class="atc-SubHeadline
+        #
+
+        print('---------- Comments -----------')
+        comment_response = requests.get('https://www.faz.net/aktuell/feuilleton/buecher/rezensionen/sachbuch/biographie-des-schriftstellers-leonhard-frank-17092115.html?action=commentList&page=1&onlyTopArguments=false&ot=de.faz.ArticleCommentsElement.comments.ajax.ot')
+        comment_soup = BeautifulSoup(comment_response.content, 'lxml')
+        print(comment_soup)
+
+        return {}
+
+
 
 
 if __name__ == '__main__':
     faz_api = FazApi()
-    list_of_links = faz_api.get_all_articles_from_dates(start='202012-31', end='2021-01-01')
+    list_of_links = faz_api.get_all_articles_from_dates(start='2021-01-01', end='2021-01-01')
+    faz_api.get_article_meta(url=list_of_links[0])
+
 
