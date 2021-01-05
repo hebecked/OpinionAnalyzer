@@ -19,8 +19,9 @@ class FazApi:
                 break
 
             for object in objects:
-                new_object = object.find('a', href=True).attrs['href']
+                new_object = object.find('a', {'class': 'js-hlp-LinkSwap js-tsr-Base_ContentLink tsr-Base_ContentLink'}, href=True).attrs['href']
                 print("-------------------------------")
+                print(url)
                 print(new_object)
 
             page += 1
