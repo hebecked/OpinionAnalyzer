@@ -275,7 +275,7 @@ class DatabaseExchange(connectDb.Database):
         Returns
         -------
         dict
-            { analyzer_id : {analyzer_view_name: str, analyzer_table_name : str} }
+            { article_body_id : {body: str, headline : str, topics : list[str]} }
 
         """
         # todo all provisorical - rework later!
