@@ -37,7 +37,7 @@ class Word2Vector:
 	import gensim
 
 	def __init__(self):
-		#source: https://devmount.github.io/GermanWordEmbeddings/ (http://cloud.devmount.de/d2bc5672c523b086) 
+		#source: https://devmount.github.io/GermanWordEmbeddings/ (http://cloud.devmount.de/d2bc5672c523b086) https://cloud.devmount.de/d2bc5672c523b086/german.model
 		#problem with words not in the model, requires the use of preprocessing.py functions.
 		self.model = gensim.models.KeyedVectors.load_word2vec_format("../Testdata/german_word2vec.model", binary=True) 
 		#Alternative is FastText in other file 
