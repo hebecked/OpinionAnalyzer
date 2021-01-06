@@ -1,393 +1,1048 @@
-import utils.connectDb as connectDb
-from utils.article import article
-from utils.comment import comment
+# -*- coding: utf-8 -*-
+
+# todo: open tasks marked with todo
+
 import datetime as dt
 
-#add comments, rename to dataExchange
-#add getUdfs(), getSources() for article and comment object
+import utils.connectDb as connectDb
+from utils.article import Article
+from utils.comment import Comment
 
-class databaseExchange(connectDb.database):
-    SUBSET_LENGTH=100   #threshold for database flush
-    ANALYZER_RESULT_DEFAULT_COLUMNS=['id','comment_id','analyzer_log_id']
-    #scraper related database queries
-    __SCRAPER_FETCH_LAST_RUN="""SELECT MAX(start_timestamp) FROM news_meta_data.crawl_log WHERE success=True and source_id=%s;"""    
-    __SCRAPER_FETCH_TODO="""SELECT article_id,url,article_body_id,headline,body,proc_timestamp,proc_counter FROM news_meta_data.v_todo_crawl WHERE src_id=%s;"""
 
-    #article related database queries
-    __HEADER_MIN_STATEMENT="""SELECT MAX(id) FROM news_meta_data.article_header;"""
-    __HEADER_STATEMENT="""INSERT INTO news_meta_data.article_header (source_date,obsolete,source_id,url) VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
-    __HEADER_ID_FETCH_STATEMENT="""SELECT url, id FROM news_meta_data.article_header WHERE id > %s AND source_id=%s AND source_date=%s;"""
+class DatabaseExchange(connectDb.Database):
+    SUBSET_LENGTH = 100  # threshold for database flush
+    ANALYZER_RESULT_DEFAULT_COLUMNS = ['id', 'comment_id', 'analyzer_log_id']
 
-    __BODY_MIN_STATEMENT="""SELECT MAX(id) from news_meta_data.article_body;"""
-    __BODY_STATEMENT="""INSERT INTO news_meta_data.article_body (article_id, headline, body, proc_timestamp, proc_counter) VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
-    __BODY_UPDATE_STATEMENT="""UPDATE news_meta_data.article_body set proc_counter=%s where id=%s;"""
-    __BODY_ID_FETCH_STATEMENT="""select article_id, max(id) as id FROM  news_meta_data.article_body where id > %s group by article_id;"""
+    # class variable representing database architecture for analyzers
+    __analyzer_database_structure = {}
 
-    #udf related database queries
-    __UDF_INSERT_STATEMENT="""INSERT INTO news_meta_data.udf_values (udf_id,object_type,object_id,udf_value) VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
+    # class variables representing current logfile state in db
+    __analyzer_ids = {}
+    __scraper_log_id = None
 
-    #comment related database queries
-    __COMMENT_MIN_STATEMENT="""SELECT MAX(id) FROM news_meta_data.comment;"""
-    __COMMENT_STATEMENT="""INSERT INTO news_meta_data.comment (article_body_id, external_id, parent_id, level, body,proc_timestamp ) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING;"""
-    __COMMENT_ID_FETCH_STATEMENT="""SELECT external_id, article_body_id, id FROM news_meta_data.comment WHERE id > %s AND article_body_id in %s;"""    
-#todo get recent comments from view (by source_id and proc_timestamp)
-    
-    #logging related database queries
-    __LOG_STARTCRAWL="""INSERT INTO news_meta_data.crawl_log (source_id,start_timestamp, success) VALUES (%s, %s,False);"""
-    __LOG_ENDCRAWL="""UPDATE news_meta_data.crawl_log SET end_timestamp=%s, success=%s WHERE id=%s;"""
-    __LOG_ENDCRAWL_TEST="""SELECT * FROM news_meta_data.crawl_log  WHERE id=%s;"""
-    __LOG_GET_MAX_ID="""SELECT MAX(id) FROM news_meta_data.crawl_log WHERE source_id=%s;"""
-    
-    #analyzer related database queries
-    __ANALYZER_FETCH_HEADER="""SELECT id, analyzer_view_name, analyzer_table_name FROM news_meta_data.analyzer_header;"""
-    __ANALYZER_FETCH_TODO="""SELECT comment_id, comment_body FROM news_meta_data.{}"""
-    __ANALYZER_LOG_START="""INSERT INTO news_meta_data.analyzer_log (analyzer_id,comment_id, start_timestamp) VALUES (%s,%s,%s);"""
-    __ANALYZER_FETCH_LOG_IDs="""SELECT comment_id, max(id) AS id  FROM  news_meta_data.analyzer_log where start_timestamp=%s and analyzer_id=%s and comment_id in %s GROUP BY comment_id;"""
-    __ANALYZER_GET_TARGET_COLUMNS="""SELECT column_name FROM information_schema.columns WHERE table_schema='news_meta_data' AND table_name=%s;"""
-    __ANALYZER_LOG_END="""UPDATE news_meta_data.analyzer_log SET end_timestamp=%s, success=True WHERE id=%s AND comment_id =%s;"""
-    __ANALYZER_INSERT_RESULT="""INSERT INTO news_meta_data.{} {} VALUES %s;"""
-    
-    #class variable representing database architecture for analyzers
-    __analyzer_data={}
-    
-    #class variables representing current logfile state in db
-    __analyzerIds={}
-    __scraperLogId=None
-        
+    # database queries
+    # scraper related database queries
+    __SQL_SCRAPER_FETCH_LAST_RUN = """
+                                      SELECT 
+                                        MAX(start_timestamp) 
+                                      FROM 
+                                        news_meta_data.crawl_log 
+                                      WHERE 
+                                        success = True 
+                                        AND source_id = %s;
+                                   """
+
+    __SQL_SCRAPER_FETCH_TODO = """
+                                  SELECT 
+                                    article_id, 
+                                    url, 
+                                    article_body_id, 
+                                    headline, 
+                                    body, 
+                                    proc_timestamp, 
+                                    proc_counter 
+                                  FROM 
+                                    news_meta_data.v_todo_crawl
+                                  WHERE 
+                                    src_id = %s;
+                               """
+
+    __SQL_SCRAPER_LOG_START = """
+                                 INSERT INTO 
+                                   news_meta_data.crawl_log (source_id, start_timestamp, success) 
+                                 VALUES (%s, %s, False);
+                              """
+
+    __SQL_SCRAPER_LOG_END = """
+                               UPDATE 
+                                 news_meta_data.crawl_log 
+                               SET 
+                                 end_timestamp = %s, 
+                                 success = %s 
+                               WHERE id = %s;
+                            """
+
+    __SQL_SCRAPER_FETCH_MAX_LOG_ID = """
+                                        SELECT 
+                                          MAX(id) 
+                                        FROM 
+                                          news_meta_data.crawl_log 
+                                        WHERE 
+                                          source_id = %s;
+                                     """
+
+    # Article related database queries
+    __SQL_ARTICLE_HEADER_FETCH_START_ID = """
+                                             SELECT 
+                                               MAX(id) 
+                                             FROM 
+                                               news_meta_data.article_header;
+                                          """
+
+    __SQL_ARTICLE_HEADER_INSERT = """
+                                     INSERT INTO 
+                                       news_meta_data.article_header (source_date, obsolete, source_id, url) 
+                                     VALUES (%s, %s, %s, %s) 
+                                     ON CONFLICT DO NOTHING;
+                                  """
+
+    __SQL_ARTICLE_HEADER_FETCH_ID = """
+                                       SELECT 
+                                         url, 
+                                         id 
+                                       FROM 
+                                         news_meta_data.article_header 
+                                       WHERE 
+                                         id > %s 
+                                         AND source_id = %s 
+                                         AND source_date = %s;
+                                    """
+
+    __SQL_ARTICLE_BODY_FETCH_START_ID = """
+                                           SELECT 
+                                             MAX(id) 
+                                           FROM 
+                                             news_meta_data.article_body;
+                                        """
+
+    __SQL_ARTICLE_BODY_INSERT = """
+                                   INSERT INTO 
+                                     news_meta_data.article_body (article_id, headline, body, proc_timestamp, proc_counter) 
+                                   VALUES (%s, %s, %s, %s, %s) 
+                                   ON CONFLICT DO NOTHING;
+                                """
+
+    __SQL_ARTICLE_BODY_UPDATE = """
+                                   UPDATE 
+                                     news_meta_data.article_body 
+                                   SET 
+                                     proc_counter = %s 
+                                   WHERE 
+                                     id = %s;
+                                """
+
+    __SQL_ARTICLE_BODY_FETCH_ID = """
+                                     SELECT 
+                                       article_id, 
+                                       MAX(id) AS id 
+                                     FROM  
+                                       news_meta_data.article_body 
+                                     WHERE 
+                                       id > %s 
+                                     GROUP BY 
+                                       article_id;
+                                  """
+
+    # udf related database queries
+    __SQL_UDF_INSERT = """
+                          INSERT INTO 
+                            news_meta_data.udf_values (udf_id, object_type, object_id, udf_value) 
+                          VALUES (%s, %s, %s, %s) 
+                          ON CONFLICT DO NOTHING;
+                       """
+
+    # Comment related database queries
+    __SQL_COMMENT_FETCH_START_ID = """
+                                      SELECT 
+                                        MAX(id) 
+                                      FROM 
+                                        news_meta_data.comment;
+                                   """
+
+    __SQL_COMMENT_INSERT = """
+                              INSERT INTO 
+                                news_meta_data.Comment (article_body_id, external_id, parent_id, level, body,proc_timestamp) 
+                              VALUES (%s, %s, %s, %s, %s, %s) 
+                              ON CONFLICT DO NOTHING;
+                           """
+
+    __SQL_COMMENT_FETCH_ID = """
+                                SELECT 
+                                  external_id, 
+                                  article_body_id, 
+                                  id 
+                                FROM 
+                                  news_meta_data.comment 
+                                WHERE 
+                                  id > %s 
+                                  AND article_body_id IN %s;
+                             """
+
+    # todo get recent comments from view (by source_id and proc_timestamp)
+
+    # analyzer related database queries
+    __SQL_ANALYZER_FETCH_HEADER = """
+                                     SELECT 
+                                       id, 
+                                       analyzer_view_name, 
+                                       analyzer_table_name 
+                                     FROM 
+                                       news_meta_data.analyzer_header;
+                                  """
+
+    __SQL_ANALYZER_FETCH_TODO = """
+                                   SELECT 
+                                     comment_id, 
+                                     comment_body 
+                                   FROM 
+                                     news_meta_data.{}
+                                """  # {} needed to add data not wrapped in ''
+
+    __SQL_ANALYZER_LOG_START = """
+                                  INSERT INTO 
+                                    news_meta_data.analyzer_log (analyzer_id, comment_id, start_timestamp) 
+                                  VALUES (%s, %s, %s);
+                               """
+
+    __SQL_ANALYZER_FETCH_LOG_IDs = """
+                                      SELECT 
+                                        comment_id, 
+                                        MAX(id) AS id  
+                                      FROM 
+                                        news_meta_data.analyzer_log 
+                                      WHERE 
+                                        start_timestamp = %s 
+                                        AND analyzer_id = %s 
+                                        AND comment_id IN %s 
+                                      GROUP BY 
+                                        comment_id;
+                                   """
+
+    __SQL_ANALYZER_FETCH_TARGET_COLUMNS = """
+                                             SELECT 
+                                               column_name 
+                                             FROM 
+                                               information_schema.columns 
+                                             WHERE 
+                                               table_schema = 'news_meta_data' 
+                                               AND table_name = %s;
+                                          """
+
+    __SQL_ANALYZER_LOG_END = """
+                                UPDATE 
+                                  news_meta_data.analyzer_log 
+                                SET 
+                                  end_timestamp = %s, 
+                                  success=True 
+                                WHERE 
+                                  id = %s 
+                                  AND comment_id = %s;
+                             """
+
+    __SQL_ANALYZER_INSERT_RESULT = """
+                                      INSERT INTO 
+                                        news_meta_data.{} {} 
+                                      VALUES %s;
+                                   """  # {} needed to add data not wrapped in ''
+
+    __SQL_TOPICIZER_FETCH_TODO = """
+                                    SELECT 
+                                        b.id, 
+                                        b.body, 
+                                        b.headline, 
+                                        u.udf_value 
+                                    FROM 
+                                        news_meta_data.article_body as b,
+                                        news_meta_data.udf_values as u
+                                    WHERE
+                                        b.id=u.object_id
+                                        AND u.object_type=1
+                                        AND u.udf_id=2
+                                        AND NOT b.body=''
+                                    FETCH FIRST 1000 ROWS ONLY;
+                                    """  # rewrite with VIEW
 
     def __init__(self):
         super().__init__()
-        print("initializing...")
+        print("initializing database exchange...")
         self.connect()
-        databaseExchange.__analyzer_data=self.__fetchAnalyzerTables()
-        print("Analyzer tables: ",databaseExchange.__analyzer_data )
-        
+        DatabaseExchange.__analyzer_database_structure = self.__fetch_analyzer_tables()
+#        print("Analyzer tables: ", DatabaseExchange.__analyzer_database_structure)
+
     def close(self):
         super().close()
-        
+
     def __del__(self):
         super().__del__()
-        
+
     def connect(self):
         super().connect()
-        
-    def __fetchAnalyzerTables(self):
-        #fetch table data for analyzers from header table (which view and target table to use)
-        cur = self.conn.cursor()
-        cur.execute(databaseExchange.__ANALYZER_FETCH_HEADER)
-        result = cur.fetchall()
-        cur.close()
-        if len(result)==0: return {}
-        analyzerDict={}
-        for res in result:
-            analyzerDict[res[0]]={'analyzer_view_name':res[1],'analyzer_table_name':res[2]}
-        return analyzerDict
 
-        
-    def fetchTodoListAnalyzer(self, analyzerId:int):
-        if not analyzerId in databaseExchange.__analyzer_data.keys(): return []
+    def fetch_topicizer_data(self) -> dict:
+        """
+        fetches topic builder related data from database
+
+        Returns
+        -------
+        dict
+            { article_body_id : {body: str, headline : str, topics : list[str]} }
+
+        """
+        # todo all provisorical - rework later!
         cur = self.conn.cursor()
-        cur.execute(databaseExchange.__ANALYZER_FETCH_TODO.format(databaseExchange.__analyzer_data[analyzerId]['analyzer_view_name']))
+        cur.execute(DatabaseExchange.__SQL_TOPICIZER_FETCH_TODO)
         result = cur.fetchall()
         cur.close()
-        dataSet=set([])
+        if len(result) == 0:
+            return {}
+        topicizer_data = {}
         for res in result:
-            dataSet|=set([res])
-        returnList=list(dataSet)
-        self.__logStartAnalyzer(analyzerId,returnList)
-        return returnList
-    
-    def __logStartAnalyzer(self, analyzerId:int, analyzerTodoList: list):
-        if not analyzerId in databaseExchange.__analyzer_data.keys(): return False
-        self.__analyzerStart=dt.datetime.today()
+            if res[0] in topicizer_data.keys():
+                topicizer_data[res[0]]['udfs'].append(res[3])
+            else:
+                topicizer_data[res[0]] = {'body': res[1], 'headline': res[2], 'topics': [res[3]]}
+        return topicizer_data
+
+    def __fetch_analyzer_tables(self) -> dict:
+        """
+        fetches all analyzer related table information from news_meta_data.analyzer_header \n
+        in detail: view from which to crate the to do list and target table
+
+        Returns
+        -------
+        dict
+            { analyzer_id : {analyzer_view_name: str, analyzer_table_name : str} }
+
+        """
+        # fetch table data for analyzers from header table (which view and target table to use)
         cur = self.conn.cursor()
-        [cur.execute(databaseExchange.__ANALYZER_LOG_START,(analyzerId, x[0],self.__analyzerStart)) for x in analyzerTodoList]
-        databaseExchange.__analyzerIds.update(self.__fetchAnalyzerLogIds(analyzerId, list(c[0] for c in analyzerTodoList)))
+        cur.execute(DatabaseExchange.__SQL_ANALYZER_FETCH_HEADER)
+        result = cur.fetchall()  # id, analyzer_view_name, analyzer_table_name
+        cur.close()
+        if len(result) == 0:
+            return {}
+        analyzer_dict = {}
+        for res in result:
+            analyzer_dict[res[0]] = {'analyzer_view_name': res[1], 'analyzer_table_name': res[2]}
+        return analyzer_dict
+
+    def fetch_analyzer_todo_list(self, analyzer_id: int) -> list:
+        """
+        
+
+        Parameters
+        ----------
+        analyzer_id : int
+            analyzer unique id corresponding to id in analyzer_header table
+
+        Returns
+        -------
+        list
+            list of tuples (comment_id, comment_body) \n
+            retrieved from corresponding analyzer related t do list (view)
+
+        """
+        if analyzer_id not in DatabaseExchange.__analyzer_database_structure.keys():
+            return []
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_ANALYZER_FETCH_TODO.format(
+                DatabaseExchange.__analyzer_database_structure[analyzer_id]['analyzer_view_name']
+            )
+        )
+        result = cur.fetchall()  # comment_id, comment_body
+        cur.close()
+        data_set = set([])
+        for res in result:
+            data_set |= {res}
+        todo_list = list(data_set)
+        self.__log_analyzer_start(analyzer_id, list(c[0] for c in todo_list))
+        return todo_list
+
+    def __log_analyzer_start(self, analyzer_id: int, comment_id_list: list):
+        """
+        writes logging entry for all comment_id in list (analyzer_todo_list) to analyzer_log table
+
+        Parameters
+        ----------
+        analyzer_id : int
+            analyzer unique id corresponding to id in analyzer_header table
+        comment_id_list : list
+            list of comment_id (int)
+
+        Returns
+        -------
+        bool
+            True if successful
+
+        """
+        if analyzer_id not in DatabaseExchange.__analyzer_database_structure.keys():
+            return False
+        self.__analyzer_start_timestamp = dt.datetime.today()
+        cur = self.conn.cursor()
+        for comment_id in comment_id_list:
+            cur.execute(
+                DatabaseExchange.__SQL_ANALYZER_LOG_START,
+                (analyzer_id, comment_id, self.__analyzer_start_timestamp)
+            )
+        DatabaseExchange.__analyzer_ids.update(
+            self.__fetch_analyzer_log_ids(analyzer_id, comment_id_list)
+        )
         self.conn.commit()
         cur.close()
 
-    def __fetchAnalyzerLogIds(self, analyzerId:int, commentIds: list):
+    def __fetch_analyzer_log_ids(self, analyzer_id: int, comment_id_list: list) -> dict:
+        """
+        retrieve all logging ids in database table analyzer_log and save in class variable
+
+        Parameters
+        ----------
+        analyzer_id : int
+            analyzer unique id corresponding to id in analyzer_header table
+        comment_id_list : list
+            list of comment ids (int)
+
+        Returns
+        -------
+        dict
+            mapping table for comment_id to log_id as dict\n
+             {comment_id : analyzer_log.id}
+
+        """
         cur = self.conn.cursor()
-        cur.execute(databaseExchange.__ANALYZER_FETCH_LOG_IDs, (self.__analyzerStart,analyzerId, tuple(commentIds)))
+        cur.execute(
+            DatabaseExchange.__SQL_ANALYZER_FETCH_LOG_IDs,
+            (self.__analyzer_start_timestamp, analyzer_id, tuple(comment_id_list))
+        )
         ids = cur.fetchall()
-        cur.close()   
-        if len(ids)==0: 
+        cur.close()
+        if len(ids) == 0:
             return {}
         return dict(ids)
-    
-    def __fetchAnalyzerColums(self, analyzerId:int):
+
+    def __fetch_analyzer_columns(self, analyzer_id: int) -> list:
+        """
+        retrieving list of feasible target table column for given analyzer
+
+        Parameters
+        ----------
+        analyzer_id : int
+            analyzer unique id corresponding to id in analyzer_header table
+
+        Returns
+        -------
+        list
+            list of individual database columns in analyzer result table\n
+            default columns excluded
+
+        """
         cur = self.conn.cursor()
-        cur.execute(databaseExchange.__ANALYZER_GET_TARGET_COLUMNS, (databaseExchange.__analyzer_data[analyzerId]['analyzer_table_name'],))
-        table_fields = cur.fetchall()
-        if len(table_fields)==0:
-            cur.close()   
-            return set([])
-        columns = set(f[0] for f in table_fields)-set(databaseExchange.ANALYZER_RESULT_DEFAULT_COLUMNS)
+        cur.execute(
+            DatabaseExchange.__SQL_ANALYZER_FETCH_TARGET_COLUMNS,
+            (DatabaseExchange.__analyzer_database_structure[analyzer_id]['analyzer_table_name'],)
+        )
+        table_fields = cur.fetchall()  # column_name for result table
+        if len(table_fields) == 0:
+            cur.close()
+            return []
+        columns = set(f[0] for f in table_fields) - set(DatabaseExchange.ANALYZER_RESULT_DEFAULT_COLUMNS)
         cur.close()
         return list(columns)
-    
-    def writeAnalyzerResults(self, analyzerId:int, analyzerResult: list):
-        if not type(analyzerResult)==list: return False
-        if not analyzerId in databaseExchange.__analyzer_data.keys(): return False
-        analyzerEnd=dt.datetime.today()
-        targetColumns=self.__fetchAnalyzerColums(analyzerId)
-        cols=tuple(databaseExchange.ANALYZER_RESULT_DEFAULT_COLUMNS[1:] + targetColumns)
-        colString='('+','.join(cols)+')'
-        cur = self.conn.cursor()
-        for result in analyzerResult:
-            if not type(result)==dict:continue
-            insert=databaseExchange.__ANALYZER_INSERT_RESULT.format(databaseExchange.__analyzer_data[analyzerId]['analyzer_table_name'], colString)
-            values=(result['comment_id'],databaseExchange.__analyzerIds[result['comment_id']])
-            if not(set(targetColumns) - set(result.keys())):
-                for col in targetColumns:
-                    values+=tuple([result[col]])
-                insert.format(values)
-                cur.execute(insert,(values,))
-                cur.execute(databaseExchange.__ANALYZER_LOG_END,(analyzerEnd, databaseExchange.__analyzerIds[result['comment_id']], result['comment_id']))
-        self.conn.commit()
-        cur.close()
-        keys=databaseExchange.__analyzerIds.keys()
-        for result in analyzerResult:
-            if result['comment_id']in keys:
-                del databaseExchange.__analyzerIds[result['comment_id']]
-        return True
 
-             
-    def fetchTodoListScraper(self, sourceId:int):
-        cur = self.conn.cursor()
-        cur.execute(databaseExchange.__SCRAPER_FETCH_TODO,(sourceId,))
-        result = cur.fetchall()
-        cur.close()
-        if len(result)==0: return []
-        returnList=[]
-        for res in result:
-            art=article()
-            art.setHeader({'id':res[0],'url':res[1],'source_id':sourceId})
-            if(res[2]!=None):
-                art.setBody({'id':res[2],'article_id':res[0],'headline':res[3],'body':res[4],'proc_timestamp':res[5],'proc_counter':res[6]})
-                art.setBodyOld()
-            returnList+=[art]
-        return returnList
+    def write_analyzer_results(self, analyzer_id: int, analyzer_result: list) -> bool:
+        """
+        writes analyzer result data to corresponding database result table (specified by analyzer_id)
 
-    def fetchLastRun(self,sourceId:int):
-        cur = self.conn.cursor()
-        cur.execute(databaseExchange.__SCRAPER_FETCH_LAST_RUN,(sourceId,))
-        result = cur.fetchall()
-        cur.close()
-        if result[0][0]==None: return dt.datetime(1990,1,1)
-        return result[0][0]
-    
-    def logStartCrawl(self,sourceId:int):
-        cur = self.conn.cursor()
-        cur.execute(databaseExchange.__LOG_STARTCRAWL,(sourceId,dt.datetime.today().replace(microsecond=0).isoformat()))
-        self.conn.commit()
-        cur.execute(databaseExchange.__LOG_GET_MAX_ID,(sourceId,))
-        result = cur.fetchall()
-        cur.close()
-        if result[0][0]==None: return False
-        databaseExchange.__scraperLogId=result[0][0]
-        print("logId: ",databaseExchange.__scraperLogId)
-        return True
+        Parameters
+        ----------
+        analyzer_id : int
+            analyzer unique id corresponding to id in analyzer_header table
+        analyzer_result : list
+            list of result dicts\n
+            {database_column : analyzer_result}
 
-    def logEndCrawl(self,success:bool=True):
-        cur = self.conn.cursor()
-        argument_tuple=(dt.datetime.today().replace(microsecond=0).isoformat(),success,databaseExchange.__scraperLogId)
-        cur.execute(databaseExchange.__LOG_ENDCRAWL,argument_tuple)
-        self.conn.commit()        
-        cur.close()
+        Returns
+        -------
+        bool
+            True if successful
 
-    def fetchArticleIds(self, articlesList:list, startId:int):
-        articleIds=[]
+        """
+        if not type(analyzer_result) == list:
+            return False
+        if analyzer_id not in DatabaseExchange.__analyzer_database_structure.keys():
+            return False
+        analyzer_end_timestamp = dt.datetime.today()
+        target_columns = self.__fetch_analyzer_columns(analyzer_id)
+        cols = tuple(DatabaseExchange.ANALYZER_RESULT_DEFAULT_COLUMNS[1:] + target_columns)
+        columns_as_string = '(' + ','.join(cols) + ')'
         cur = self.conn.cursor()
-        for sourcesDates in set((x.getArticle()["header"]["source_id"],x.getArticle()["header"]["source_date"]) for x in articlesList):
-            cur.execute(databaseExchange.__HEADER_ID_FETCH_STATEMENT,tuple([startId]+list(sourcesDates)))
-            result = cur.fetchall()
-            articleIds+=list(result)
-        cur.close()
-        return dict(articleIds)
-    
-    def fetchBodyIds(self, articlesList:list, startId:int):
-        bodyIds=[]       
-        cur = self.conn.cursor()        
-        cur.execute(databaseExchange.__BODY_ID_FETCH_STATEMENT,(startId,))
-        result = cur.fetchall()
-        if len(result)==0: return {}
-        bodyIds=list(result)       
-        return dict(bodyIds)
-    
-    def __writeHeaders(self, articlesList:list):
-        cur = self.conn.cursor()
-        cur.execute(databaseExchange.__HEADER_MIN_STATEMENT)
-        result = cur.fetchall()
-        if result[0][0]==None: startId=0
-        else: startId=result[0][0]  #todo check if correct
-        for art in articlesList:
-            if (art.setHeaderComplete()):
-                hdr=art.getArticle()["header"]
-                cur.execute(databaseExchange.__HEADER_STATEMENT,(hdr["source_date"],hdr["obsolete"],hdr["source_id"],hdr["url"]))
-        self.conn.commit()
-        cur.close()
-        self.fillHeaderIds(articlesList,startId)
-
-    
-    def __writeBodies(self, articlesList:list):
-        cur = self.conn.cursor()
-        cur.execute(databaseExchange.__BODY_MIN_STATEMENT)
-        result = cur.fetchall()
-        if result[0][0]==None: startId=0
-        else: startId=result[0][0]  #todo check if correct
-        for art in articlesList:
-            if (art.setBodyComplete()):
-                todo=art.getBodyToWrite()
-                if(todo["insert"]):
-                    cur.execute(databaseExchange.__BODY_STATEMENT,(todo["body"]["article_id"],todo["body"]["headline"],todo["body"]["body"],todo["body"]["proc_timestamp"],todo["body"]["proc_counter"]+1))
-                else:
-                    cur.execute(databaseExchange.__BODY_UPDATE_STATEMENT,(todo["body"]["proc_counter"]+1,todo["body"]["id"]))
-        self.conn.commit()
-        cur.close()
-        self.fillBodyIds(articlesList,startId)
-    
-    def __writeArticleUdfs(self, articlesList:list):
-        cur = self.conn.cursor()
-        for art in articlesList:
-            if art.getBodyToWrite()["insert"]:
-                for udf in art.getArticle()["udfs"]:
-                    cur.execute(databaseExchange.__UDF_INSERT_STATEMENT,(udf[0],article.OBJECT_TYPE, art.getArticle()["body"]["id"],udf[1]))
-        self.conn.commit()
-        cur.close()            
-    
-    def fillHeaderIds(self,articlesList:list, startId: int):
-        Ids=self.fetchArticleIds(articlesList,startId)
-        for art in articlesList:
-            url=art.getArticle()["header"]["url"]
-            if url in Ids.keys():
-                art.setHeaderId(Ids[url])
-                
-    def fillBodyIds(self,articlesList:list, startId: int):
-        Ids=self.fetchBodyIds(articlesList,startId)
-        for art in articlesList:
-            articleId=art.getArticle()["header"]["id"]
-            if articleId in Ids.keys():
-                art.setBodyId(Ids[articleId])    
-        
-    
-    def writeArticles(self, articlesList:list):
-        if(type(articlesList)!=list): return False
-        start=0
-        while start < len(articlesList):
-            worklist=list(filter(lambda x: type(x)==article,articlesList[start:start+databaseExchange.SUBSET_LENGTH]))
-            headers=list(filter(lambda x: not(x.isInDb()),worklist))
-            self.__writeHeaders(headers)
-            #headers[0].print()
-            print("article headers written and id added")
-            #worklist[0].print()
-            bodies=list(filter(lambda x: x.isInDb(),worklist))
-            self.__writeBodies(bodies)
-            print("article bodies written and id added")
-            #bodies[0].print()
-            self.__writeArticleUdfs(bodies)   
-            print("article udfs written")
-            start+=databaseExchange.SUBSET_LENGTH
-
-    def fetchCommentIds(self, commentsList:list, startId:int):
-        article_body_id_List=list(x.getComment()["data"]["article_body_id"] for x in commentsList)
-        article_body_id_tuple=tuple(article_body_id_List)
-        commentIds=[]       
-        cur = self.conn.cursor()        
-        cur.execute(databaseExchange.__COMMENT_ID_FETCH_STATEMENT,(startId,article_body_id_tuple))
-        result = cur.fetchall()
-        if len(result)==0: return {}
-        commentIds=list(((r[0],r[1]),r[2]) for r in result)       
-        return dict(commentIds)        
-
-    def fillCommentIds(self, commentsList:list, startId:int):
-        Ids=self.fetchCommentIds(commentsList,startId)
-        for comm in commentsList:
-            identifier=(comm.getComment()["data"]["external_id"],comm.getComment()["data"]["article_body_id"])
-            if identifier in Ids.keys():
-                comm.setCommentId(Ids[identifier])    
-    
-    def fetchOldCommentKeys(self, sourceId: int, startdate:dt.datetime):
-# todo use view to get "not so old" comments from database
-        
-        pass
-    def __writeCommentData(self, commentsList:list):
-        cur = self.conn.cursor()
-        cur.execute(databaseExchange.__COMMENT_MIN_STATEMENT)
-        result = cur.fetchall()
-        if result[0][0]==None: startId=0
-        else: startId=result[0]
-        for comm in commentsList:
-            if (comm.setComplete()):
-                data=comm.getComment()["data"]
-                cur.execute(databaseExchange.__COMMENT_STATEMENT,(data["article_body_id"],data["external_id"],data["parent_id"],data["level"],data["body"],data["proc_timestamp"]))
-        self.conn.commit()
-        cur.close()
-        self.fillCommentIds(commentsList,startId)
-        
-    def __writeCommentUdfs(self, commentsList:list):
-        cur = self.conn.cursor()
-        for comm in commentsList:
-            if not('id' in comm.getComment()["data"].keys()):
+        for result in analyzer_result:
+            if not type(result) == dict:
                 continue
-            if comm.getComment()["udfs"]:
-                for udf in comm.getComment()["udfs"]:
-                    cur.execute(databaseExchange.__UDF_INSERT_STATEMENT,(udf[0],comment.OBJECT_TYPE, comm.getComment()["data"]["id"],udf[1]))
+            insert_sql = DatabaseExchange.__SQL_ANALYZER_INSERT_RESULT.format(
+                DatabaseExchange.__analyzer_database_structure[analyzer_id]['analyzer_table_name'],
+                columns_as_string
+            )  # needed to fill data to sql statement without being wrapped as string ('')
+            values = (result['comment_id'], DatabaseExchange.__analyzer_ids[result['comment_id']])
+            if not (set(target_columns) - set(result.keys())):  # if set of missing columns are empty
+                for col in target_columns:
+                    values += tuple([result[col]])
+                insert_sql.format(values)  # needed to fill data to sql statement without being wrapped as string ('')
+                cur.execute(insert_sql, (values,))  # values tuple added to insert query
+                cur.execute(
+                    DatabaseExchange.__SQL_ANALYZER_LOG_END,
+                    (analyzer_end_timestamp, DatabaseExchange.__analyzer_ids[result['comment_id']],
+                        result['comment_id'])
+                )
         self.conn.commit()
-        cur.close()   
-    
-    def writeComments(self, commentsList:list):
-        if(type(commentsList)!=list): return False
-        start=0
-        while start < len(commentsList):
-            worklist=list(filter(lambda x: type(x)==comment,commentsList[start:start+databaseExchange.SUBSET_LENGTH]))
-            
+        cur.close()
+        keys = DatabaseExchange.__analyzer_ids.keys()
+        for result in analyzer_result:
+            if result['comment_id'] in keys:
+                del DatabaseExchange.__analyzer_ids[result['comment_id']]
+        return True
+
+    def fetch_scraper_todo_list(self, source_id: int) -> list:
+        """
+        get to do Article list from database for scraper specified by source_id
+
+        Parameters
+        ----------
+        source_id : int
+            scraper unique id corresponding to id in source_header table
+
+        Returns
+        -------
+        list
+            list of Article objects as saved in database\n
+            retrieved from v_todo_crawl view for corresponding scraper source_id
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_SCRAPER_FETCH_TODO,
+            (source_id,)
+        )
+        result = cur.fetchall()  # article_id, url, article_body_id, headline, body, proc_timestamp, proc_counter
+        cur.close()
+        if len(result) == 0:
+            return []
+        todo_list = []
+        for res in result:
+            art = Article()
+            art.set_header({'id': res[0], 'url': res[1], 'source_id': source_id})
+            if res[2] is not None:
+                art.set_body(
+                    {'id': res[2], 'article_id': res[0], 'headline': res[3], 'body': res[4], 'proc_timestamp': res[5],
+                     'proc_counter': res[6]})
+                art.set_body_old()
+            todo_list += [art]
+        return todo_list
+
+    def fetch_scraper_last_run(self, source_id: int) -> dt.datetime:
+        """
+
+        Parameters
+        ----------
+        source_id : int
+            scraper unique id corresponding to id in source_header table
+
+        Returns
+        -------
+        TYPE
+            datetime.datetime object for the last run of this scraper
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_SCRAPER_FETCH_LAST_RUN,
+            (source_id,)
+        )
+        result = cur.fetchall()  # last timestamp of successful run
+        cur.close()
+        if result[0][0] is None:
+            return dt.datetime(1990, 1, 1)
+        return result[0][0]
+
+    def log_scraper_start(self, source_id: int) -> bool:
+        """
+        writes new line to crawl_log table\n
+        start entry for scraper given by source_id
+
+        Parameters
+        ----------
+        source_id : int
+            scraper unique id corresponding to id in source_header table
+
+        Returns
+        -------
+        bool
+            True if successful
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(DatabaseExchange.__SQL_SCRAPER_LOG_START,
+                    (source_id, dt.datetime.today().replace(microsecond=0).isoformat()))
+        self.conn.commit()
+        cur.execute(DatabaseExchange.__SQL_SCRAPER_FETCH_MAX_LOG_ID, (source_id,))
+        result = cur.fetchall()  # id of last successful run
+        cur.close()
+        if result[0][0] is None:
+            return False
+        DatabaseExchange.__scraper_log_id = result[0][0]
+#        print("logId: ", DatabaseExchange.__scraper_log_id)
+        return True
+
+    def log_scraper_end(self, success: bool = True):
+        """
+        completes entry for current scraper run (adding end date and flag successful)
+
+        Parameters
+        ----------
+        success : bool, optional
+            Has crawling been successful? The default is True.
+
+        Returns
+        -------
+        None.
+
+        """
+        cur = self.conn.cursor()
+        update_tuple = (
+            dt.datetime.today().replace(microsecond=0).isoformat(), success, DatabaseExchange.__scraper_log_id
+        )
+        cur.execute(
+            DatabaseExchange.__SQL_SCRAPER_LOG_END,
+            update_tuple
+        )
+        self.conn.commit()
+        cur.close()
+
+    def __fetch_article_ids(self, articles_list: list, start_id: int) -> dict:
+        """
+        fetches mapping of urls to article_id (given by database) from article_header table
+
+        Parameters
+        ----------
+        articles_list : list
+            list of Article objects
+        start_id : int
+            database id from which to start the extraction\n
+            smallest possible id range for less traffic and response time
+
+        Returns
+        -------
+        dict
+            mapping table for url to article_id as dict\n
+             {url : article_header.id}
+
+        """
+        article_ids = []
+        cur = self.conn.cursor()
+        for source_dates in set(
+                (x.get_article()["header"]["source_id"], x.get_article()["header"]["source_date"])
+                for x in articles_list):
+            cur.execute(
+                DatabaseExchange.__SQL_ARTICLE_HEADER_FETCH_ID,
+                tuple([start_id] + list(source_dates))
+            )
+            result = cur.fetchall()  # url, article_id
+            article_ids += list(result)
+        cur.close()
+        return dict(article_ids)
+
+    def __fetch_body_ids(self, start_id: int) -> dict:
+        """
+        fetches mapping of article_id to latest body_id (given by database) from article_body table
+
+        Parameters
+        ----------
+        start_id : int
+            database id from which to start the extraction\n
+            smallest possible id range for less traffic and response time
+        Returns
+        -------
+        dict
+            mapping table for article_id to body_id as dict\n
+             {article_id : article_body.id}
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(DatabaseExchange.__SQL_ARTICLE_BODY_FETCH_ID, (start_id,))
+        result = cur.fetchall()  # article_id, body_id
+        if len(result) == 0:
+            return {}
+        body_ids = list(result)
+        return dict(body_ids)
+
+    def __write_article_headers(self, article_list: list):
+        """
+        writes header data for Article objects in article_list to article_header table
+
+        Parameters
+        ----------
+        article_list : list
+            list of Article objects to be written to database
+
+        Returns
+        -------
+        None.
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(DatabaseExchange.__SQL_ARTICLE_HEADER_FETCH_START_ID)
+        result = cur.fetchall()  # last header id before current insert run
+        if result[0][0] is None:
+            start_id = 0
+        else:
+            start_id = result[0][0]  # todo check if correct
+        for art in article_list:
+            if art.set_header_complete():
+                hdr = art.get_article()["header"]
+                cur.execute(
+                    DatabaseExchange.__SQL_ARTICLE_HEADER_INSERT,
+                    (hdr["source_date"], hdr["obsolete"], hdr["source_id"], hdr["url"])
+                )
+        self.conn.commit()
+        cur.close()
+        self.__fill_header_ids(article_list, start_id)
+
+    def __write_article_bodies(self, article_list: list):
+        """
+        writes article body data for Article objects in article_list to article_body table
+
+        Parameters
+        ----------
+        article_list : list
+            list of Article objects to be written to database
+
+        Returns
+        -------
+        None.
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(DatabaseExchange.__SQL_ARTICLE_BODY_FETCH_START_ID)
+        result = cur.fetchall()  # last body id before current insert run
+        if result[0][0] is None:
+            start_id = 0
+        else:
+            start_id = result[0][0]   # todo check if correct
+        for art in article_list:
+            if art.set_body_complete():
+                body_to_use = art.get_body_to_write()
+                if body_to_use["insert"]:
+                    cur.execute(DatabaseExchange.__SQL_ARTICLE_BODY_INSERT, (
+                        body_to_use["body"]["article_id"], body_to_use["body"]["headline"], body_to_use["body"]["body"],
+                        body_to_use["body"]["proc_timestamp"], body_to_use["body"]["proc_counter"] + 1))
+                else:
+                    cur.execute(DatabaseExchange.__SQL_ARTICLE_BODY_UPDATE,
+                                (body_to_use["body"]["proc_counter"] + 1, body_to_use["body"]["id"]))
+        self.conn.commit()
+        cur.close()
+        self.__fill_body_ids(article_list, start_id)
+
+    def __write_article_udfs(self, article_list: list):
+        """
+        writes udfs for Article objects in article_list to udf_values table
+
+        Parameters
+        ----------
+        article_list : list
+            list of Article objects to be written to database
+
+        Returns
+        -------
+        None.
+
+        """
+        cur = self.conn.cursor()
+        for art in article_list:
+            if art.get_body_to_write()["insert"]:
+                for udf in art.get_article()["udfs"]:
+                    cur.execute(
+                        DatabaseExchange.__SQL_UDF_INSERT,
+                        (udf[0], Article.OBJECT_TYPE, art.get_article()["body"]["id"], udf[1])
+                    )
+        self.conn.commit()
+        cur.close()
+
+    def __fill_header_ids(self, article_list: list, start_id: int):
+        """
+        add database given article_id to Article object (after writing to database)
+
+        Parameters
+        ----------
+        article_list : list
+            list of Article objects to enrich with article_id\n
+            (adding information to input list)
+        start_id : int
+            database id from which to start the extraction\n
+            smallest possible id range for less traffic and response time
+
+        Returns
+        -------
+        None.
+
+        """
+        id_lookup_dict = self.__fetch_article_ids(article_list, start_id)
+        for art in article_list:
+            url = art.get_article()["header"]["url"]
+            if url in id_lookup_dict.keys():
+                art.set_header_id(id_lookup_dict[url])
+
+    def __fill_body_ids(self, article_list: list, start_id: int):
+        """
+        add database given body_id to Article object (after writing to database)
+
+        Parameters
+        ----------
+        article_list : list
+            list of Article objects to enrich with body_id\n
+            (adding information to input list)
+        start_id : int
+            database id from which to start the extraction\n
+            smallest possible id range for less traffic and response time
+
+        Returns
+        -------
+        None.
+
+        """
+        id_lookup_dict = self.__fetch_body_ids(start_id)
+        for art in article_list:
+            article_id = art.get_article()["header"]["id"]
+            if article_id in id_lookup_dict.keys():
+                art.set_body_id(id_lookup_dict[article_id])
+
+    def write_articles(self, article_list: list) -> bool:
+        """
+        write full Article objects from list (header, body, udfs) to database
+
+        Parameters
+        ----------
+        article_list : list
+            list of Article objects to ewrite to database
+
+        Returns
+        -------
+        bool
+            True if successful
+
+        """
+        if type(article_list) != list:
+            return False
+        start = 0
+        return_value = True  # todo add error handling
+        while start < len(article_list):
+            work_list = list(
+                filter(lambda x: type(x) == Article,
+                       article_list[start:start + DatabaseExchange.SUBSET_LENGTH]))
+            headers = list(filter(lambda x: not (x.is_in_db()), work_list))
+            self.__write_article_headers(headers)
+#            print("Article headers written and id added") # todo delete line (debugging purposes only)
+            bodies = list(filter(lambda x: x.is_in_db(), work_list))
+            self.__write_article_bodies(bodies)
+#            print("Article bodies written and id added") # todo delete line (debugging purposes only)
+            self.__write_article_udfs(bodies)
+#            print("Article udfs written") # todo delete line (debugging purposes only)
+            start += DatabaseExchange.SUBSET_LENGTH
+        return return_value
+
+    def __fetch_comment_ids(self, comment_list: list, start_id: int) -> dict:
+        """
+        fetches mapping of (external_id, article_body_id) to comment_id (given by database) from comment table
+
+        Parameters
+        ----------
+        comment_list : list
+            list of Comment objects
+        start_id : int
+            database id from which to start the extraction\n
+            smallest possible id range for less traffic and response time
+
+        Returns
+        -------
+        dict
+            mapping table for tuple to comment_id as dict\n
+             {(external_id, article_body_id) : comment.id}
+
+        """
+        article_body_id_list = list(x.get_comment()["data"]["article_body_id"] for x in comment_list)
+        article_body_id_tuple = tuple(article_body_id_list)
+        cur = self.conn.cursor()
+        cur.execute(DatabaseExchange.__SQL_COMMENT_FETCH_ID, (start_id, article_body_id_tuple))
+        result = cur.fetchall()  # external_id, article_body_id, id
+        if len(result) == 0:
+            return {}
+        comment_ids = list(((r[0], r[1]), r[2]) for r in result)
+        return dict(comment_ids)
+
+    def __fill_comment_ids(self, comment_list: list, start_id: int):
+        """
+        add database given comment_id to Comment object (after writing to database)
+
+        Parameters
+        ----------
+        comment_list : list
+            list of Comment objects to enrich with body_id\n
+            (adding information to input list)
+        start_id : int
+            database id from which to start the extraction\n
+            smallest possible id range for less traffic and response time
+
+        Returns
+        -------
+        None.
+
+        """
+        id_lookup_dict = self.__fetch_comment_ids(comment_list, start_id)
+        for comm in comment_list:
+            identifier = (comm.get_comment()["data"]["external_id"], comm.get_comment()["data"]["article_body_id"])
+            if identifier in id_lookup_dict.keys():
+                comm.set_comment_id(id_lookup_dict[identifier])
+
+    def __fetch_old_comment_keys(self, source_id: int, start_date: dt.datetime):
+        """
+        no functionality right now
+
+        """
+        # todo use view to get "not so old" comments from database
+        pass
+
+    def __write_comment_data(self, comment_list: list):
+        """
+         writes comment data for Comment objects in comment_list to comment table
+
+        Parameters
+        ----------
+        comment_list : list
+            list of Comment objects to be written to database
+
+        Returns
+        -------
+        None.
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(DatabaseExchange.__SQL_COMMENT_FETCH_START_ID)
+        result = cur.fetchall()  # last comment id before current insert run
+        if result[0][0] is None:
+            start_id = 0
+        else:
+            start_id = result[0]
+        for cmt in comment_list:
+            if cmt.set_complete():
+                data = cmt.get_comment()["data"]
+                cur.execute(
+                    DatabaseExchange.__SQL_COMMENT_INSERT,
+                    (data["article_body_id"], data["external_id"], data["parent_id"], data["level"], data["body"],
+                        data["proc_timestamp"])
+                )
+        self.conn.commit()
+        cur.close()
+        self.__fill_comment_ids(comment_list, start_id)
+
+    def __write_comment_udfs(self, comment_list: list):
+        """
+        writes udfs for Comment objects in comment_list to udf_values table
+
+        Parameters
+        ----------
+        comment_list : list
+            list of Comment objects to be written to database
+
+        Returns
+        -------
+        None.
+
+        """
+        cur = self.conn.cursor()
+        for cmt in comment_list:
+            if not ('id' in cmt.get_comment()["data"].keys()):
+                continue
+            if cmt.get_comment()["udfs"]:
+                for udf in cmt.get_comment()["udfs"]:
+                    cur.execute(
+                        DatabaseExchange.__SQL_UDF_INSERT,
+                        (udf[0], Comment.OBJECT_TYPE, cmt.get_comment()["data"]["id"], udf[1])
+                    )
+        self.conn.commit()
+        cur.close()
+
+    def write_comments(self, comment_list: list) -> bool:
+        """
+        write full Comment objects from list (data, udfs) to database
+
+        Parameters
+        ----------
+        comment_list : list
+            list of Comment objects to be written to database
+
+        Returns
+        -------
+        bool
+            True if successful
+
+        """
+        if type(comment_list) != list:
+            return False
+        start = 0
+        return_value = True  # todo add error handling
+        while start < len(comment_list):
+            work_list = list(
+                filter(lambda x: type(x) == Comment,
+                       comment_list[start:start + DatabaseExchange.SUBSET_LENGTH]))
+
             # todo filter by not in db (use fetchOldCommentKeys)
-            comments=worklist
-            
-            self.__writeCommentData(comments)
-            print("comment data written:",start," - ",start+databaseExchange.SUBSET_LENGTH)
-            self.__writeCommentUdfs(comments)
-            print("comment udfs written:",start," - ",start+databaseExchange.SUBSET_LENGTH)
-            start+=databaseExchange.SUBSET_LENGTH
-    
+            comments = work_list
+            self.__write_comment_data(comments)
+#            print("Comment data written:", start, " - ", start + DatabaseExchange.SUBSET_LENGTH) # todo delete line (debugging purposes only)
+            self.__write_comment_udfs(comments)
+#            print("Comment udfs written:", start, " - ", start + DatabaseExchange.SUBSET_LENGTH) # todo delete line (debugging purposes only)
+            start += DatabaseExchange.SUBSET_LENGTH
+        return return_value
+
+
 def test():
-    testArticle=article()
-    testArticle.setHeader({"url":"http://www.google.de","obsolete":False,"source_id":1,"source_date":dt.date(2020,12,1)})
-    #testArticle.setBody({"proc_timestamp":dt.datetime(2020,12,2,22,0,33),"headline":"example of headline","body":"testText","proc_counter":2,"id":1})
-    #testArticle.setBodyOld()
-    testArticle.setBody({"proc_timestamp":dt.datetime.today(),"headline":"example of headline","body":"testText"})
-    testArticle.addUdf("author","me")
-    testArticle.addUdf("label","smart")
-    print("plain article print")
-    testArticle.print()
-    writer=databaseExchange()
+    """
+    some test cases
+    excluded from ordinary run as it adds garbage to database
+    just take a look at the functionality but don't use in production
+
+    Returns
+    -------
+    None.
+
+    """
+    test_article = Article()
+    test_article.set_header(
+        {"url": "http://www.google.de", "obsolete": False, "source_id": 1, "source_date": dt.date(2020, 12, 1)})
+    # test_article.setBody({"proc_timestamp":dt.datetime(2020,12,2,22,0,33),"headline":"example of headline","body":"testText","proc_counter":2,"id":1})
+    # test_article.setBodyOld()
+    test_article.set_body({"proc_timestamp": dt.datetime.today(), "headline": "example of headline", "body": "testText"})
+    test_article.add_udf("author", "me")
+    test_article.add_udf("label", "smart")
+    print("plain Article print")
+    test_article.print()
+    writer = DatabaseExchange()
     writer.connect()
-    print("last Run= ",writer.fetchLastRun(1))
-    writer.logStartCrawl(1)
-#    writer.writeArticles([testArticle])
-    testComment=comment()
-    testComment.setData({"article_body_id":141,"level":0,"body":"i'm a comment","proc_timestamp":dt.datetime.today()})
-    testComment.addUdf("author","brilliant me")
-    testComment.setExternalId((hash("brilliant me"+testComment.getComment()["data"]["body"])))
-#    print("plain comment print")
-    testComment.print()
-#    writer.writeComments([testComment])
-   # testComment.print()
-    writer.logEndCrawl()
-    todo=writer.fetchTodoListScraper(1)
+    print("last Run= ", writer.fetch_scraper_last_run(1))
+    writer.log_scraper_start(1)
+    writer.write_articles([test_article])
+    test_comment = Comment()
+    test_comment.set_data(
+        {"article_body_id": 141, "level": 0, "body": "i'm a Comment", "proc_timestamp": dt.datetime.today()})
+    test_comment.add_udf("author", "brilliant me")
+    test_comment.set_external_id((hash("brilliant me" + test_comment.get_comment()["data"]["body"])))
+    print("plain Comment print")
+    test_comment.print()
+    writer.write_comments([test_comment])
+    writer.log_scraper_end()
+    todo = writer.fetch_scraper_todo_list(1)
     for td in todo:
-        pass#td.print()
+        td.print()
     writer.close()
 
 
 if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
-    print("Starting databaseExchange testcases here:\n\n")
-    writer=databaseExchange()
-    #print(writer.fetchTodoListAnalyzer(1))
-#    todo=writer.fetchTodoListAnalyzer(1)
-#    writer.writeAnalyzerResults(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in todo])
+    print("Starting DatabaseExchange showcase here:\n\n")
+    writer = DatabaseExchange()
+    # print(writer.fetch_analyzer_todo_list(1))
+    # to_do_list=writer.fetch_analyzer_todo_list(1)
+    #    writer.write_analyzer_results(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in to_do_list])
+    print(writer.fetch_topicizer_data())
     writer.close()
     print("further test deactivated")

@@ -1,5 +1,6 @@
 from utils.connectDb import Database
 
+
 def main():
         db = Database()
         db.connect()
