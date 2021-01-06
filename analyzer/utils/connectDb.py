@@ -18,7 +18,7 @@ def __exit__(self, type, value, traceback):
 """
 
 
-class database:
+class Database:
 
     def __init__(self):
         """ initalize class and get connection parameters """

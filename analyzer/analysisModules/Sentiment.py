@@ -10,6 +10,8 @@ Get text topic:	https://spacy.io/models/de
 				(ML-NLP approaches, gpt summary?)
 Get Personalities: 	https://github.com/jkwieser/personality-detection-text
 					https://github.com/SenticNet/personality-detection
+Improve code documentation
+Add test case for splitted results
 """
 
 import json

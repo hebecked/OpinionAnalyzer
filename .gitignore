@@ -4,3 +4,4 @@ package-lock.json
 .idea
 idea
 __pycache__/
+analyzer/Testdata/german_word2vec.model

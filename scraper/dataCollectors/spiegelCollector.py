@@ -1,5 +1,5 @@
 from datetime import date
-from utils.connectDb import database
+from utils.connectDb import Database
 from random import randint
 from time import sleep
 import spiegel_scraper as spon
@@ -9,7 +9,7 @@ logger = logging.getLogger()
 
 
 def getFirstInitValue():
-    db = database()
+    db = Database()
     db.connect()
     dateTuple = db.retrieveValues("SELECT is_first_init FROM general_data.system_configuration WHERE news_type = 'spiegel';")
     dateObject = []
@@ -19,13 +19,13 @@ def getFirstInitValue():
 
 
 def setFirstInitValue(newsType, bool):
-    db = database()
+    db = Database()
     db.connect()
     db.execute("UPDATE general_data.system_configuration SET is_first_init = " + bool + " WHERE news_type = '" + newsType + "';")
 
 
 def getDateObject(start, end):
-    db = database()
+    db = Database()
     db.connect()
     dateTuple = db.retrieveValues("SELECT date::VARCHAR FROM general_data.date_time_dimension WHERE date >= '" + start + "'  AND date <= '" + end + "';")
     dateObject = []
@@ -34,7 +34,7 @@ def getDateObject(start, end):
     return dateObject
 
 def getYesterdayDateObject():
-    db = database()
+    db = Database()
     db.connect()
     dateTuple = db.retrieveValues("SELECT date::VARCHAR FROM general_data.date_time_dimension WHERE date = CURRENT_DATE-'1 day'::INTERVAL;")
     dateObject = []
@@ -69,7 +69,7 @@ def createDbJson(rawData, date):
 
 
 def insertData(tableName, values, dataLine):
-    db = database()
+    db = Database()
     db.connect()
     db.execute("INSERT INTO " + tableName + " " + values + " VALUES ('" + dataLine["url"] + "'" + "," + "'" + dataLine["headline"] + "'" + "," + "'" + dataLine["published_at"] + "');")
 

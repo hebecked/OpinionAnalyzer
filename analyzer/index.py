@@ -1,6 +1,6 @@
 from cronJobs.cronJobs import CronJobs
 from time import sleep
-from utils.connectDb import database
+from utils.connectDb import Database
 import logging
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger()
@@ -8,7 +8,7 @@ logger = logging.getLogger()
 def main():
     logger.info("Analyzer successfully started.")
     logger.info("Testing database connection.")
-    db = database()
+    db = Database()
     db.connect()
     db.getVersion()
     db.getTestTableMeta()
