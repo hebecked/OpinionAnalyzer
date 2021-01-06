@@ -46,7 +46,25 @@ class databaseExchange(connectDb.database):
     __ANALYZER_GET_TARGET_COLUMNS="""SELECT column_name FROM information_schema.columns WHERE table_schema='news_meta_data' AND table_name=%s;"""
     __ANALYZER_LOG_END="""UPDATE news_meta_data.analyzer_log SET end_timestamp=%s, success=True WHERE id=%s AND comment_id =%s;"""
     __ANALYZER_INSERT_RESULT="""INSERT INTO news_meta_data.{} {} VALUES %s;"""
-    
+
+    __SQL_TOPICIZER_FETCH_TODO = """
+                                    SELECT 
+                                        b.id, 
+                                        b.body, 
+                                        b.headline, 
+                                        u.udf_value 
+                                    FROM 
+                                        news_meta_data.article_body as b,
+                                        news_meta_data.udf_values as u
+                                    WHERE
+                                        b.id=u.object_id
+                                        AND u.object_type=1
+                                        AND u.udf_id=2
+                                        AND NOT b.body=''
+                                    FETCH FIRST 1000 ROWS ONLY;
+                                    """  # rewrite with VIEW
+
+
     #class variable representing database architecture for analyzers
     __analyzer_data={}
     
@@ -70,7 +88,32 @@ class databaseExchange(connectDb.database):
         
     def connect(self):
         super().connect()
-        
+
+    def fetch_topicizer_data(self) -> dict:
+        """
+        fetches topic builder related data from database
+
+        Returns
+        -------
+        dict
+            { analyzer_id : {analyzer_view_name: str, analyzer_table_name : str} }
+
+        """
+        # todo all provisorical - rework later!
+        cur = self.conn.cursor()
+        cur.execute(databaseExchange.__SQL_TOPICIZER_FETCH_TODO)
+        result = cur.fetchall()
+        cur.close()
+        if len(result) == 0:
+            return {}
+        topicizer_data = {}
+        for res in result:
+            if res[0] in topicizer_data.keys():
+                topicizer_data[res[0]]['udfs'].append(res[3])
+            else:
+                topicizer_data[res[0]] = {'body': res[1], 'headline': res[2], 'topics': [res[3]]}
+        return topicizer_data
+
     def __fetchAnalyzerTables(self):
         #fetch table data for analyzers from header table (which view and target table to use)
         cur = self.conn.cursor()
@@ -389,5 +432,6 @@ if __name__ == '__main__':
     #print(writer.fetchTodoListAnalyzer(1))
 #    todo=writer.fetchTodoListAnalyzer(1)
 #    writer.writeAnalyzerResults(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in todo])
+    print(writer.fetch_topicizer_data())
     writer.close()
     print("further test deactivated")
