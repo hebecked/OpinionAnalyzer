@@ -68,7 +68,7 @@ class Database:
     def getVersion(self):
         try:
             print('PostgreSQL database version:')
-            db_version = self.execute('SELECT version()')
+            db_version = self.retrieveValues('SELECT version()')
             print(db_version)
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
@@ -76,7 +76,7 @@ class Database:
     def getTestTableMeta(self):
         try:
             print('test:')
-            db_version = self.execute('SELECT * FROM information_schema.tables WHERE table_name = \'test\'')
+            db_version = self.retrieveValues('SELECT * FROM information_schema.tables WHERE table_name = \'test\'')
             print(db_version)
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
