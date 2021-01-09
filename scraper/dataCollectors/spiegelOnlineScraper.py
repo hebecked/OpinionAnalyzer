@@ -273,7 +273,7 @@ def run_all():
         db.log_scraper_start(spiegel_online_scraper.id)
         start_date = end_date - timedelta(weeks=1)
         article_header_list = spiegel_online_scraper.get_article_list(start_date, end_date)
-        end_date = start_date - 1
+        end_date = start_date - timedelta(1)
         if len(article_header_list) == 0:
             break
         db.write_articles(article_header_list)
