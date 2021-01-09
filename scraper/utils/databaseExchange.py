@@ -86,6 +86,15 @@ class DatabaseExchange(connectDb.Database):
                                      ON CONFLICT DO NOTHING;
                                   """
 
+    __SQL_ARTICLE_HEADER_SET_OBSOLETE = """
+                                        UPDATE 
+                                            news_meta_data.article_header
+                                        SET
+                                            obsolete = true
+                                        WHERE 
+                                            id = %s;
+                                    """
+
     __SQL_ARTICLE_HEADER_FETCH_ID = """
                                        SELECT 
                                          url, 
@@ -256,6 +265,7 @@ class DatabaseExchange(connectDb.Database):
         super().__init__()
         print("initializing database exchange...")
         self.connect()
+        print("connected")
         DatabaseExchange.__analyzer_database_structure = self.__fetch_analyzer_tables()
 #        print("Analyzer tables: ", DatabaseExchange.__analyzer_database_structure)
 
@@ -665,6 +675,21 @@ class DatabaseExchange(connectDb.Database):
         body_ids = list(result)
         return dict(body_ids)
 
+    def __set_articles_obsolete(self, article_list: list):
+        """
+        sets column obsolete = True in article_header table for all articles in article_list
+
+        Parameters
+        ----------
+        article_list
+            list of articles to mark as obsolete in database
+        """
+        cur = self.conn.cursor()
+        for art in article_list:
+            cur.execute(DatabaseExchange.__SQL_ARTICLE_HEADER_SET_OBSOLETE, (art.get_article()['header']['id'],))
+        self.conn.commit()
+        cur.close()
+
     def __write_article_headers(self, article_list: list):
         """
         writes header data for Article objects in article_list to article_header table
@@ -828,6 +853,8 @@ class DatabaseExchange(connectDb.Database):
             work_list = list(
                 filter(lambda x: type(x) == Article,
                        article_list[start:start + DatabaseExchange.SUBSET_LENGTH]))
+            obsolete = list(filter(lambda x:  x.is_in_db() and x.get_article()['header']['obsolete'], work_list))
+            self.__set_articles_obsolete(obsolete)
             headers = list(filter(lambda x: not (x.is_in_db()), work_list))
             self.__write_article_headers(headers)
 #            print("Article headers written and id added") # todo delete line (debugging purposes only)
