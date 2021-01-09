@@ -155,8 +155,6 @@ class Faz:
         return comments
 
 
-
-
 if __name__ == '__main__':
     faz_api = Faz()
     list_of_links = faz_api.get_all_articles_from_dates(start='2021-01-01', end='2021-01-01')
