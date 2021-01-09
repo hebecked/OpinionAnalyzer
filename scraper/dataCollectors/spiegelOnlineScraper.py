@@ -264,6 +264,18 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
 
 
 def run_all():
+    """
+       full run of Scraper.
+       Fetching all articles - starting today and moving backwards in chunks of one week
+       will first add article-headers, then crawl bodies and comments
+       restart with next (older) week
+       
+       running on cpu_count-1 cores at the same time to concurrently crawl the pages at faster pace
+
+        Returns
+        -------
+        None
+    """
     start_time = datetime.today()
     logger.info("full run step - started at " + str(start_time))
     spiegel_online_scraper = SpiegelOnlineScraper()
