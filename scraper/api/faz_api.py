@@ -74,19 +74,42 @@ class FazApi:
         return article_body_meta_json_formatted
 
     def get_article_comments(self, url: str) -> []:
+        url = url + "?action=commentList&page=1&onlyTopArguments=false&ot=de.faz.ArticleCommentsElement.comments.ajax.ot"
 
-        print('---------- Comments -----------')
-        comment_response = requests.get('https://www.faz.net/aktuell/feuilleton/buecher/rezensionen/sachbuch/biographie-des-schriftstellers-leonhard-frank-17092115.html?action=commentList&page=1&onlyTopArguments=false&ot=de.faz.ArticleCommentsElement.comments.ajax.ot')
+        comment_response = requests.get(url)
         comment_soup = BeautifulSoup(comment_response.content, 'lxml')
-        print(comment_soup)
+
         comment_title_soup = comment_soup.find_all('p', {'class': 'js-lst-Comments_CommentTitle lst-Comments_CommentTitle'})
         comment_body_soup = comment_soup.find_all('p', {'class': 'lst-Comments_CommentText'})
+        comment_timestamp_soup = comment_soup.find_all('span', {'class': 'lst-Comments_CommentInfoDateText'})
 
-        print(comment_title_soup)
-        print(comment_body_soup)
+        if len(comment_title_soup) != len(comment_body_soup):
+            raise Exception("The number of comment bodies is not equal to the number of commen titles in + " + url)
 
+        comments = []
+        i = 0
+        while i < len(comment_body_soup) and i < len(comment_title_soup):
+            contents = "".join(str(item) for item in comment_title_soup[i].contents)
+            comment_title_cleaned = contents.replace("\n", ' ').replace("\t", ' ').rstrip("<br/>").rstrip("<br/").strip()
 
-        return []
+            contents_body = "".join(str(item) for item in comment_body_soup[i].contents)
+            comment_body_cleaned = contents_body.replace("\n", ' ').replace("\t", ' ').replace("<br/>", '').replace("<br/", '').strip()
+
+            contents_time = comment_timestamp_soup[i].contents[0]
+            contents_german_day = contents_time.split(' - ')[0]
+            contents_day = datetime.datetime.strptime(contents_german_day, '%d.%m.%Y').strftime('%Y-%m-%d')
+            contents_timestamp = contents_day + ' ' + contents_time.split(' - ')[1]
+
+            comment = {
+                "title": comment_title_cleaned,
+                "body": comment_body_cleaned,
+                "commented_at": contents_timestamp
+            }
+
+            comments.append(comment)
+            i += 1
+
+        return comments
 
 
 
@@ -94,8 +117,16 @@ class FazApi:
 if __name__ == '__main__':
     faz_api = FazApi()
     list_of_links = faz_api.get_all_articles_from_dates(start='2021-01-01', end='2021-01-01')
-    article_meta = faz_api.get_article_meta(url=list_of_links[0])
-    article_body_meta = faz_api.get_article_body_meta(url=list_of_links[0])
-    article_comments = faz_api.get_article_comments(url=list_of_links[0])
+    for link in list_of_links:
+        print(link)
+        try:
+            article_meta = faz_api.get_article_meta(url=link)
+            article_body_meta = faz_api.get_article_body_meta(url=link)
+            article_comments = faz_api.get_article_comments(url=link)
+            print(article_comments)
+        except IndexError:
+            print("non regular article")
+
+
 
 
