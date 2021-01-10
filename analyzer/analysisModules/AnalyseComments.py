@@ -1,6 +1,6 @@
 from utils.connectDb import Database
-from Sentiment import EnsembleSentiment
 from utils.databaseExchange import DatabaseExchange
+from Sentiment import EnsembleSentiment
 import json
 import logging
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S:')

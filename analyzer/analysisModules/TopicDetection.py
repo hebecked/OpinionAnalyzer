@@ -34,7 +34,11 @@ class baseline_topic_detection:
 	def __init__(self):
 		self.tagger = ht.HanoverTagger('morphmodel_ger.pgz')
 		self.commonGerWords=[]
-		with open('../Testdata/CommonGerWords.csv', newline='') as csvfile:
+		if __name__ == "__main__":
+			stop_word_path = '../Testdata/CommonGerWords.csv'
+		else:
+			stop_word_path = './Testdata/CommonGerWords.csv'
+		with open(stop_word_path, newline='') as csvfile:
 			spamreader = csv.reader(csvfile, delimiter=',')
 			#skip first 2 lines
 			spamreader.__next__()
@@ -55,7 +59,7 @@ class baseline_topic_detection:
 
 		
 
-	def get_topics(self, article):
+	def get_topics(self, article: str) -> list:
 		'''
 		Extract topics from an article body.
 		Hint: It is recommended to attach the headline to the body.
@@ -94,6 +98,7 @@ class baseline_topic_detection:
 			result.append(topic[0])
 			del wordfreq[topic[0]]
 
+		#possibly redouce to nouns in the future
 		return result
 
 

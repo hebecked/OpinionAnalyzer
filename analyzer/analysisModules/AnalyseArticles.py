@@ -1,16 +1,32 @@
 from utils.connectDb import Database
+from utils.databaseExchange import DatabaseExchange
+from TopicDetection import baseline_topic_detection
 import json
+import logging
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S:')
+logger = logging.getLogger()
 
-def main():
+
+def test_db_connection():
     db = Database()
     db.connect()
     print("I am just here to say casually Hi....So, Hi! Oh and This: \n")
     db.getVersion()
     db.getTestTableMeta()
 
+#init DB exchange module
+db=DatabaseExchange()
 
-if __name__ == "__main__":
-    with open('../Testdata/TestArticle.json') as f:
-        testArticle = json.load(f)
-        #dict_keys(['url', 'id', 'channel', 'subchannel', 'headline', 'intro', 'text', 'topics', 'author', 'comments_enabled', 'date_created', 'date_modified', 'date_published', 'breadcrumbs'])
-        # main()
+#init baseline topic detection for analysis
+bltd = baseline_topic_detection()
+
+articles = db.fetch_topicizer_data() # list of {article_body_id : dict {body: , headline: ,topics: } }
+for article_id, article in articles.items():
+	analyze = article["headline"] + " " + article["body"]
+	
+	#determine topics
+	result = bltd.get_topics( analyze )
+	print(result)
+
+
+
