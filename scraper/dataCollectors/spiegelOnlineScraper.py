@@ -290,7 +290,7 @@ def run_all():
             break
         db.write_articles(article_header_list)
         todo_list = db.fetch_scraper_todo_list(spiegel_online_scraper.id)
-        num_processes = cpu_count() - 1
+        num_processes = min(cpu_count() - 1, 5)  # num processes reduced. IP-ban with 9 processes after about 1,5 hours
         chunk_size = math.ceil(len(todo_list) / num_processes)
         with closing(Pool(processes=num_processes)) as pool:
             result = [pool.apply_async(spiegel_online_scraper.wrap_get_write_articles_parallel,
