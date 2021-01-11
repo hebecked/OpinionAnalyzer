@@ -34,6 +34,7 @@ class baseline_topic_detection:
 	def __init__(self):
 		self.tagger = ht.HanoverTagger('morphmodel_ger.pgz')
 		self.commonGerWords=[]
+		other_stopwords = stop_words = set(nltk.corpus.stopwords.words("german"))
 		if __name__ == "__main__":
 			stop_word_path = '../Testdata/CommonGerWords.csv'
 		else:
@@ -44,31 +45,29 @@ class baseline_topic_detection:
 			spamreader.__next__()
 			spamreader.__next__()
 			for row in spamreader:
-				self.commonGerWords.append(re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', row[1]).lower())
 				tokenized_sent = nltk.tokenize.word_tokenize(row[1], language='german')
 				if len(tokenized_sent) == 0:
 					self.commonGerWords.append("")
 					continue
 				word = self.tagger.tag_sent(tokenized_sent)[0][1]
-				word = re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', word).lower()
-				self.commonGerWords.append(word)
-				word2 = re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', row[1]).lower()
+				word = re.sub('[^A-Za-züäößÄÖÜ]+', '', word).lower() #if needed ad numbers 0-9
+				self.commonGerWords.append(word) # add lemmatized string
+				word2 = re.sub('[^A-Za-züäößÄÖÜ]+', '', row[1]).lower()
 				if word != word2:
-					self.commonGerWords.append(word2)
+					self.commonGerWords.append(word2) # Add unformated string if not identical
+		for word in other_stopwords:
+			if word not in self.commonGerWords:
+				self.commonGerWords.append(word) #add additional stopwords from lib
+		self.commonGerWords = set(self.commonGerWords)
 
 
-		
-
-	def get_topics(self, article: str) -> list:
+	def get_wordfrquency(self, article: str) -> dict:
 		'''
-		Extract topics from an article body.
-		Hint: It is recommended to attach the headline to the body.
+		Extract the most frequent words from an article body.
 
 		:param str article: The article body
 		:return: Topics determined from the article body.
-		:rtype: list[str]
-		:raises ValueError: if the message_body exceeds 160 characters
-		:raises TypeError: if the message_body is not a basestring
+		:rtype: dict[str: int]
 		'''
 		wordlist = article.split()
 		wordfreq = dict()
@@ -76,6 +75,7 @@ class baseline_topic_detection:
 			#clean up the strings from punctuations
 			tokenized_sent = nltk.tokenize.word_tokenize(word, language='german')
 			word = self.tagger.tag_sent(tokenized_sent)[0][1]
+			#if desired all non-nouns can be removed here
 			word = re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', word).lower() #remove numbers?
 			# Check if the word is already in the dictionary 
 			if word in wordfreq:  
@@ -87,7 +87,21 @@ class baseline_topic_detection:
 		for commonWord in self.commonGerWords:
 			if commonWord in wordfreq.keys():
 				del wordfreq[commonWord]
+
+		return wordfreq
 		
+
+	def get_topics(self, article: str) -> list:
+		'''
+		Extract topics from an article body.
+		Hint: It is recommended to attach the headline to the body.
+
+		:param str article: The article body
+		:return: Topics determined from the article body.
+		:rtype: list[str]
+		'''
+		
+		wordfreq = self.get_wordfrquency(article)
 		#sort and return
 		#print(sorted(wordfreq.items(), key=lambda item: item[1]))	# uncomment for debugging
 		result=[]
@@ -98,7 +112,7 @@ class baseline_topic_detection:
 			result.append(topic[0])
 			del wordfreq[topic[0]]
 
-		#possibly redouce to nouns in the future
+		#possibly reduce to nouns in the future
 		return result
 
 
