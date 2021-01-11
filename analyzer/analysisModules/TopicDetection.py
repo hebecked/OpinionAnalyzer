@@ -35,7 +35,7 @@ class baseline_topic_detection:
 		self.tagger = ht.HanoverTagger('morphmodel_ger.pgz')
 		self.commonGerWords=[]
 		other_stopwords = stop_words = set(nltk.corpus.stopwords.words("german"))
-		if __name__ == "__main__":
+		if __name__ == "__main__": #TODO move file readin to private sub-function
 			stop_word_path = '../Testdata/CommonGerWords.csv'
 		else:
 			stop_word_path = './Testdata/CommonGerWords.csv'
