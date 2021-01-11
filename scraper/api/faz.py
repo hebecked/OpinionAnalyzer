@@ -75,6 +75,7 @@ class Faz:
             }
 
             return meta
+
         except IndexError:
             return {}
 
