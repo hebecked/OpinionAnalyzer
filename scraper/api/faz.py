@@ -1,53 +1,36 @@
-import requests
+import urllib.request
 import datetime
 import json
 from bs4 import BeautifulSoup
-from dateutil.parser import parse
-
-
-def is_date(string: str, fuzzy=False) -> bool:
-    """
-    Return whether the string can be interpreted as a date.
-
-    :param string: str, string to check for date
-    :param fuzzy: bool, ignore unknown tokens in string if True
-    """
-    try:
-        parse(string, fuzzy=fuzzy)
-        return True
-
-    except ValueError:
-        return False
 
 
 class Faz:
 
-    def get_all_articles_from_dates(self, start: str, end: str) -> []:
+    def __init__(self):
+        self.article_url = 'https://www.faz.net/suche/s'
+        self.full_page_url = '?printPagedArticle=true#pageIndex_1'
+        self.all_comments_url = '?action=commentList&page=1&onlyTopArguments=false&ot=de.faz.ArticleCommentsElement.comments.ajax.ot'
+
+    def get_all_articles_from_dates(self, start: datetime.datetime, end: datetime.datetime) -> []:
         """
         Return a list of all article links created in the time interval set
 
         :param start: str, start date of the intervall in YYYY-mm-dd format
         :param end: str, end date of the intervall in YYYY-mm-dd format
         """
-
-        # Checking if date string have correct format
-        if not is_date(start):
-            raise Exception(start + " (start) has incorrect format. Please use format \'%YYYY-mm-dd\' as input format!")
-        elif not is_date(end):
-            raise Exception(end + "(end) has incorrect format. Please use format \'%YYYY-mm-dd\' as input format!")
-
         link_array = []
 
         # Transforming start and end date into format to request data from faz.net
-        start_date = datetime.datetime.strptime(start, '%Y-%m-%d').strftime('%d.%m.%Y')
-        end_date = datetime.datetime.strptime(end, '%Y-%m-%d').strftime('%d.%m.%Y')
+        start_date = start.strftime('%d.%m.%Y')
+        end_date = end.strftime('%d.%m.%Y')
 
         # Retrieving all article links from time interval via the search HTML
         page = 1
         while True:
-            url = 'https://www.faz.net/suche/s' + str(page) + '.html?from=' + str(start_date) + '&to=' + str(end_date)
-            response = requests.get(url)
-            soup = BeautifulSoup(response.content, 'lxml')
+            url = self.article_url + str(page) + '.html?from=' + str(start_date) + '&to=' + str(end_date)
+            with urllib.request.urlopen(url) as response:
+                article_response = response.read().decode('utf-8')
+            soup = BeautifulSoup(article_response, 'lxml')
             link_soup = soup.find_all('li', {'class': 'lst-Teaser_Item'})
 
             if len(link_soup) == 0:
@@ -70,40 +53,30 @@ class Faz:
         """
 
         # Get full content of a article on one page
-        article_url = url + "?printPagedArticle=true#pageIndex_1"
+        article_url = url + self.full_page_url
 
         # Retrieve full article HTML and transform into soup
-        response = requests.get(article_url)
-        soup = BeautifulSoup(response.content, 'lxml')
+        with urllib.request.urlopen(article_url) as response:
+            article_response = response.read().decode('utf-8')
+        soup = BeautifulSoup(article_response, 'lxml')
 
-        # Select only article meta data of article
-        article_meta_data = soup.find('div', {'class': 'js-adobe-digital-data is-Invisible'}).attrs['data-digital-data']
-        article_meta_data_json = json.loads(article_meta_data)
-        article_meta_data_json_formatted = json.dumps(article_meta_data_json, indent=2)
+        try:
+            # Select only article meta data of article
+            article_meta_data = soup.find('div', {'class': 'js-adobe-digital-data is-Invisible'}).attrs['data-digital-data']
+            article_meta_data_json = json.loads(article_meta_data)
 
-        return article_meta_data_json_formatted
+            article_body_data = soup.find_all('script', {'type': 'application/ld+json'})
+            article_body_meta_data = article_body_data[1].contents[0].rstrip("\n").rstrip("\t").strip()
+            article_body_meta_data_json = json.loads(article_body_meta_data)
 
-    def get_article_body_meta(self, url: str) -> {}:
-        """
-        Return a JSON with body meta data (including article text) related to a single article
+            meta = {
+                "article_meta": article_meta_data_json,
+                "article_body_meta": article_body_meta_data_json
+            }
 
-        :param url: str, url of a article
-        """
-
-        # Get full content of a article on one page
-        article_url = url + "?printPagedArticle=true#pageIndex_1"
-
-        # Retrieve full article HTML and transform into soup
-        response = requests.get(article_url)
-        soup = BeautifulSoup(response.content, 'lxml')
-
-        # Select only body meta data of article
-        article_body_data = soup.find_all('script', {'type': 'application/ld+json'})
-        article_body_meta_data = article_body_data[1].contents[0].rstrip("\n").rstrip("\t").strip()
-        article_body_meta_data_json = json.loads(article_body_meta_data)
-        article_body_meta_data_json_formatted = json.dumps(article_body_meta_data_json, indent=2)
-
-        return article_body_meta_data_json_formatted
+            return meta
+        except IndexError:
+            return {}
 
     def get_article_comments(self, url: str) -> []:
         """
@@ -113,32 +86,30 @@ class Faz:
         """
 
         # Load javascript only with comments
-        url = url + "?action=commentList&page=1&onlyTopArguments=false&ot=de.faz.ArticleCommentsElement.comments.ajax.ot"
+        url = url + self.all_comments_url
 
         # Retrieve comments page of article and transform it into soup
-        comment_response = requests.get(url)
-        comment_soup = BeautifulSoup(comment_response.content, 'lxml')
+        with urllib.request.urlopen(url) as response:
+            comment_response = response.read().decode('utf-8')
+        comment_soup = BeautifulSoup(comment_response, 'lxml')
 
-        # Select from soup the parts where title, body of comment and the comment timestamp is saved
-        comment_title_soup = comment_soup.find_all('p', {'class': 'js-lst-Comments_CommentTitle lst-Comments_CommentTitle'})
-        comment_body_soup = comment_soup.find_all('p', {'class': 'lst-Comments_CommentText'})
-        comment_timestamp_soup = comment_soup.find_all('span', {'class': 'lst-Comments_CommentInfoDateText'})
-
-        # Safety mechanism in case there are pages which have comments with no title
-        if len(comment_title_soup) != len(comment_body_soup):
-            raise Exception("The number of comment bodies is not equal to the number of commen titles in + " + url)
-
-        # Clean meta data and create array for comments meta data in order
+        # Select from soup the parts where title, body of comment and the comment timestamp is saved,
+        # differentiated by comment level (if reply of comment or not)
         comments = []
-        i = 0
-        while i < len(comment_body_soup) and i < len(comment_title_soup):
-            contents = "".join(str(item) for item in comment_title_soup[i].contents)
-            comment_title_cleaned = contents.replace("\n", ' ').replace("\t", ' ').rstrip("<br/>").rstrip("<br/").strip()
+        comment_first_level_soup = comment_soup.find_all('li', {'class': 'js-lst-Comments_Item lst-Comments_Item lst-Comments_Item-level1'})
+        comment_second_level_soup = comment_soup.find_all('li', {'class': 'js-lst-Comments_Item lst-Comments_Item lst-Comments_Item-level2'})
 
-            contents_body = "".join(str(item) for item in comment_body_soup[i].contents)
-            comment_body_cleaned = contents_body.replace("\n", ' ').replace("\t", ' ').replace("<br/>", '').replace("<br/", '').strip()
+        for first_level_comment in comment_first_level_soup:
+            title_soup = first_level_comment.find('p', {'class': 'js-lst-Comments_CommentTitle lst-Comments_CommentTitle'})
+            title_contents = "".join(str(item) for item in title_soup.contents)
+            comment_title_cleaned = title_contents.replace("\n", ' ').replace("\t", ' ').rstrip("<br/>").rstrip("<br/").strip()
 
-            contents_time = comment_timestamp_soup[i].contents[0]
+            body_soup = first_level_comment.find('p', {'class': 'lst-Comments_CommentText'})
+            body_contents = "".join(str(item) for item in body_soup.contents)
+            comment_body_cleaned = body_contents.replace("\n", ' ').replace("\t", ' ').replace("<br/>", '').replace("<br/", '').strip()
+
+            created_at_soup = first_level_comment.find('span', {'class': 'lst-Comments_CommentInfoDateText'})
+            contents_time = created_at_soup.contents[0]
             contents_german_day = contents_time.split(' - ')[0]
             contents_day = datetime.datetime.strptime(contents_german_day, '%d.%m.%Y').strftime('%Y-%m-%d')
             contents_timestamp = contents_day + ' ' + contents_time.split(' - ')[1]
@@ -146,27 +117,48 @@ class Faz:
             comment = {
                 "title": comment_title_cleaned,
                 "body": comment_body_cleaned,
-                "commented_at": contents_timestamp
+                "created_at": contents_timestamp,
+                "level": 1
             }
 
             comments.append(comment)
-            i += 1
+
+        for second_level_comment in comment_second_level_soup:
+            title_soup = second_level_comment.find('p', {'class': 'js-lst-Comments_CommentTitle lst-Comments_CommentTitle'})
+            title_contents = "".join(str(item) for item in title_soup.contents)
+            comment_title_cleaned = title_contents.replace("\n", ' ').replace("\t", ' ').rstrip("<br/>").rstrip("<br/").strip()
+
+            body_soup = second_level_comment.find('p', {'class': 'lst-Comments_CommentText'})
+            body_contents = "".join(str(item) for item in body_soup.contents)
+            comment_body_cleaned = body_contents.replace("\n", ' ').replace("\t", ' ').replace("<br/>", '').replace("<br/", '').strip()
+
+            created_at_soup = second_level_comment.find('span', {'class': 'lst-Comments_CommentInfoDateText'})
+            contents_time = created_at_soup.contents[0]
+            contents_german_day = contents_time.split(' - ')[0]
+            contents_day = datetime.datetime.strptime(contents_german_day, '%d.%m.%Y').strftime('%Y-%m-%d')
+            contents_timestamp = contents_day + ' ' + contents_time.split(' - ')[1]
+
+            comment = {
+                "title": comment_title_cleaned,
+                "body": comment_body_cleaned,
+                "created_at": contents_timestamp,
+                "level": 2
+            }
+
+            comments.append(comment)
 
         return comments
 
 
 if __name__ == '__main__':
     faz_api = Faz()
-    list_of_links = faz_api.get_all_articles_from_dates(start='2021-01-01', end='2021-01-01')
+    list_of_links = faz_api.get_all_articles_from_dates(start=datetime.datetime(2021, 1, 1), end=datetime.datetime(2021, 1, 1))
     for link in list_of_links:
         print(link)
-        try:
-            article_meta = faz_api.get_article_meta(url=link)
-            article_body_meta = faz_api.get_article_body_meta(url=link)
-            article_comments = faz_api.get_article_comments(url=link)
-            print(article_comments)
-        except IndexError:
-            print("non regular article")
+        article_meta = faz_api.get_article_meta(url=link)
+        print(article_meta)
+        article_comments = faz_api.get_article_comments(url=link)
+        print(article_comments)
 
 
 
