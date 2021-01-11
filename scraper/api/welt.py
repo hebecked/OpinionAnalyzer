@@ -1,22 +1,7 @@
 import datetime
 import json
 from bs4 import BeautifulSoup
-from dateutil.parser import parse
 import urllib.request
-
-
-def is_date(string: str, fuzzy=False) -> bool:
-    """
-    Return whether the string can be interpreted as a date.
-    :param string: str, string to check for date
-    :param fuzzy: bool, ignore unknown tokens in string if True
-    """
-    try:
-        parse(string, fuzzy=fuzzy)
-        return True
-
-    except ValueError:
-        return False
 
 
 def get_article_comments_recursively(url: str, comments: [], minimum_created: datetime.datetime) -> []:
