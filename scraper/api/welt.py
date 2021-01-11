@@ -20,6 +20,12 @@ def is_date(string: str, fuzzy=False) -> bool:
 
 
 def get_article_comments_recursively(url: str, comments: [], minimum_created: datetime.datetime) -> []:
+    """
+     Return a Array with comments meta data of a single article recursively in case there are more than 100
+     :param url: str, url of a article
+     :param comments: [], first comment batch
+     :param minimum_created: datetime.datetime, minimum created date of first 100 comments
+     """
     min_created_time = minimum_created.strftime("%Y-%m-%dT%H:%M:%S.%f")
     comment_url = url + '&created-cursor=' + str(min_created_time)
 
