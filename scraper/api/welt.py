@@ -34,6 +34,7 @@ def get_article_comments_recursively(url: str, comments: [], minimum_created: da
             comments.append(comment)
         return get_article_comments_recursively(url=url, comments=comments, minimum_created=minimum_created)
 
+
 class Welt:
 
     def __init__(self):
