@@ -3,6 +3,7 @@ spiegel-scraper
 pycron
 validators
 scrapy
+bs4
 
 # flask
 
