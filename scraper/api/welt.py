@@ -91,9 +91,10 @@ class Welt:
         # Retrieving meta data
         article_meta_data = soup.find('script', {'data-qa': 'StructuredData', 'type': 'application/ld+json'}).contents[0]
         article_meta_data_json = json.loads(article_meta_data)
-        article_meta_data_json_formatted = json.dumps(article_meta_data_json, indent=2)
 
-        return article_meta_data_json_formatted
+        article_meta_data_json['articleBody'] = BeautifulSoup(article_meta_data_json['articleBody'], "lxml").text
+
+        return article_meta_data_json
 
     def get_article_comments(self, url: str) -> []:
         """

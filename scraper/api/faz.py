@@ -73,7 +73,6 @@ class Faz:
                 "article_meta": article_meta_data_json,
                 "article_body_meta": article_body_meta_data_json
             }
-
             return meta
 
         except IndexError:
