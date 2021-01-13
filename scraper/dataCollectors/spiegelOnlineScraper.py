@@ -310,7 +310,7 @@ def run_regular():
         -------
         None
     """
-    default_start_date = date(2020, 12, 1)
+    default_start_date = date.today() - timedelta(30)
     start_time = datetime.today()
     logger.info("regular run - started at " + str(start_time))
     spiegel_online_scraper = SpiegelOnlineScraper()
