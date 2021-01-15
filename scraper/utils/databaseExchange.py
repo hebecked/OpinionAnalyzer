@@ -356,6 +356,8 @@ class DatabaseExchange(connectDb.Database):
         for res in result:
             data_set |= {res}
         todo_list = list(data_set)
+        if not todo_list:
+            return todo_list
         self.__log_analyzer_start(analyzer_id, list(c[0] for c in todo_list))
         return todo_list
 
