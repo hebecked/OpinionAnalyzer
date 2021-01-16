@@ -34,7 +34,7 @@ class baseline_topic_detection:
 	def __init__(self):
 		self.tagger = ht.HanoverTagger('morphmodel_ger.pgz')
 		self.commonGerWords=[]
-		other_stopwords = stop_words = set(nltk.corpus.stopwords.words("german"))
+		other_stopwords = set(nltk.corpus.stopwords.words("german"))
 		if __name__ == "__main__": #TODO move file readin to private sub-function
 			stop_word_path = '../Testdata/CommonGerWords.csv'
 		else:
@@ -61,14 +61,14 @@ class baseline_topic_detection:
 		self.commonGerWords = set(self.commonGerWords)
 
 
-	def get_wordfrquency(self, article: str) -> dict:
-		'''
+	def get_wordfrequency(self, article: str) -> dict:
+		"""
 		Extract the most frequent words from an article body.
 
 		:param str article: The article body
 		:return: Topics determined from the article body.
 		:rtype: dict[str: int]
-		'''
+		"""
 		wordlist = article.split()
 		wordfreq = dict()
 		for word in wordlist:
@@ -78,34 +78,33 @@ class baseline_topic_detection:
 			#if desired all non-nouns can be removed here
 			word = re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', word).lower() #remove numbers?
 			# Check if the word is already in the dictionary 
-			if word in wordfreq:  
+			if word in wordfreq.keys():  
 			    wordfreq[word] = wordfreq[word] + 1
 			else:
 			    wordfreq[word] = 1
-
-		# remove common German words
-		for commonWord in self.commonGerWords:
-			if commonWord in wordfreq.keys():
-				del wordfreq[commonWord]
-
 		return wordfreq
 		
 
 	def get_topics(self, article: str) -> list:
-		'''
+		"""
 		Extract topics from an article body.
 		Hint: It is recommended to attach the headline to the body.
 
 		:param str article: The article body
 		:return: Topics determined from the article body.
 		:rtype: list[str]
-		'''
-		
-		wordfreq = self.get_wordfrquency(article)
+		"""
+
+		wordfreq = self.get_wordfrequency(article)
+
+		# remove common German words
+		for commonWord in (set(wordfreq.keys()) & self.commonGerWords):
+			del wordfreq[commonWord]
+
 		#sort and return
 		#print(sorted(wordfreq.items(), key=lambda item: item[1]))	# uncomment for debugging
 		result=[]
-		while len(result) < 5 or len(wordfreq) <=0:
+		while len(result) < 5 and len(wordfreq) > 0:
 			topic=max(wordfreq.items(), key=lambda item: item[1])
 			if topic[1]<=2:
 				break

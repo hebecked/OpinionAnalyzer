@@ -7,13 +7,6 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 logger = logging.getLogger()
 
 
-def test_db_connection():
-    db = Database()
-    db.connect()
-    print("I am just here to say casually Hi....So, Hi! Oh and This: \n")
-    db.getVersion()
-    db.getTestTableMeta()
-
 #init DB exchange module
 db=DatabaseExchange()
 
