@@ -42,13 +42,12 @@ class multilang_bert_sentiment:
     def analyze(self, text):
         averages = []
         errors = []
-        inputs = self.tokenizer(text,
-                                return_tensors="pt")  # , max_length=512, stride=0, return_overflowing_tokens=True, truncation=True, padding=True)
+        inputs = self.tokenizer(text, return_tensors="pt")  # , max_length=512, stride=0, return_overflowing_tokens=True, truncation=True, padding=True)
         length = len(inputs['input_ids'][0])
         while length > 0:
             if length > self.max_length:
                 next_inputs = {k: (i[0][self.max_length:]).reshape(1, len(i[0][self.max_length:])) for k, i in
-                               inputs.items()}
+                               inputs.items()}  
                 inputs = {k: (i[0][:self.max_length]).reshape(1, len(i[0][:self.max_length])) for k, i in
                           inputs.items()}
             else:
@@ -57,10 +56,10 @@ class multilang_bert_sentiment:
             weights = proOrCon[0].detach().numpy()[0]
             weights = softmax(weights)
             average = np.average(np.linspace(1, 5, 5), weights=weights)
-            average = average * 2. / 5. - 1
-            averages.append(average)
+            average_scaled = (average -1) * 2. / 4. - 1
+            averages.append(average_scaled)
             errors.append(
-                np.sqrt(np.average((np.linspace(1, 5, 5) - average) ** 2, weights=weights)) * 2. / 5.
+                np.sqrt(np.average((np.linspace(-1, 1, 5) - average_scaled) ** 2, weights=weights))
             )
             if self.truncate:
                 break
@@ -102,7 +101,7 @@ class german_bert_sentiment:
                 next_inputs = False
             proOrCon = self.model(**inputs)
             weights = proOrCon[0].detach().numpy()[0]
-            weights[2], weights[1] = weights[1], weights[2]
+            weights[2], weights[1] = weights[1], weights[2] # reorder for linear scaling according to model output
             weights = softmax(weights)
             average = np.average(np.linspace(1, -1, 3), weights=weights)
             averages.append(average)
@@ -118,7 +117,7 @@ class german_bert_sentiment:
                 break
             length = len(inputs['input_ids'][0])
         average = np.average(averages, weights=1. / np.array(errors) ** 2)
-        error = np.sqrt(1. / np.sum(1. / np.array(errors) ** 2))
+        error = np.sqrt(1. / np.sum(1. / np.array(errors) ** 2)) #*5./3.
         return [average, error]
 
 
@@ -156,7 +155,8 @@ class EnsembleSentiment():
         result2 = self.sentiment_model_2.analyze(text)
         results = np.array([result1, result2])
         result = np.average(results.T[0], weights=1. / results.T[1] ** 2)
-        error = np.sqrt(1. / np.sum(1. / results.T[1] ** 2))
+        #sqrt__weighted_variance = np.sqrt(np.average((results.T[0] - result) ** 2, weights=1. / results.T[1] ** 2)) # Error determination including discrepancy between outputs 
+        error = np.sqrt(1. / np.sum(1. / results.T[1] ** 2)) # physically correct error determination
         return [result, error]
 
 

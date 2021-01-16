@@ -20,13 +20,14 @@ db=DatabaseExchange()
 #init baseline topic detection for analysis
 bltd = baseline_topic_detection()
 
+#add a loop here
 articles = db.fetch_topicizer_data() # list of {article_body_id : dict {body: , headline: ,topics: } }
 for article_id, article in articles.items():
 	analyze = article["headline"] + " " + article["body"]
 	
 	#determine topics
 	result = bltd.get_topics( analyze )
-	print(result)
+	print(result) # accumulate and write as a block to DB
 
 
 
