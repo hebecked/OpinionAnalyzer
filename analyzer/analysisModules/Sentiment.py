@@ -75,6 +75,7 @@ class german_bert_sentiment:
     """
     Sentiment analyzer module based on a range of sources including twitter, facebook, product reviews
     https://huggingface.co/oliverguhr/german-sentiment-bert?text = Du+Arsch%21
+    https://github.com/oliverguhr/german-sentiment
     """
 
     def __init__(self, truncate=False):
