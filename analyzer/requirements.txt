@@ -8,9 +8,11 @@ transformers == 3.5.1
 psycopg2-binary == 2.8.6
 scipy == 1.5.4
 numpy == 1.19.4
+nltk == 3.5
 #pygermanet == 1.0.2
 pycron
 validators
+HanTa
 
 
 #Alternative Python packages for NLP:
