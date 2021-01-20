@@ -48,6 +48,7 @@ class multilang_bert_sentiment:
             if length > self.max_length:
                 next_inputs = {k: (i[0][self.max_length:]).reshape(1, len(i[0][self.max_length:])) for k, i in inputs.items()}  
                 inputs = {k: (i[0][:self.max_length]).reshape(1, len(i[0][:self.max_length])) for k, i in inputs.items()}
+                print("#Zeichen: ", len(text), "#Token: ", length, text)
             else:
                 next_inputs = False
             proOrCon = self.model(**inputs)
@@ -93,7 +94,7 @@ class german_bert_sentiment:
             if length > self.max_length:
                 next_inputs = {k: (i[0][self.max_length:]).reshape(1, len(i[0][self.max_length:])) for k, i in inputs.items()}
                 inputs = {k: (i[0][:self.max_length]).reshape(1, len(i[0][:self.max_length])) for k, i in inputs.items()}
-                print(len(text), text)
+                print("#Zeichen: ", len(text), "#Token: ", length, text)
             else:
                 next_inputs = False
             proOrCon = self.model(**inputs)
