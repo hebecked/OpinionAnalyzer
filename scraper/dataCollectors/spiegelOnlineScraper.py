@@ -322,7 +322,7 @@ def run_regular():
     end = date.today()
     article_header_list = spiegel_online_scraper.get_article_list(start, end)
     db.write_articles(article_header_list)
-    end_historical = db.fetch_scraper_oldest(1)
+    end_historical = db.fetch_scraper_oldest(spiegel_online_scraper.id)
     start_historical = end_historical - timedelta(2)
     article_header_list = spiegel_online_scraper.get_article_list(start_historical, end_historical)
     db.write_articles(article_header_list)
