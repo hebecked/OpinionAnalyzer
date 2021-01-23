@@ -18,12 +18,55 @@ import json
 import numpy as np
 from scipy.special import softmax
 from textblob_de import TextBlobDE as TextBlob
+import re
 # from flair.models import TextClassifier
 # from flair.data import Sentence
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 
 # from IPython import embed; embed()
+class baselineSentiment:
+
+    def __init__(self):
+        #word|POS \t sentiment \t ,words, \n
+        with open('../Testdata/SentiWS_v1.8c_Negative.txt', 'r') as file1: 
+            Lines = file1.readlines() 
+        with open('../Testdata/SentiWS_v1.8c_Positive.txt', 'r') as file2:
+            Lines.extend(file2.readlines()) 
+        sentiments = dict()
+        for line in Lines:
+            splits1 = line.split("|")
+            splits2 = splits1[1].split("\t")
+            word = re.sub('[^A-Za-züäößÄÖÜ]+', '', splits1[0]).lower()
+            sentiment = float(splits2[1])
+            sentiments[word] = sentiment
+            if len(splits2)>2:
+                related_words = splits2[2].split(",")
+                for related_word in related_words:
+                    word = re.sub('[^A-Za-züäößÄÖÜ]+', '', related_word).lower()
+                    sentiments[word] = sentiment
+        self.sentiments = sentiments
+
+    def print_sentiments(self):
+        print(self.sentiments)
+
+    def analyze(self, text):
+        values=[]
+        text_words = re.split('\s+', text)
+        nwords=0
+        for word in text_words:
+            clean_word = re.sub('[^A-Za-züäößÄÖÜ]+', '', word).lower()
+            if clean_word in self.sentiments.keys():
+                values.append(self.sentiments[clean_word])
+                nwords+=1
+        if len(values) == 0:
+            result = 0
+            error = 1
+        else:
+            result = np.mean(values)
+            error = np.std(values)
+        print(nwords, " of ", len(text_words) )
+        return [result, error] 
 
 
 class multilang_bert_sentiment:
@@ -175,6 +218,8 @@ if __name__ == "__main__":
     SentimentModel1 = multilang_bert_sentiment()
     SentimentModel2 = german_bert_sentiment(truncate=True)
     SentimentModel3 = EnsembleSentiment()
+    baseline = baselineSentiment()
+    #baseline.print_sentiments()
 
     print("Running ", Test_cases, " tests + one overlength sample.")
     accu = []
@@ -187,8 +232,9 @@ if __name__ == "__main__":
             result2 = SentimentModel2.analyze(comment["body"])
             result3 = SentimentModel3.analyze(comment["body"])
             result4 = TextblobSentiment().analyze(comment["body"])
+            resultB = baseline.analyze(comment["body"])
             accu.extend(comment["body"])
-            print("Comment: ", i, " Results 1,2,3,4: ", result1, result2, result3, result4)
+            print("Comment: ", i, " Results 1,2,3,4,B: ", result1, result2, result3, result4, resultB)
         if i >= Test_cases:
             break
     accu = str().join(accu)
@@ -196,5 +242,8 @@ if __name__ == "__main__":
     result2 = SentimentModel2.analyze(accu)
     result3 = SentimentModel3.analyze(accu)
     result4 = TextblobSentiment().analyze(accu)
-    print("Large Comment Results 1,2,3,4: ", result1, result2, result3, result4)
+    resultB = baseline.analyze(accu)
+    print("Large Comment Results 1,2,3,4: ", result1, result2, result3, result4, resultB)
     print("Tests completed successfully.")
+
+
