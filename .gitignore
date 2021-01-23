@@ -5,3 +5,6 @@ package-lock.json
 idea
 __pycache__/
 analyzer/Testdata/german_word2vec.model
+cc.de.50.bin
+cc.de.100.bin
+cc.de.300.bin

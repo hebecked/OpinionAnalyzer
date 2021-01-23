@@ -17,11 +17,15 @@ import json
 # import tensorflow as tf
 import numpy as np
 from scipy.special import softmax
+from scipy import spatial 
 from textblob_de import TextBlobDE as TextBlob
 import re
 # from flair.models import TextClassifier
 # from flair.data import Sentence
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import fasttext
+import fasttext.util
+import nltk
 
 
 # from IPython import embed; embed()
@@ -46,6 +50,7 @@ class baselineSentiment:
                     word = re.sub('[^A-Za-züäößÄÖÜ]+', '', related_word).lower()
                     sentiments[word] = sentiment
         self.sentiments = sentiments
+        #print(len(sentiments))
 
     def print_sentiments(self):
         print(self.sentiments)
@@ -65,7 +70,55 @@ class baselineSentiment:
         else:
             result = np.mean(values)
             error = np.std(values)
-        print(nwords, " of ", len(text_words) )
+        self.lastbase = [nwords, len(text_words)] #allows to evaluate certainty of a result
+        return [result, error] 
+
+
+class baselineFastTextSentiment(baselineSentiment):
+
+    def __init__(self):
+        super().__init__()
+        self.ft = fasttext.load_model('../Testdata/cc.de.50.bin')
+        #fasttext.util.reduce_model(self.ft, 50) #change size
+        #self.ft.save_model('../Testdata/cc.de.50.bin') #and store
+        ft_sentiment = []
+        for word in self.sentiments:
+            word_vector = self.ft.get_word_vector(word)
+            ft_sentiment.append([word, word_vector, self.sentiments[word]])
+        self.ft_sentiment = ft_sentiment
+        self.stopwords = set(nltk.corpus.stopwords.words("german"))
+
+    def analyze(self, text):
+        values = []
+        text_words = re.split('\s+', text)
+        nwords = 0
+        for word in text_words:
+            clean_word = re.sub('[^A-Za-züäößÄÖÜ]+', '', word).lower()
+            #remove stop words
+            if clean_word in self.stopwords:
+                continue
+            nwords += 1
+            #generate word vectors
+            ft_word = self.ft.get_word_vector(clean_word)
+            closest_distance = spatial.distance.cosine(ft_word, self.ft_sentiment[0][1])
+            closest_index = 0
+            #compare to all sentiment word vectors and get minimum cosine distance
+            for i, reference in enumerate(self.ft_sentiment):
+                distance = spatial.distance.cosine(ft_word,reference[1])
+                if distance < closest_distance:
+                    closest_distance = distance
+                    closest_index = i
+            if closest_distance > 0.25:
+                continue
+            print(closest_distance, clean_word, self.ft_sentiment[closest_index][0])
+            values.append(self.ft_sentiment[closest_index][2])
+        if len(values) == 0:
+            result = 0
+            error = 1
+        else:
+            result = np.mean(values)
+            error = np.std(values)
+        self.lastbase = [nwords, len(text_words)] #allows to evaluate certainty of a result
         return [result, error] 
 
 
@@ -219,6 +272,7 @@ if __name__ == "__main__":
     SentimentModel2 = german_bert_sentiment(truncate=True)
     SentimentModel3 = EnsembleSentiment()
     baseline = baselineSentiment()
+    ft_baseline = baselineFastTextSentiment()
     #baseline.print_sentiments()
 
     print("Running ", Test_cases, " tests + one overlength sample.")
@@ -233,8 +287,9 @@ if __name__ == "__main__":
             result3 = SentimentModel3.analyze(comment["body"])
             result4 = TextblobSentiment().analyze(comment["body"])
             resultB = baseline.analyze(comment["body"])
+            result_ftB = ft_baseline.analyze(comment["body"])
             accu.extend(comment["body"])
-            print("Comment: ", i, " Results 1,2,3,4,B: ", result1, result2, result3, result4, resultB)
+            print("Comment: ", i, " Results 1,2,3,4,B,ftB: ", "%.2f" % result1[0], "%.2f" % result2[0], "%.2f" % result3[0], "%.2f" % result4[0], "%.2f" % resultB[0], "%.2f" % result_ftB[0])
         if i >= Test_cases:
             break
     accu = str().join(accu)
@@ -243,7 +298,8 @@ if __name__ == "__main__":
     result3 = SentimentModel3.analyze(accu)
     result4 = TextblobSentiment().analyze(accu)
     resultB = baseline.analyze(accu)
-    print("Large Comment Results 1,2,3,4: ", result1, result2, result3, result4, resultB)
+    result_ftB = ft_baseline.analyze(accu)
+    print("Large Comment Results 1,2,3,4,B,ftB: ", "%.2f" % result1[0], "%.2f" % result2[0], "%.2f" % result3[0], "%.2f" % result4[0], "%.2f" % resultB[0], "%.2f" % result_ftB[0])
     print("Tests completed successfully.")
 
 
