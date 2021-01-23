@@ -552,9 +552,16 @@ class DatabaseExchange(connectDb.Database):
 
     def fetch_scraper_oldest(self, source_id: int) -> dt.datetime:
         """
+        Parameters
+        ----------
+        source_id : int
+            scraper unique id corresponding to id in source_header table
 
-        :param source_id:
-        :return:
+        Returns
+        -------
+        TYPE
+            datetime.date object for the oldest source date in article_header table for this scraper
+
         """
         cur = self.conn.cursor()
         cur.execute(
@@ -1098,6 +1105,6 @@ if __name__ == '__main__':
     # print(writer.fetch_analyzer_todo_list(1))
     # to_do_list=writer.fetch_analyzer_todo_list(1)
     #    writer.write_analyzer_results(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in to_do_list])
-    print(writer.fetch_topicizer_data())
+    print("Topic data fetched: ", len(writer.fetch_topicizer_data()))
     writer.close()
     print("further test deactivated")
