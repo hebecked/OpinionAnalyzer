@@ -47,6 +47,15 @@ class DatabaseExchange(connectDb.Database):
                                     src_id = %s;
                                """
 
+    __SQL_SCRAPER_FETCH_OLDEST = """
+                                    SELECT 
+                                        MIN(source_date)
+                                    FROM
+                                        news_meta_data.article_header
+                                    WHERE
+                                        source_id = %s;
+                                """
+
     __SQL_SCRAPER_LOG_START = """
                                  INSERT INTO 
                                    news_meta_data.crawl_log (source_id, start_timestamp, success) 
@@ -540,6 +549,23 @@ class DatabaseExchange(connectDb.Database):
                 art.set_body_old()
             todo_list += [art]
         return todo_list
+
+    def fetch_scraper_oldest(self, source_id: int) -> dt.datetime:
+        """
+
+        :param source_id:
+        :return:
+        """
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_SCRAPER_FETCH_OLDEST,
+            (source_id,)
+        )
+        result = cur.fetchall()  # last timestamp of successful run
+        cur.close()
+        if result[0][0] is None:
+            return dt.today()
+        return result[0][0]
 
     def fetch_scraper_last_run(self, source_id: int) -> dt.datetime:
         """

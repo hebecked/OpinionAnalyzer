@@ -290,6 +290,8 @@ def run_all():
             break
         db.write_articles(article_header_list)
         todo_list = db.fetch_scraper_todo_list(spiegel_online_scraper.id)
+        if not todo_list:
+            continue
         num_processes = min(cpu_count() - 1, 5)  # num processes reduced. IP-ban with 9 processes after about 1,5 hours
         chunk_size = math.ceil(len(todo_list) / num_processes)
         with closing(Pool(processes=num_processes)) as pool:
@@ -319,6 +321,10 @@ def run_regular():
     start = max(db.fetch_scraper_last_run(spiegel_online_scraper.id).date(), default_start_date)
     end = date.today()
     article_header_list = spiegel_online_scraper.get_article_list(start, end)
+    db.write_articles(article_header_list)
+    end_historical = db.fetch_scraper_oldest(1)
+    start_historical = end_historical - timedelta(2)
+    article_header_list = spiegel_online_scraper.get_article_list(start_historical, end_historical)
     db.write_articles(article_header_list)
     todo_list = db.fetch_scraper_todo_list(spiegel_online_scraper.id)
     spiegel_online_scraper.get_write_articles_details(db, todo_list, start - timedelta(1))
