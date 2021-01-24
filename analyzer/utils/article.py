@@ -43,7 +43,7 @@ class Article:
         if Article.__udf_dict is None or Article.__source_list is None:
             Article.__source_list = []
             Article.__udf_dict = {}
-#            print("first launch, setting class variables")  # todo delete line (debugging purposes only)
+#            print("first launch, setting article class variables")  # todo delete line (debugging purposes only)
             # todo database connection to be rewritten later
             db = ownDBObject()
             db.connect()

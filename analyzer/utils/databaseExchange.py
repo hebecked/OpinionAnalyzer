@@ -47,6 +47,15 @@ class DatabaseExchange(connectDb.Database):
                                     src_id = %s;
                                """
 
+    __SQL_SCRAPER_FETCH_OLDEST = """
+                                    SELECT 
+                                        MIN(source_date)
+                                    FROM
+                                        news_meta_data.article_header
+                                    WHERE
+                                        source_id = %s;
+                                """
+
     __SQL_SCRAPER_LOG_START = """
                                  INSERT INTO 
                                    news_meta_data.crawl_log (source_id, start_timestamp, success) 
@@ -85,6 +94,15 @@ class DatabaseExchange(connectDb.Database):
                                      VALUES (%s, %s, %s, %s) 
                                      ON CONFLICT DO NOTHING;
                                   """
+
+    __SQL_ARTICLE_HEADER_SET_OBSOLETE = """
+                                        UPDATE 
+                                            news_meta_data.article_header
+                                        SET
+                                            obsolete = true
+                                        WHERE 
+                                            id = %s;
+                                    """
 
     __SQL_ARTICLE_HEADER_FETCH_ID = """
                                        SELECT 
@@ -256,6 +274,7 @@ class DatabaseExchange(connectDb.Database):
         super().__init__()
         print("initializing database exchange...")
         self.connect()
+        print("connected")
         DatabaseExchange.__analyzer_database_structure = self.__fetch_analyzer_tables()
 #        print("Analyzer tables: ", DatabaseExchange.__analyzer_database_structure)
 
@@ -346,6 +365,8 @@ class DatabaseExchange(connectDb.Database):
         for res in result:
             data_set |= {res}
         todo_list = list(data_set)
+        if not todo_list:
+            return todo_list
         self.__log_analyzer_start(analyzer_id, list(c[0] for c in todo_list))
         return todo_list
 
@@ -529,6 +550,30 @@ class DatabaseExchange(connectDb.Database):
             todo_list += [art]
         return todo_list
 
+    def fetch_scraper_oldest(self, source_id: int) -> dt.datetime:
+        """
+        Parameters
+        ----------
+        source_id : int
+            scraper unique id corresponding to id in source_header table
+
+        Returns
+        -------
+        TYPE
+            datetime.date object for the oldest source date in article_header table for this scraper
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_SCRAPER_FETCH_OLDEST,
+            (source_id,)
+        )
+        result = cur.fetchall()  # last timestamp of successful run
+        cur.close()
+        if result[0][0] is None:
+            return dt.today()
+        return result[0][0]
+
     def fetch_scraper_last_run(self, source_id: int) -> dt.datetime:
         """
 
@@ -664,6 +709,21 @@ class DatabaseExchange(connectDb.Database):
             return {}
         body_ids = list(result)
         return dict(body_ids)
+
+    def __set_articles_obsolete(self, article_list: list):
+        """
+        sets column obsolete = True in article_header table for all articles in article_list
+
+        Parameters
+        ----------
+        article_list
+            list of articles to mark as obsolete in database
+        """
+        cur = self.conn.cursor()
+        for art in article_list:
+            cur.execute(DatabaseExchange.__SQL_ARTICLE_HEADER_SET_OBSOLETE, (art.get_article()['header']['id'],))
+        self.conn.commit()
+        cur.close()
 
     def __write_article_headers(self, article_list: list):
         """
@@ -828,6 +888,8 @@ class DatabaseExchange(connectDb.Database):
             work_list = list(
                 filter(lambda x: type(x) == Article,
                        article_list[start:start + DatabaseExchange.SUBSET_LENGTH]))
+            obsolete = list(filter(lambda x:  x.is_in_db() and x.get_article()['header']['obsolete'], work_list))
+            self.__set_articles_obsolete(obsolete)
             headers = list(filter(lambda x: not (x.is_in_db()), work_list))
             self.__write_article_headers(headers)
 #            print("Article headers written and id added") # todo delete line (debugging purposes only)
@@ -1043,6 +1105,6 @@ if __name__ == '__main__':
     # print(writer.fetch_analyzer_todo_list(1))
     # to_do_list=writer.fetch_analyzer_todo_list(1)
     #    writer.write_analyzer_results(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in to_do_list])
-    print(writer.fetch_topicizer_data())
+    print("Topic data fetched: ", len(writer.fetch_topicizer_data()))
     writer.close()
     print("further test deactivated")

@@ -56,7 +56,7 @@ class Comment:
         self.__complete = False
         if Comment.__udf_dict is None:
             Comment.udf_dict = {}
-#            print("first launch, setting class variables")  # todo delete line (debugging purposes only)
+#            print("first launch, setting comment class variables")  # todo delete line (debugging purposes only)
             # todo  database connection to be rewritten later
             db = ownDBObject()
             db.connect()
