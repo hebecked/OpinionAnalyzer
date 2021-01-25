@@ -88,13 +88,16 @@ class Faz:
         # Load javascript only with comments
         pagecount = 1
         comments = []
-        while True:
-            cmt_url = url + self.all_comments_url.format(pagecount)
-            # Retrieve comments page of article and transform it into soup
-            with urllib.request.urlopen(cmt_url) as response:
-                comment_response = response.read().decode('utf-8')
-            comment_soup = BeautifulSoup(comment_response, 'lxml')
 
+        while True:
+            try:
+                cmt_url = url + self.all_comments_url.format(pagecount)
+                # Retrieve comments page of article and transform it into soup
+                with urllib.request.urlopen(cmt_url) as response:
+                    comment_response = response.read().decode('utf-8')
+                comment_soup = BeautifulSoup(comment_response, 'lxml')
+            except:
+                break
             # Select from soup the parts where title, body of comment and the comment timestamp is saved,
             # differentiated by comment level (if reply of comment or not)
 
@@ -102,6 +105,8 @@ class Faz:
             if not comment_first_level_soup:
                 break
             comments += self.get_comment_data(comment_first_level_soup, 0)
+            if len(comment_first_level_soup) < 20:
+                break
             pagecount += 1
         return comments
 
@@ -118,7 +123,7 @@ class Faz:
             comment_body_cleaned = body_contents.replace("\n", ' ').replace("\t", ' ').replace("<br/>", '').replace("<br/", '').strip()
 
             author_soup = cmt.find('span', {'class': 'lst-Comments_CommentInfoNameText'})
-            author_contents = "".join(str(item) for item in  author_soup.contents)
+            author_contents = "".join(str(item) for item in author_soup.contents)
             comment_author_cleaned = author_contents.replace("\n", ' ').replace("\t", ' ').replace("<br/>", '').replace("<br/", '').strip()
 
             created_at_soup = cmt.find('span', {'class': 'lst-Comments_CommentInfoDateText'})
