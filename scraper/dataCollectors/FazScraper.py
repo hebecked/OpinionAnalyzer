@@ -27,7 +27,7 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
 
     def __init__(self):
         super(FazScraper, self).__init__()
-        self.id = 1  # set corresponding datasource id here
+        self.id = 3  # set corresponding datasource id here
         self.has_errors = False
         self.api = Faz()
 
