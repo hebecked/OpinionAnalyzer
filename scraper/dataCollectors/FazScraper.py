@@ -8,7 +8,7 @@ from utils.article import Article
 from utils.comment import Comment
 from utils.comment import calculate_comment_external_id
 from utils.databaseExchange import DatabaseExchange
-from api.welt import Welt
+from api.faz import Faz
 import logging
 import sys
 import os
@@ -20,16 +20,16 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 logger = logging.getLogger()
 
 
-class WeltScraper(dataCollectors.templateScraper.Scraper):
+class FazScraper(dataCollectors.templateScraper.Scraper):
     SUBSET_LENGTH = 10  # threshold for database flush
     DELAY_SUBSET = 1  # sleep x every SUBSET_LENGTH html requests
     DELAY_INDIVIDUAL = 0  # sleep x every html request
 
     def __init__(self):
-        super(WeltScraper, self).__init__()
-        self.id = 2  # set corresponding datasource id here
+        super(FazScraper, self).__init__()
+        self.id = 1  # set corresponding datasource id here
         self.has_errors = False
-        self.api = Welt()
+        self.api = Faz()
 
     def get_article_list(self, start_date: date = date(1900, 1, 1), end_date: date = date.today()) -> list:
         """
@@ -58,12 +58,12 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
                 as_datetime = datetime.combine(dt, datetime.min.time())
                 url_list = self.api.get_all_articles_from_dates(as_datetime, as_datetime)
                 for url in url_list:
-                    full_list += [{'url': url, 'source_date': dt, 'is_paid': "/plus" in url}]
+                    full_list += [{'url': url, 'source_date': dt}]
             except:
                 logger.warning("process-id "+str(os.getpid())+" Article List crawl error!")
                 self.has_errors = True
-            time.sleep(WeltScraper.DELAY_INDIVIDUAL)  # remove Comment for crawler delay
-        url_list = list(filter(lambda x: x['is_paid'] is False, full_list))  # remove paid articles without access
+            time.sleep(FazScraper.DELAY_INDIVIDUAL)  # remove Comment for crawler delay
+        url_list = full_list  # no possibility to filter paid articles here
         for url in url_list:
             try:
                 art = Article()
@@ -92,32 +92,53 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
 
         """
         try:
-            welt_api_return = self.api.get_article_meta(art.get_article()['header']['url'])
+            faz_api_return = self.api.get_article_meta(art.get_article()['header']['url'])
         except:
             logger.warning("process-id "+str(os.getpid())+" Article crawl error fetching details: article url = "
                            + str(art.get_article()['header']['url']))
             self.has_errors = True
             art.set_obsolete(True)
             return False
-        art.set_body(
-            {'headline': welt_api_return['headline'].replace("\n", ' ').replace("\t", ' '),
-                'body': welt_api_return['articleBody'].replace("\n", ' ').replace("\t", ' '),
-                'proc_timestamp': datetime.today(),
-                'proc_counter': 0})
+        if 'article_meta' not in faz_api_return.keys() or 'article_body_meta' not in faz_api_return.keys():
+            art.set_obsolete(True)
+            self.has_errors = True
+            return False
+        header_keys = faz_api_return['article_meta'].keys()
+        body_keys = faz_api_return['article_body_meta'].keys()
+        if ('isAccessibleForFree' in body_keys and 'False' in
+            faz_api_return['article_body_meta']['isAccessibleForFree'])\
+                or ('article' in header_keys and 'type' in faz_api_return['article_meta']['article'].keys() and
+                    'Bezahlartikel' in faz_api_return['article_meta']['article']['type']):
+            art.set_obsolete(True)  # paid article can not be detected earlier
+            return False
+        if 'headline' in body_keys and 'articleBody' in body_keys:
+            art.set_body(
+                {'headline': faz_api_return['article_body_meta']['headline'],
+                 'body': faz_api_return['article_body_meta']['articleBody'], 'proc_timestamp': datetime.today(),
+                 'proc_counter': 0})
         # add udfs
-        if 'author' in welt_api_return.keys():
-            art.add_udf('author', welt_api_return['author']['name'])
-        if 'dateModified' in welt_api_return.keys():
-            art.add_udf('date_modified', welt_api_return['dateModified'])
-        if 'datePublished' in welt_api_return.keys():
-            art.add_udf('date_published', welt_api_return['datePublished'])
+        if 'author' in body_keys:
+            if type(faz_api_return['article_body_meta']['author']) == dict and 'name' in faz_api_return['article_body_meta']['author'].keys():
+                art.add_udf('author', faz_api_return['article_body_meta']['author']['name'])
+            elif type(faz_api_return['article_body_meta']['author']) == list:
+                for aut in faz_api_return['article_body_meta']['author']:
+                    if type(aut) == dict and 'name' in aut.keys():
+                        art.add_udf('author', aut['name'])
+
+        if 'article' in header_keys and 'publishedFirst' in faz_api_return['article_meta']['article'].keys():
+            art.add_udf('date_created', faz_api_return['article_meta']['article']['publishedFirst'])
+            art.add_udf('date_published', faz_api_return['article_meta']['article']['publishedFirst'])
             try:
                 art.set_body_counter(max(
                     int(math.log((date.today() -
-                                  date.fromisoformat(welt_api_return['datePublished'][0:10])).days * 24, 2)) - 1, 0))
+                                  date.fromisoformat(faz_api_return
+                                        ['article_meta']['article']['publishedFirst'][0:10])).days * 24, 2))
+                    - 1, 0))
             except:
                 # use default
                 pass
+        if 'dateModified' in body_keys:
+            art.add_udf('date_modified', faz_api_return['article_body_meta']['dateModified'])
         return True
 
     def get_write_articles_details(self, writer: DatabaseExchange, article_list: list,
@@ -144,19 +165,75 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
             return False
         start_list_elem = 0
         while start_list_elem < len(article_list):
-            for art in article_list[start_list_elem:(start_list_elem + WeltScraper.SUBSET_LENGTH)]:
+            for art in article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)]:
                 logger.info("process-id "+str(os.getpid())+" fetching article: " + str(art.get_article()['header']['url']))
                 self.get_article_details(art)
-                time.sleep(WeltScraper.DELAY_INDIVIDUAL)
-            writer.write_articles(article_list[start_list_elem:(start_list_elem + WeltScraper.SUBSET_LENGTH)])
-            for art in article_list[start_list_elem:(start_list_elem + WeltScraper.SUBSET_LENGTH)]:
+                time.sleep(FazScraper.DELAY_INDIVIDUAL)
+            writer.write_articles(article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)])
+            for art in article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)]:
                 logger.info("process-id "+str(os.getpid())+" fetching comments for " + str(art.get_article()['header']['url']))
                 comment_list = self.get_comments_for_article(art, start_date)
                 writer.write_comments(comment_list)
-                time.sleep(WeltScraper.DELAY_INDIVIDUAL)
-            start_list_elem += WeltScraper.SUBSET_LENGTH
-            time.sleep(WeltScraper.DELAY_SUBSET)
+                time.sleep(FazScraper.DELAY_INDIVIDUAL)
+            start_list_elem += FazScraper.SUBSET_LENGTH
+            time.sleep(FazScraper.DELAY_SUBSET)
         return True
+
+    def flatten_comments(self, art: Article, comment_list: list, parent_external_id: int = None, comment_depth=0,
+                         start_date: date = date(1900, 1, 1), end_date: date = date.today()) -> list:
+        """
+        recursively traverses the Comment tree and returns list of own Comment objects filled with predefined data
+
+        Parameters
+        ----------
+        art : Article
+            the Article the comments belong to
+        comment_list : list
+            list of comments (starting level)
+        parent_external_id : int, optional
+            for recursive call: if Comment has parent, add parent_id here to save this connection to database \n
+            The default is None.
+        comment_depth : TYPE, optional
+            current depth of Comment list. The default is starting value of 0 (Comment for Article).
+        start_date : date, optional
+            comments before this date are dropped. The default is date(1900,1,1).
+        end_date : date, optional
+            comments after this date are dropped. The default is date.today().
+
+        Returns
+        -------
+        comment_return_list:list
+            list of all Comment objects below the Article, which fit between the given dates
+
+        """
+        comment_return_list = []
+        if type(comment_list) != list:
+            return []
+        for cmt in comment_list:
+            if type(cmt) != dict:
+                continue
+            cmt_keys = cmt.keys()
+            if 'body' in cmt_keys and 'title' in cmt_keys and 'author' in cmt_keys and 'created_at' in cmt_keys and \
+                    cmt['body'] is not None and cmt['title'] is not None and cmt['author'] is not None \
+                    and cmt['created_at'] is not None:
+                cmt_ext_id = calculate_comment_external_id(
+                    art.get_article()["header"]["url"], cmt['author'], cmt['title'] + " " + cmt['body']
+                )
+                tmp_comment = Comment()
+                tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
+                                      "parent_id": parent_external_id, "level": comment_depth,
+                                      "body": cmt['title'] + " " + cmt['body'],
+                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id})
+                tmp_comment.add_udf("headline", cmt['title'])
+                tmp_comment.add_udf("author", cmt['author'])
+                tmp_comment.add_udf("date_created", cmt['created_at'])
+                if start_date <= date.fromisoformat(cmt['created_at'][0:10]) <= end_date:
+                    comment_return_list += [tmp_comment]
+                if 'replies' in cmt_keys:
+                    tmp_comment.add_udf("replies", str(len(cmt['replies'])))
+                    comment_return_list += self.flatten_comments(art, cmt['replies'], cmt_ext_id, comment_depth + 1,
+                                                                 start_date, end_date)
+        return comment_return_list
 
     def get_comments_for_article(self, art: Article, start_date: date = date(1900, 1, 1),
                                  end_date: date = date.today()) -> list:
@@ -181,32 +258,12 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
         """
         comment_return_list = []
         try:
-            api_return = self.api.get_article_comments(art.get_article()['header']['url'])
-            raw_comment_list = list(filter(lambda x: 'parentId' not in x.keys(), api_return))
+            comments = self.api.get_article_comments(art.get_article()['header']['url'])
+            comment_return_list += self.flatten_comments(art, comments, None, 0, start_date, end_date)
         except:
-            logger.warning("process-id "+str(os.getpid())+" Comment crawl error for article_id : " +
-                           str(art.get_article()['header']['id']))
-            raw_comment_list = []
+            logger.warning("process-id "+str(os.getpid())+" Comment crawl error for article_id : "
+                           + str(art.get_article()['header']['id']))
             self.has_errors = True
-        for cmt in raw_comment_list:
-            if type(cmt) != dict:
-                continue
-            if cmt['contents'] is not None and cmt['user'] is not None and cmt['created'] is not None:
-                cmt_ext_id = calculate_comment_external_id(
-                    art.get_article()["header"]["url"], cmt['user']['displayName'], cmt['contents']
-                )
-                tmp_comment = Comment()
-                tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
-                                      "parent_id": None, "level": 0,
-                                      "body": cmt['contents'].replace("\n", ' ').replace("\t", ' '),
-                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id})
-                if 'user' in cmt.keys():
-                    tmp_comment.add_udf("author", cmt['user']['displayName'])
-                tmp_comment.add_udf("date_created", cmt['created'])
-                if start_date <= date.fromisoformat(cmt['created'][0:10]) <= end_date:
-                    comment_return_list += [tmp_comment]
-                if 'childCount' in cmt.keys():
-                    tmp_comment.add_udf("replies", cmt['childCount'])
         return comment_return_list
 
     def __del__(self):
@@ -238,24 +295,24 @@ def run_all():
     """
     start_time = datetime.today()
     logger.info("full run step - started at " + str(start_time))
-    welt_scraper = WeltScraper()
+    spiegel_online_scraper = FazScraper()
     db = DatabaseExchange()
     end_date = date.today()
     while True:
-        db.log_scraper_start(welt_scraper.id)
+        db.log_scraper_start(spiegel_online_scraper.id)
         start_date = end_date - timedelta(weeks=1)
-        article_header_list = welt_scraper.get_article_list(start_date, end_date)
+        article_header_list = spiegel_online_scraper.get_article_list(start_date, end_date)
         end_date = start_date - timedelta(1)
         if len(article_header_list) == 0:
             break
         db.write_articles(article_header_list)
-        todo_list = db.fetch_scraper_todo_list(welt_scraper.id)
+        todo_list = db.fetch_scraper_todo_list(spiegel_online_scraper.id)
         if not todo_list:
             continue
         num_processes = min(cpu_count() - 1, 5)  # num processes reduced. IP-ban with 9 processes after about 1,5 hours
         chunk_size = math.ceil(len(todo_list) / num_processes)
         with closing(Pool(processes=num_processes)) as pool:
-            result = [pool.apply_async(welt_scraper.wrap_get_write_articles_parallel,
+            result = [pool.apply_async(spiegel_online_scraper.wrap_get_write_articles_parallel,
                                        args=(copy.deepcopy(todo_list[i * chunk_size:(i + 1) * chunk_size]),))
                                        for i in range(0, num_processes)]
             _ = [p.get() for p in result]
@@ -275,20 +332,20 @@ def run_regular():
     default_start_date = date.today() - timedelta(30)
     start_time = datetime.today()
     logger.info("regular run - started at " + str(start_time))
-    welt_scraper = WeltScraper()
+    faz_scraper = FazScraper()
     db = DatabaseExchange()
-    db.log_scraper_start(welt_scraper.id)
-    start = max(db.fetch_scraper_last_run(welt_scraper.id).date(), default_start_date)
+    db.log_scraper_start(faz_scraper.id)
+    start = max(db.fetch_scraper_last_run(faz_scraper.id).date(), default_start_date)
     end = date.today()
-    article_header_list = welt_scraper.get_article_list(start, end)
+    article_header_list = faz_scraper.get_article_list(start, end)
     db.write_articles(article_header_list)
-    end_historical = db.fetch_scraper_oldest(welt_scraper.id)
+    end_historical = db.fetch_scraper_oldest(faz_scraper.id)
     start_historical = end_historical - timedelta(2)
-    article_header_list = welt_scraper.get_article_list(start_historical, end_historical)
+    article_header_list = faz_scraper.get_article_list(start_historical, end_historical)
     db.write_articles(article_header_list)
-    todo_list = db.fetch_scraper_todo_list(welt_scraper.id)
-    welt_scraper.get_write_articles_details(db, todo_list, start - timedelta(1))
-    db.log_scraper_end(not welt_scraper.has_errors)
+    todo_list = db.fetch_scraper_todo_list(faz_scraper.id)
+    faz_scraper.get_write_articles_details(db, todo_list, start - timedelta(1))
+    db.log_scraper_end(not faz_scraper.has_errors)
     logger.info("regular run - duration = " + str(datetime.today() - start_time))
     db.close()
 
@@ -296,7 +353,7 @@ def run_regular():
 if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
-    print("Starting WeltScraper testcases here:\n\n")
+    print("Starting FazScraper testcases here:\n\n")
     logger.info("call parameters: " + str(sys.argv))
     # if len(sys.argv) > 1:
     #     if sys.argv[1] == 'all':
@@ -305,16 +362,18 @@ if __name__ == '__main__':
     #         run_regular()
     # else:
     #     run_regular()
-    welt_scraper = WeltScraper()
-    todo = welt_scraper.get_article_list(date(2020, 1, 20), date(2020, 1, 21))
+    faz_scraper = FazScraper()
+    todo = faz_scraper.get_article_list(date(2021, 1, 20), date(2021, 1, 21))
     cmts = []
-    for t in todo:
-        t.set_header_id(1)
-        t.set_body_id(1)
-        welt_scraper.get_article_details(t)
-        cmts += welt_scraper.get_comments_for_article(t)
+    for i, t in enumerate(todo[0:10]):
+        print("crawling", t)
+        t.set_header_id(i+1)
+        t.set_body_id(i+1)
+        faz_scraper.get_article_details(t)
+        cmts += faz_scraper.get_comments_for_article(t)
     for t in todo[0:10]:
         t.print()
     for c in cmts[0:10]:
         c.print()
+
 
