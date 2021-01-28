@@ -13,3 +13,7 @@ export GF_PG_PASSWORD="gf_postgres"
 
 echo "Grafana Admin Configs"
 export GF_SECURITY_ADMIN_PASSWORD="IamTheAdmin"
+
+echo "PGAdmin Configs"
+export PGADMIN_DEFAULT_EMAIL="opinion-analyzer-crew@hu-berlin.de"
+export PGADMIN_DEFAULT_PASSWORD="IamTheMasterOfTheData"

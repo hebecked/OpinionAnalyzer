@@ -12,6 +12,23 @@ services:
       - 5432:5432
     volumes:
       - dbdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Running pgAdmin on port 5555
+  # Note: On deployment you need to set the server configs after login into the pgAdmin client. Use the postgres
+  #       configs for this one
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    depends_on:
+      - postgres
+    ports:
+      - 5555:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      - SERVER_MODE=True
+    restart: unless-stopped
 
   # A service container to
   dbs-configurator:
@@ -23,6 +40,9 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - GF_PG_USER=${GF_PG_USER}
+      - GF_PG_PASSWORD=${GF_PG_PASSWORD}
+    restart: unless-stopped
 
   # Running grafana on port 8080
   grafana:
@@ -40,6 +60,7 @@ services:
     user: "root"
     volumes:
       - grafana_storage:/var/lib/grafana
+    restart: unless-stopped
 
 
   # Data analytics and NLP worker 
@@ -53,6 +74,7 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    restart: unless-stopped
 
   # Data analytics and NLP worker
   scraper:
@@ -65,6 +87,7 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    restart: unless-stopped
 
 volumes:
   dbdata:
