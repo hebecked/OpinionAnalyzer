@@ -11,9 +11,9 @@ echo "Setting Grafana Postgres User (only SELECT rights to specific schemas insi
 export GF_PG_USER="gf_postgres"
 export GF_PG_PASSWORD="gf_postgres"
 
-echo "Grafana Admin Configs"
+echo "Setting Grafana Admin Configs"
 export GF_SECURITY_ADMIN_PASSWORD="IamTheAdmin"
 
-echo "PGAdmin Configs"
+echo "Setting PGAdmin Configs"
 export PGADMIN_DEFAULT_EMAIL="opinion-analyzer-crew@hu-berlin.de"
 export PGADMIN_DEFAULT_PASSWORD="IamTheMasterOfTheData"
