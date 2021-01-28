@@ -30,12 +30,16 @@ import nltk
 
 # from IPython import embed; embed()
 class baselineSentiment:
+    """
+    Sentiment analyzer module based on a simple word - sentiment list.
+    The average and the std of all words in a text that can be matched to a word in the list is calculated.
+    """
 
     def __init__(self):
-        #word|POS \t sentiment \t ,words, \n
-        with open('../Testdata/SentiWS_v1.8c_Negative.txt', 'r') as file1: 
+        #Line format: "word|POS \t sentiment \t word,word... \n"
+        with open('../Testdata/SentiWS_v1.8c_Negative.txt', 'r', encoding='utf-8') as file1: 
             Lines = file1.readlines() 
-        with open('../Testdata/SentiWS_v1.8c_Positive.txt', 'r') as file2:
+        with open('../Testdata/SentiWS_v1.8c_Positive.txt', 'r', encoding='utf-8') as file2:
             Lines.extend(file2.readlines()) 
         sentiments = dict()
         for line in Lines:
@@ -50,9 +54,10 @@ class baselineSentiment:
                     word = re.sub('[^A-Za-züäößÄÖÜ]+', '', related_word).lower()
                     sentiments[word] = sentiment
         self.sentiments = sentiments
-        #print(len(sentiments))
+
 
     def print_sentiments(self):
+        """Prints all the read-in sentiments"""
         print(self.sentiments)
 
     def analyze(self, text):
@@ -75,9 +80,14 @@ class baselineSentiment:
 
 
 class baselineFastTextSentiment(baselineSentiment):
+    """
+    Sentiment analyzer module based on a word - sentiment list supported by fasttext-vectors.
+    The average and the std of all words in a text that can be matched to a word in the list is calculated.
+    To match the words the cosine distance of festtext-vectors are used.
+    """
 
     def __init__(self):
-        super().__init__()
+        super().__init__() #call without lower case?
         self.ft = fasttext.load_model('../Testdata/cc.de.50.bin')
         #fasttext.util.reduce_model(self.ft, 50) #change size
         #self.ft.save_model('../Testdata/cc.de.50.bin') #and store
