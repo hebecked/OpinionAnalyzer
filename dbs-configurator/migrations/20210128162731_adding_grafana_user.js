@@ -1,8 +1,6 @@
 const fs = require('fs');
 const logger = require("tracer").console();
 
-const query = fs.readFileSync("/usr/src/app/sqlStorage/grafana-user/grafana_user.sql");
-
 exports.up = function(knex) {
 
   const GF_PG_USER = process.env.GF_PG_USER;
