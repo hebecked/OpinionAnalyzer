@@ -100,19 +100,24 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
             self.has_errors = True
             art.set_obsolete(True)
             return False
-        art.set_body(
-            {'headline': unicodedata.normalize('NFKD', welt_api_return['headline'].replace("\n", ' ').replace("\t", ' ')),
+        return_keys = welt_api_return.keys()
+        if 'headline' in return_keys and 'articleBody' in return_keys:
+            art.set_body(
+                {'headline': unicodedata.normalize('NFKD', welt_api_return['headline'].replace("\n", ' ').replace("\t", ' ')),
                 'body': unicodedata.normalize('NFKD', welt_api_return['articleBody'].replace("\n", ' ').replace("\t", ' ')),
                 'proc_timestamp': datetime.today(),
                 'proc_counter': 0})
+        else:
+            art.set_obsolete(True)
+            return False
         # add udfs
-        if 'author' in welt_api_return.keys():
+        if 'author' in return_keys:
             art.add_udf('author',
                         unicodedata.normalize('NFKD',
                                             welt_api_return['author']['name'].replace("\n", ' ').replace("\t", ' ')))
-        if 'dateModified' in welt_api_return.keys():
+        if 'dateModified' in return_keys:
             art.add_udf('date_modified', welt_api_return['dateModified'])
-        if 'datePublished' in welt_api_return.keys():
+        if 'datePublished' in return_keys:
             art.add_udf('date_published', welt_api_return['datePublished'])
             try:
                 art.set_body_counter(max(
@@ -152,10 +157,13 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
                 self.get_article_details(art)
                 time.sleep(WeltScraper.DELAY_INDIVIDUAL)
             writer.write_articles(article_list[start_list_elem:(start_list_elem + WeltScraper.SUBSET_LENGTH)])
-            for art in article_list[start_list_elem:(start_list_elem + WeltScraper.SUBSET_LENGTH)]:
+            fetch_comments_list = list(filter(lambda x:  x.is_in_db() and not x.get_article()['header']['obsolete'],
+                                         article_list[start_list_elem:(start_list_elem + WeltScraper.SUBSET_LENGTH)]))
+            for art in fetch_comments_list:
                 logger.info("process-id "+str(os.getpid())+" fetching comments for " + str(art.get_article()['header']['url']))
                 comment_list = self.get_comments_for_article(art, start_date)
-                writer.write_comments(comment_list)
+                if comment_list:
+                    writer.write_comments(comment_list)
                 time.sleep(WeltScraper.DELAY_INDIVIDUAL)
             start_list_elem += WeltScraper.SUBSET_LENGTH
             time.sleep(WeltScraper.DELAY_SUBSET)
@@ -182,6 +190,8 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
 
 
         """
+        if 'id' not in art.get_body_to_write()["body"].keys():
+            return []
         comment_return_list = []
         try:
             api_return = self.api.get_article_comments(art.get_article()['header']['url'])
@@ -302,24 +312,25 @@ if __name__ == '__main__':
     print("-------------------------------------------------\n")
     print("Starting WeltScraper testcases here:\n\n")
     logger.info("call parameters: " + str(sys.argv))
-    # if len(sys.argv) > 1:
-    #     if sys.argv[1] == 'all':
-    #         run_all()
-    #     else:
-    #         run_regular()
-    # else:
-    #     run_regular()
-    welt_scraper = WeltScraper()
-    todo = welt_scraper.get_article_list(date(2020, 1, 21), date(2020, 1, 21))
-    cmts = []
-    for i, t in enumerate(todo):
-        print("crawling article", i)
-        t.set_header_id(i+1)
-        t.set_body_id(i+1)
-        welt_scraper.get_article_details(t)
-        cmts += welt_scraper.get_comments_for_article(t)
-    for t in todo[0:10]:
-        t.print()
-    for c in cmts[0:10]:
-        c.print()
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'all':
+            run_all()
+        else:
+            run_regular()
+    else:
+        run_regular()
+    # welt_scraper = WeltScraper()
+    # todo = welt_scraper.get_article_list(date(2020, 1, 10), date(2020, 1, 21))
+    # cmts = []
+    # print("todo: ", len(todo))
+    # for i, t in enumerate(todo):
+    #     print("crawling article", i)
+    #     t.set_header_id(i+1)
+    #     t.set_body_id(i+1)
+    #     welt_scraper.get_article_details(t)
+    #     cmts += welt_scraper.get_comments_for_article(t)
+    # for t in todo[0:10]:
+    #     t.print()
+    # for c in cmts[0:10]:
+    #     c.print()
 

@@ -124,6 +124,9 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
                                                    replace("\n", ' ').replace("\t", ' ').strip()),
                  'proc_timestamp': datetime.today(),
                  'proc_counter': 0})
+        else:
+            art.set_obsolete(True)
+            return False
         # add udfs
         if 'author' in body_keys:
             if type(faz_api_return['article_body_meta']['author']) == dict \
@@ -182,12 +185,13 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
                 self.get_article_details(art)
                 time.sleep(FazScraper.DELAY_INDIVIDUAL)
             writer.write_articles(article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)])
-            fetch_comments_list = list(filter(lambda x: not x.get_article()['header']['obsolete'],
+            fetch_comments_list = list(filter(lambda x: x.is_in_db() and not x.get_article()['header']['obsolete'],
                                          article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)]))
             for art in fetch_comments_list:
                 logger.info("process-id "+str(os.getpid())+" fetching comments for " + str(art.get_article()['header']['url']))
                 comment_list = self.get_comments_for_article(art, start_date)
-                writer.write_comments(comment_list)
+                if comment_list:
+                    writer.write_comments(comment_list)
                 time.sleep(FazScraper.DELAY_INDIVIDUAL)
             start_list_elem += FazScraper.SUBSET_LENGTH
             time.sleep(FazScraper.DELAY_SUBSET)

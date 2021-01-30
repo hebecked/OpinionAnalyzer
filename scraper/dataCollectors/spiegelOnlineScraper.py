@@ -153,10 +153,13 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
                 self.get_article_details(art)
                 time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)
             writer.write_articles(article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)])
-            for art in article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)]:
+            fetch_comments_list = list(filter(lambda x:  x.is_in_db() and not x.get_article()['header']['obsolete'],
+                                         article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)]))
+            for art in fetch_comments_list:
                 logger.info("process-id "+str(os.getpid())+" fetching comments for " + str(art.get_article()['header']['url']))
                 comment_list = self.get_comments_for_article(art, start_date)
-                writer.write_comments(comment_list)
+                if comment_list:
+                    writer.write_comments(comment_list)
                 time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)
             start_list_elem += SpiegelOnlineScraper.SUBSET_LENGTH
             time.sleep(SpiegelOnlineScraper.DELAY_SUBSET)
