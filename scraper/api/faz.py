@@ -37,10 +37,14 @@ class Faz:
                 break
 
             for link_spoon in link_soup:
-                article_link = link_spoon.find('a', {'class': 'js-hlp-LinkSwap js-tsr-Base_ContentLink tsr-Base_ContentLink'}, href=True).attrs['href']
-                if article_link not in link_array:
-                    link_array.append(article_link)
-
+                try:
+                    link_block = link_spoon.find('a', {'class': 'js-hlp-LinkSwap js-tsr-Base_ContentLink tsr-Base_ContentLink'}, href=True)
+                    if link_block is not None:
+                        article_link = link_block.attrs['href']
+                        if article_link not in link_array:
+                            link_array.append(article_link)
+                except:
+                    pass
             page += 1
 
         return link_array
@@ -152,10 +156,10 @@ class Faz:
 
 if __name__ == '__main__':
     faz_api = Faz()
-    list_of_links = faz_api.get_all_articles_from_dates(start=datetime.datetime(2021, 1, 1), end=datetime.datetime(2021, 1, 1))
+    list_of_links = faz_api.get_all_articles_from_dates(start=datetime.datetime(2021, 1, 11), end=datetime.datetime(2021, 1, 11))
     art = []
     cmt = []
-    for link in list_of_links:
+    for link in list_of_links[:10]:
         print(link)
         article_meta = faz_api.get_article_meta(url=link)
         art += [article_meta]

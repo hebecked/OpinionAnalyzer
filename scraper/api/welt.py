@@ -28,7 +28,10 @@ def get_article_comments_recursively(url: str, comments: [], minimum_created: da
 
     else:
         for comment in comments_rec_json['comments']:
-            comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S.%f")
+            if '.' in comment['created']:
+                comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S.%f")
+            else:
+                comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S")
             if comment_created < minimum_created:
                 minimum_created = comment_created
             comments.append(comment)
@@ -119,7 +122,10 @@ class Welt:
 
         min_comment_created = datetime.datetime.now()
         for comment in comment_json['comments']:
-            comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S.%f")
+            if '.' in comment['created']:
+                comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S.%f")
+            else:
+                comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S")
             if comment_created < min_comment_created:
                 min_comment_created = comment_created
             comments_list.append(comment)

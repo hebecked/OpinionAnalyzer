@@ -15,6 +15,7 @@ import os
 from multiprocessing import cpu_count, Pool
 from contextlib import closing
 import copy
+import unicodedata
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO,
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger()
@@ -62,7 +63,7 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
             except:
                 logger.warning("process-id "+str(os.getpid())+" Article List crawl error!")
                 self.has_errors = True
-            time.sleep(WeltScraper.DELAY_INDIVIDUAL)  # remove Comment for crawler delay
+            time.sleep(WeltScraper.DELAY_SUBSET)  # remove Comment for crawler delay
         url_list = list(filter(lambda x: x['is_paid'] is False, full_list))  # remove paid articles without access
         for url in url_list:
             try:
@@ -100,13 +101,15 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
             art.set_obsolete(True)
             return False
         art.set_body(
-            {'headline': welt_api_return['headline'].replace("\n", ' ').replace("\t", ' '),
-                'body': welt_api_return['articleBody'].replace("\n", ' ').replace("\t", ' '),
+            {'headline': unicodedata.normalize('NFKD', welt_api_return['headline'].replace("\n", ' ').replace("\t", ' ')),
+                'body': unicodedata.normalize('NFKD', welt_api_return['articleBody'].replace("\n", ' ').replace("\t", ' ')),
                 'proc_timestamp': datetime.today(),
                 'proc_counter': 0})
         # add udfs
         if 'author' in welt_api_return.keys():
-            art.add_udf('author', welt_api_return['author']['name'])
+            art.add_udf('author',
+                        unicodedata.normalize('NFKD',
+                                            welt_api_return['author']['name'].replace("\n", ' ').replace("\t", ' ')))
         if 'dateModified' in welt_api_return.keys():
             art.add_udf('date_modified', welt_api_return['dateModified'])
         if 'datePublished' in welt_api_return.keys():
@@ -198,10 +201,11 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
                 tmp_comment = Comment()
                 tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
                                       "parent_id": None, "level": 0,
-                                      "body": cmt['contents'].replace("\n", ' ').replace("\t", ' '),
+                                      "body": unicodedata.normalize('NFKD',
+                                                                    cmt['contents'].replace("\n", ' ').replace("\t", ' ')),
                                       "proc_timestamp": datetime.today(), "external_id": cmt_ext_id})
                 if 'user' in cmt.keys():
-                    tmp_comment.add_udf("author", cmt['user']['displayName'])
+                    tmp_comment.add_udf("author", unicodedata.normalize('NFKD', cmt['user']['displayName']))
                 tmp_comment.add_udf("date_created", cmt['created'])
                 if start_date <= date.fromisoformat(cmt['created'][0:10]) <= end_date:
                     comment_return_list += [tmp_comment]
@@ -306,11 +310,12 @@ if __name__ == '__main__':
     # else:
     #     run_regular()
     welt_scraper = WeltScraper()
-    todo = welt_scraper.get_article_list(date(2020, 1, 20), date(2020, 1, 21))
+    todo = welt_scraper.get_article_list(date(2020, 1, 21), date(2020, 1, 21))
     cmts = []
-    for t in todo:
-        t.set_header_id(1)
-        t.set_body_id(1)
+    for i, t in enumerate(todo):
+        print("crawling article", i)
+        t.set_header_id(i+1)
+        t.set_body_id(i+1)
         welt_scraper.get_article_details(t)
         cmts += welt_scraper.get_comments_for_article(t)
     for t in todo[0:10]:

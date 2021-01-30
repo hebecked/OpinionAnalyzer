@@ -15,6 +15,8 @@ import os
 from multiprocessing import cpu_count, Pool
 from contextlib import closing
 import copy
+import unicodedata
+
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO,
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger()
@@ -58,14 +60,15 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
                 as_datetime = datetime.combine(dt, datetime.min.time())
                 url_list = self.api.get_all_articles_from_dates(as_datetime, as_datetime)
                 for url in url_list:
-                    full_list += [{'url': url, 'source_date': dt}]
+                    full_list += [{'url': url, 'source_date': dt, 'is_paid': "/premiumContent" in url}]
             except:
                 logger.warning("process-id "+str(os.getpid())+" Article List crawl error!")
                 self.has_errors = True
-            time.sleep(FazScraper.DELAY_INDIVIDUAL)  # remove Comment for crawler delay
-        url_list = full_list  # no possibility to filter paid articles here
+            time.sleep(FazScraper.DELAY_SUBSET)  # remove Comment for crawler delay
+        url_list = list(filter(lambda x: x['is_paid'] is False, full_list))
         for url in url_list:
             try:
+
                 art = Article()
                 art.set_header(
                     {'source_date': url['source_date'], 'source_id': self.id, 'url': str(url['url'])})
@@ -113,17 +116,26 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
             return False
         if 'headline' in body_keys and 'articleBody' in body_keys:
             art.set_body(
-                {'headline': faz_api_return['article_body_meta']['headline'],
-                 'body': faz_api_return['article_body_meta']['articleBody'], 'proc_timestamp': datetime.today(),
+                {'headline': unicodedata.normalize('NFKD',
+                                                   faz_api_return['article_body_meta']['headline'].
+                                                   replace("\n", ' ').replace("\t", ' ').strip()),
+                 'body': unicodedata.normalize('NFKD',
+                                               faz_api_return['article_body_meta']['articleBody'].
+                                                   replace("\n", ' ').replace("\t", ' ').strip()),
+                 'proc_timestamp': datetime.today(),
                  'proc_counter': 0})
         # add udfs
         if 'author' in body_keys:
-            if type(faz_api_return['article_body_meta']['author']) == dict and 'name' in faz_api_return['article_body_meta']['author'].keys():
-                art.add_udf('author', faz_api_return['article_body_meta']['author']['name'])
+            if type(faz_api_return['article_body_meta']['author']) == dict \
+                    and 'name' in faz_api_return['article_body_meta']['author'].keys():
+                art.add_udf('author', unicodedata.normalize('NFKD',
+                                                            faz_api_return['article_body_meta']['author']['name'].
+                                                   replace("\n", ' ').replace("\t", ' ').strip()))
             elif type(faz_api_return['article_body_meta']['author']) == list:
                 for aut in faz_api_return['article_body_meta']['author']:
                     if type(aut) == dict and 'name' in aut.keys():
-                        art.add_udf('author', aut['name'])
+                        art.add_udf('author', unicodedata.normalize('NFKD', aut['name'].
+                                                   replace("\n", ' ').replace("\t", ' ').strip()))
 
         if 'article' in header_keys and 'publishedFirst' in faz_api_return['article_meta']['article'].keys():
             art.add_udf('date_created', faz_api_return['article_meta']['article']['publishedFirst'])
@@ -170,7 +182,9 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
                 self.get_article_details(art)
                 time.sleep(FazScraper.DELAY_INDIVIDUAL)
             writer.write_articles(article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)])
-            for art in article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)]:
+            fetch_comments_list = list(filter(lambda x: not x.get_article()['header']['obsolete'],
+                                         article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)]))
+            for art in fetch_comments_list:
                 logger.info("process-id "+str(os.getpid())+" fetching comments for " + str(art.get_article()['header']['url']))
                 comment_list = self.get_comments_for_article(art, start_date)
                 writer.write_comments(comment_list)
@@ -217,12 +231,13 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
                     cmt['body'] is not None and cmt['title'] is not None and cmt['author'] is not None \
                     and cmt['created_at'] is not None:
                 cmt_ext_id = calculate_comment_external_id(
-                    art.get_article()["header"]["url"], cmt['author'], cmt['title'] + " " + cmt['body']
+                    art.get_article()["header"]["url"], cmt['author'],
+                    unicodedata.normalize('NFKD', cmt['title'] + " " + cmt['body'])
                 )
                 tmp_comment = Comment()
                 tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
                                       "parent_id": parent_external_id, "level": comment_depth,
-                                      "body": cmt['title'] + " " + cmt['body'],
+                                      "body": unicodedata.normalize('NFKD', cmt['title'] + " " + cmt['body']),
                                       "proc_timestamp": datetime.today(), "external_id": cmt_ext_id})
                 tmp_comment.add_udf("headline", cmt['title'])
                 tmp_comment.add_udf("author", cmt['author'])
@@ -329,7 +344,7 @@ def run_regular():
         -------
         None
     """
-    default_start_date = date.today() - timedelta(30)
+    default_start_date = date.today() - timedelta(20)
     start_time = datetime.today()
     logger.info("regular run - started at " + str(start_time))
     faz_scraper = FazScraper()
@@ -338,10 +353,6 @@ def run_regular():
     start = max(db.fetch_scraper_last_run(faz_scraper.id).date(), default_start_date)
     end = date.today()
     article_header_list = faz_scraper.get_article_list(start, end)
-    db.write_articles(article_header_list)
-    end_historical = db.fetch_scraper_oldest(faz_scraper.id)
-    start_historical = end_historical - timedelta(2)
-    article_header_list = faz_scraper.get_article_list(start_historical, end_historical)
     db.write_articles(article_header_list)
     todo_list = db.fetch_scraper_todo_list(faz_scraper.id)
     faz_scraper.get_write_articles_details(db, todo_list, start - timedelta(1))
@@ -355,25 +366,28 @@ if __name__ == '__main__':
     print("-------------------------------------------------\n")
     print("Starting FazScraper testcases here:\n\n")
     logger.info("call parameters: " + str(sys.argv))
-    # if len(sys.argv) > 1:
-    #     if sys.argv[1] == 'all':
-    #         run_all()
-    #     else:
-    #         run_regular()
-    # else:
-    #     run_regular()
-    faz_scraper = FazScraper()
-    todo = faz_scraper.get_article_list(date(2021, 1, 20), date(2021, 1, 21))
-    cmts = []
-    for i, t in enumerate(todo[0:10]):
-        print("crawling", t)
-        t.set_header_id(i+1)
-        t.set_body_id(i+1)
-        faz_scraper.get_article_details(t)
-        cmts += faz_scraper.get_comments_for_article(t)
-    for t in todo[0:10]:
-        t.print()
-    for c in cmts[0:10]:
-        c.print()
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'all':
+            run_all()
+        else:
+            run_regular()
+    else:
+        run_regular()
+    # faz_scraper = FazScraper()
+    # start_time = datetime.today()
+    # todo = faz_scraper.get_article_list(date(2021, 1, 21), date(2021, 1, 21))
+    # cmts = []
+    # print("num articles: ", len(todo))
+    # for i, t in enumerate(todo):
+    #     print("crawling article", i)
+    #     t.set_header_id(i+1)
+    #     t.set_body_id(i+1)
+    #     faz_scraper.get_article_details(t)
+    #     cmts += faz_scraper.get_comments_for_article(t)
+    # print("time of run: " + str(datetime.today() - start_time))
+    # for t in todo[0:10]:
+    #     t.print()
+    # for c in cmts[0:10]:
+    #     c.print()
 
 

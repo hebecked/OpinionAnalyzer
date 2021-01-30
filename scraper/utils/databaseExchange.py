@@ -808,7 +808,7 @@ class DatabaseExchange(connectDb.Database):
         """
         cur = self.conn.cursor()
         for art in article_list:
-            if art.get_body_to_write()["insert"]:
+            if art.get_body_to_write()["insert"] and 'id' in art.get_article()["body"].keys():
                 for udf in art.get_article()["udfs"]:
                     cur.execute(
                         DatabaseExchange.__SQL_UDF_INSERT,
@@ -896,6 +896,7 @@ class DatabaseExchange(connectDb.Database):
             bodies = list(filter(lambda x: x.is_in_db(), work_list))
             self.__write_article_bodies(bodies)
 #            print("Article bodies written and id added") # todo delete line (debugging purposes only)
+            bodies = list(filter(lambda x: x.is_in_db() and not x.get_article()['header']['obsolete'], work_list))
             self.__write_article_udfs(bodies)
 #            print("Article udfs written") # todo delete line (debugging purposes only)
             start += DatabaseExchange.SUBSET_LENGTH
