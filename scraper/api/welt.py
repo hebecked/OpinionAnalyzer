@@ -139,7 +139,7 @@ if __name__ == '__main__':
     welt_api = Welt()
     link_list = welt_api.get_all_articles_from_dates(start=datetime.datetime(2021,1,1), end=datetime.datetime(2021,1,1))
     print(link_list)
-    for article_link in link_list:
+    for article_link in link_list[0:10]:
         a_json = welt_api.get_article_meta(article_link)
         print(a_json)
     all_comments = welt_api.get_article_comments(link_list[0])

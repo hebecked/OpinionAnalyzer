@@ -115,15 +115,16 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
             art.set_obsolete(True)  # paid article can not be detected earlier
             return False
         if 'headline' in body_keys and 'articleBody' in body_keys:
-            art.set_body(
-                {'headline': unicodedata.normalize('NFKD',
+            if not art.set_body(
+                    {'headline': unicodedata.normalize('NFKD',
                                                    faz_api_return['article_body_meta']['headline'].
                                                    replace("\n", ' ').replace("\t", ' ').strip()),
-                 'body': unicodedata.normalize('NFKD',
+                    'body': unicodedata.normalize('NFKD',
                                                faz_api_return['article_body_meta']['articleBody'].
                                                    replace("\n", ' ').replace("\t", ' ').strip()),
-                 'proc_timestamp': datetime.today(),
-                 'proc_counter': 0})
+                    'proc_timestamp': datetime.today()}):
+                art.set_obsolete(True)
+                return False
         else:
             art.set_obsolete(True)
             return False
@@ -144,11 +145,9 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
             art.add_udf('date_created', faz_api_return['article_meta']['article']['publishedFirst'])
             art.add_udf('date_published', faz_api_return['article_meta']['article']['publishedFirst'])
             try:
-                art.set_body_counter(max(
-                    int(math.log((date.today() -
-                                  date.fromisoformat(faz_api_return
-                                        ['article_meta']['article']['publishedFirst'][0:10])).days * 24, 2))
-                    - 1, 0))
+                art.set_body_counter(max(int(math.log((date.today() - datetime.strptime(faz_api_return
+                                        ['article_meta']['article']['publishedFirst'][0:10], '%d.%m.%Y')
+                                                       .date()).days * 24, 2))-1, 0))
             except:
                 # use default
                 pass
@@ -239,10 +238,13 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
                     unicodedata.normalize('NFKD', cmt['title'] + " " + cmt['body'])
                 )
                 tmp_comment = Comment()
-                tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
-                                      "parent_id": parent_external_id, "level": comment_depth,
+                if not tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
+                                      "level": comment_depth,
                                       "body": unicodedata.normalize('NFKD', cmt['title'] + " " + cmt['body']),
-                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id})
+                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id}):
+                    print("comment error")
+                    continue
+                tmp_comment.set_parent_id(parent_external_id)
                 tmp_comment.add_udf("headline", cmt['title'])
                 tmp_comment.add_udf("author", cmt['author'])
                 tmp_comment.add_udf("date_created", cmt['created_at'])
@@ -348,7 +350,7 @@ def run_regular():
         -------
         None
     """
-    default_start_date = date.today() - timedelta(20)
+    default_start_date = date.today() - timedelta(5)
     start_time = datetime.today()
     logger.info("regular run - started at " + str(start_time))
     faz_scraper = FazScraper()

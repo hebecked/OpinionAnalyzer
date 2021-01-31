@@ -102,11 +102,12 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
             return False
         return_keys = welt_api_return.keys()
         if 'headline' in return_keys and 'articleBody' in return_keys:
-            art.set_body(
+            if not art.set_body(
                 {'headline': unicodedata.normalize('NFKD', welt_api_return['headline'].replace("\n", ' ').replace("\t", ' ')),
-                'body': unicodedata.normalize('NFKD', welt_api_return['articleBody'].replace("\n", ' ').replace("\t", ' ')),
-                'proc_timestamp': datetime.today(),
-                'proc_counter': 0})
+                    'body': unicodedata.normalize('NFKD', welt_api_return['articleBody'].replace("\n", ' ').replace("\t", ' ')),
+                    'proc_timestamp': datetime.today()}):
+                art.set_obsolete(True)
+                return False
         else:
             art.set_obsolete(True)
             return False
@@ -209,11 +210,12 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
                     art.get_article()["header"]["url"], cmt['user']['displayName'], cmt['contents']
                 )
                 tmp_comment = Comment()
-                tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
-                                      "parent_id": None, "level": 0,
+                if not tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
+                                      "level": 0,
                                       "body": unicodedata.normalize('NFKD',
                                                                     cmt['contents'].replace("\n", ' ').replace("\t", ' ')),
-                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id})
+                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id}):
+                    continue
                 if 'user' in cmt.keys():
                     tmp_comment.add_udf("author", unicodedata.normalize('NFKD', cmt['user']['displayName']))
                 tmp_comment.add_udf("date_created", cmt['created'])
@@ -301,7 +303,7 @@ def run_regular():
     article_header_list = welt_scraper.get_article_list(start_historical, end_historical)
     db.write_articles(article_header_list)
     todo_list = db.fetch_scraper_todo_list(welt_scraper.id)
-    welt_scraper.get_write_articles_details(db, todo_list, start - timedelta(1))
+    welt_scraper.get_write_articles_details(db, todo_list)
     db.log_scraper_end(not welt_scraper.has_errors)
     logger.info("regular run - duration = " + str(datetime.today() - start_time))
     db.close()

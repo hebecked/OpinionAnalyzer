@@ -98,9 +98,11 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
             art.set_obsolete(True)
             return False
         if 'id' in content.keys():
-            art.set_body(
-                {'headline': content['headline']['main'], 'body': content['text'], 'proc_timestamp': datetime.today(),
-                 'proc_counter': 0})
+            if not art.set_body(
+                    {'headline': content['headline']['main'], 'body': content['text'],
+                     'proc_timestamp': datetime.today()}):
+                art.set_obsolete(True)
+                return False
             art.free_data = content['id']
         # add udfs
         if 'topics' in content.keys():
@@ -203,9 +205,11 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
                     art.get_article()["header"]["url"], cmt['user']['username'], cmt['body']
                 )
                 tmp_comment = Comment()
-                tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
-                                      "parent_id": parent_external_id, "level": comment_depth, "body": cmt['body'],
-                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id})
+                if not tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
+                                      "level": comment_depth, "body": cmt['body'],
+                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id}):
+                    continue
+                tmp_comment.set_parent_id(parent_external_id)
                 if 'user' in cmt.keys():
                     tmp_comment.add_udf("author", cmt['user']['username'])
                 tmp_comment.add_udf("date_created", cmt['created_at'])
@@ -330,7 +334,7 @@ def run_regular():
     article_header_list = spiegel_online_scraper.get_article_list(start_historical, end_historical)
     db.write_articles(article_header_list)
     todo_list = db.fetch_scraper_todo_list(spiegel_online_scraper.id)
-    spiegel_online_scraper.get_write_articles_details(db, todo_list, start - timedelta(1))
+    spiegel_online_scraper.get_write_articles_details(db, todo_list)
     db.log_scraper_end(not spiegel_online_scraper.has_errors)
     logger.info("regular run - duration = " + str(datetime.today() - start_time))
     db.close()
