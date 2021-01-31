@@ -301,47 +301,6 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
         return True
 
 
-def run_all():
-    """
-       full run of Scraper.
-       Fetching all articles - starting today and moving backwards in chunks of one week
-       will first add article-headers, then crawl bodies and comments
-       restart with next (older) week
-       
-       running on cpu_count-1 cores at the same time to concurrently crawl the pages at faster pace
-
-        Returns
-        -------
-        None
-    """
-    start_time = datetime.today()
-    logger.info("full run step - started at " + str(start_time))
-    spiegel_online_scraper = FazScraper()
-    db = DatabaseExchange()
-    end_date = date.today()
-    while True:
-        db.log_scraper_start(spiegel_online_scraper.id)
-        start_date = end_date - timedelta(weeks=1)
-        article_header_list = spiegel_online_scraper.get_article_list(start_date, end_date)
-        end_date = start_date - timedelta(1)
-        if len(article_header_list) == 0:
-            break
-        db.write_articles(article_header_list)
-        todo_list = db.fetch_scraper_todo_list(spiegel_online_scraper.id)
-        if not todo_list:
-            continue
-        num_processes = min(cpu_count() - 1, 5)  # num processes reduced. IP-ban with 9 processes after about 1,5 hours
-        chunk_size = math.ceil(len(todo_list) / num_processes)
-        with closing(Pool(processes=num_processes)) as pool:
-            result = [pool.apply_async(spiegel_online_scraper.wrap_get_write_articles_parallel,
-                                       args=(copy.deepcopy(todo_list[i * chunk_size:(i + 1) * chunk_size]),))
-                                       for i in range(0, num_processes)]
-            _ = [p.get() for p in result]
-        db.log_scraper_end(False)
-        logger.info("full run step - duration = " + str(datetime.today() - start_time))
-    db.close()
-
-
 def run_regular():
     """
        Regular run of Scraper. Fetching new articles since last run or default date (if no complete run finished so far)
@@ -372,13 +331,7 @@ if __name__ == '__main__':
     print("-------------------------------------------------\n")
     print("Starting FazScraper testcases here:\n\n")
     logger.info("call parameters: " + str(sys.argv))
-    if len(sys.argv) > 1:
-        if sys.argv[1] == 'all':
-            run_all()
-        else:
-            run_regular()
-    else:
-        run_regular()
+    run_regular()
     # faz_scraper = FazScraper()
     # start_time = datetime.today()
     # todo = faz_scraper.get_article_list(date(2021, 1, 21), date(2021, 1, 21))
