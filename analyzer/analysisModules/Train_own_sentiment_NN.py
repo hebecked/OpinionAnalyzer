@@ -14,6 +14,7 @@ import fasttext.util
 import nltk
 import tensorflow as tf
 import pandas as pd
+import torch
 
 
 model = BertForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")#Alternative: "bert-base-uncased"
@@ -48,8 +49,11 @@ dataset = tf.data.experimental.SqlDataset(
 										output_types = (tf.int32, tf.string, tf.string, tf.int32)
 										)
 
-dataset_=[]
-for data in dataset:
+#split in train val and test (80,10,10)
+train_dataset = {"DB_id": [], "labels": [], 'text_input': []}
+val_dataset = train_dataset.copy()
+test_dataset = train_dataset.copy()
+for i, data in enumerate(dataset):
     if data[3].numpy() == -1:
         sentiment = [1,0,0]
     elif data[3].numpy() == 0:
@@ -58,21 +62,57 @@ for data in dataset:
         sentiment = [0,0,1]
     else:
         print("Error!")
-    dataset_.append([data[0].numpy(), str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"), sentiment])
+    if i % 10 == 0:
+        test_dataset["DB_id"].append(data[0].numpy())
+        test_dataset["labels"].append(sentiment)
+        test_dataset["text_input"].append(str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
+    elif i % 10 -1 == 0:
+        val_dataset["DB_id"].append(data[0].numpy())
+        val_dataset["labels"].append(sentiment)
+        val_dataset["text_input"].append(str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
+    else:
+        train_dataset["DB_id"].append(data[0].numpy())
+        train_dataset["labels"].append(sentiment)
+        train_dataset["text_input"].append(str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
 
-#split in train val and test (80,10,10)
 #get tokens
+train_tokens = tokenizer(train_dataset["text_input"], truncation=True, padding=True)
+train_dataset.update(train_tokens)
+val_tokens = tokenizer(val_dataset["text_input"], truncation=True, padding=True)
+val_dataset.update(val_tokens)
+test_tokens = tokenizer(test_dataset["text_input"], truncation=True, padding=True)
+test_dataset.update(test_tokens)
+
+
 #Dataset class
+class DatasetCorpus(torch.utils.data.Dataset):
+    def __init__(self, dataset):
+        encodings = dict()
+        encodings["input_ids"] = dataset["input_ids"]
+        encodings["attention_mask"] = dataset["attention_mask"]
+        self.encodings = encodings
+        self.labels = dataset["labels"]
+        self.data = dataset
+
+    def __getitem__(self, idx):
+        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
+        item['labels'] = torch.tensor(self.labels[idx])
+        return item
+
+    def __len__(self):
+        return len(self.labels)
 
 
-train_dataset=dataset
-val_dataset=dataset
+
+train_dataset=DatasetCorpus(train_dataset)
+val_dataset=DatasetCorpus(val_dataset)
+test_dataset=DatasetCorpus(test_dataset)
 
 
 training_args = TrainingArguments(
     output_dir='./results',          # output directory
     num_train_epochs=3,              # total number of training epochs
-    per_device_train_batch_size=16,  # batch size per device during training
+    per_device_train_batch_size=48,  # batch size per device during training (16)?
     per_device_eval_batch_size=64,   # batch size for evaluation
     warmup_steps=500,                # number of warmup steps for learning rate scheduler
     weight_decay=0.01,               # strength of weight decay
@@ -86,6 +126,8 @@ trainer = Trainer(
     train_dataset=train_dataset,         # training dataset
     eval_dataset=val_dataset             # evaluation dataset
 )
+
+print("Starting training")
 
 trainer.train()
 
