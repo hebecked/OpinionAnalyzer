@@ -309,7 +309,7 @@ def run_regular():
         -------
         None
     """
-    default_start_date = date.today() - timedelta(5)
+    default_start_date = date.today() - timedelta(20)
     start_time = datetime.today()
     logger.info("regular run - started at " + str(start_time))
     faz_scraper = FazScraper()
