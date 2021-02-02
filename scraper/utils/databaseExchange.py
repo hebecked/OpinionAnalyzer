@@ -3,6 +3,7 @@
 # todo: open tasks marked with todo
 
 import datetime as dt
+import pytz
 
 import utils.connectDb as connectDb
 from utils.article import Article
@@ -31,6 +32,18 @@ class DatabaseExchange(connectDb.Database):
                                         success = True 
                                         AND source_id = %s;
                                    """
+
+    __SQL_SCRAPER_CHECK_RUNNING = """
+                                    SELECT
+                                        start_timestamp,
+                                        end_timestamp
+                                    FROM
+                                         news_meta_data.crawl_log
+                                    WHERE
+                                        source_id = %s
+                                    ORDER BY id desc
+                                    FETCH FIRST 1 ROW ONLY;
+                                    """
 
     __SQL_SCRAPER_FETCH_TODO = """
                                   SELECT 
@@ -389,7 +402,7 @@ class DatabaseExchange(connectDb.Database):
         """
         if analyzer_id not in DatabaseExchange.__analyzer_database_structure.keys():
             return False
-        self.__analyzer_start_timestamp = dt.datetime.today()
+        self.__analyzer_start_timestamp = dt.datetime.now(pytz.timezone('Europe/Berlin'))
         cur = self.conn.cursor()
         for comment_id in comment_id_list:
             cur.execute(
@@ -482,7 +495,7 @@ class DatabaseExchange(connectDb.Database):
             return False
         if analyzer_id not in DatabaseExchange.__analyzer_database_structure.keys():
             return False
-        analyzer_end_timestamp = dt.datetime.today()
+        analyzer_end_timestamp = dt.datetime.now(pytz.timezone('Europe/Berlin'))
         target_columns = self.__fetch_analyzer_columns(analyzer_id)
         cols = tuple(DatabaseExchange.ANALYZER_RESULT_DEFAULT_COLUMNS[1:] + target_columns)
         columns_as_string = '(' + ','.join(cols) + ')'
@@ -571,7 +584,7 @@ class DatabaseExchange(connectDb.Database):
         result = cur.fetchall()  # last timestamp of successful run
         cur.close()
         if result[0][0] is None:
-            return dt.today()
+            return dt.datetime.now(pytz.timezone('Europe/Berlin'))
         return result[0][0]
 
     def fetch_scraper_last_run(self, source_id: int) -> dt.datetime:
@@ -599,6 +612,33 @@ class DatabaseExchange(connectDb.Database):
             return dt.datetime(1990, 1, 1)
         return result[0][0]
 
+    def check_scraper_running(self, source_id: int) -> dt.timedelta:
+        """
+
+        Parameters
+        ----------
+        source_id : int
+            scraper unique id corresponding to id in source_header table
+
+        Returns
+        -------
+        TYPE
+            datetime.timedelta object for the time after the last start of this scraper
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_SCRAPER_CHECK_RUNNING,
+            (source_id,)
+        )
+        result = cur.fetchall()  # last timestamp of successful run
+        cur.close()
+        if result[0][0] is None:
+            return dt.timedelta(days=1000)
+        if result[0][1] is None:
+            return dt.datetime.now(pytz.timezone('Europe/Berlin')) - result[0][0]
+        return dt.timedelta(1000)
+
     def log_scraper_start(self, source_id: int) -> bool:
         """
         writes new line to crawl_log table\n
@@ -617,7 +657,7 @@ class DatabaseExchange(connectDb.Database):
         """
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__SQL_SCRAPER_LOG_START,
-                    (source_id, dt.datetime.today().replace(microsecond=0).isoformat()))
+                    (source_id, dt.datetime.now(pytz.timezone('Europe/Berlin'))))
         self.conn.commit()
         cur.execute(DatabaseExchange.__SQL_SCRAPER_FETCH_MAX_LOG_ID, (source_id,))
         result = cur.fetchall()  # id of last successful run
@@ -644,7 +684,7 @@ class DatabaseExchange(connectDb.Database):
         """
         cur = self.conn.cursor()
         update_tuple = (
-            dt.datetime.today().replace(microsecond=0).isoformat(), success, DatabaseExchange.__scraper_log_id
+            dt.datetime.now(pytz.timezone('Europe/Berlin')), success, DatabaseExchange.__scraper_log_id
         )
         cur.execute(
             DatabaseExchange.__SQL_SCRAPER_LOG_END,
@@ -1073,7 +1113,7 @@ def test():
         {"url": "http://www.google.de", "obsolete": False, "source_id": 1, "source_date": dt.date(2020, 12, 1)})
     # test_article.setBody({"proc_timestamp":dt.datetime(2020,12,2,22,0,33),"headline":"example of headline","body":"testText","proc_counter":2,"id":1})
     # test_article.setBodyOld()
-    test_article.set_body({"proc_timestamp": dt.datetime.today(), "headline": "example of headline", "body": "testText"})
+    test_article.set_body({"proc_timestamp": dt.datetime.now(pytz.timezone('Europe/Berlin')), "headline": "example of headline", "body": "testText"})
     test_article.add_udf("author", "me")
     test_article.add_udf("label", "smart")
     print("plain Article print")
@@ -1085,7 +1125,7 @@ def test():
     writer.write_articles([test_article])
     test_comment = Comment()
     test_comment.set_data(
-        {"article_body_id": 141, "level": 0, "body": "i'm a Comment", "proc_timestamp": dt.datetime.today()})
+        {"article_body_id": 141, "level": 0, "body": "i'm a Comment", "proc_timestamp": dt.datetime.now(pytz.timezone('Europe/Berlin'))})
     test_comment.add_udf("author", "brilliant me")
     test_comment.set_external_id((hash("brilliant me" + test_comment.get_comment()["data"]["body"])))
     print("plain Comment print")

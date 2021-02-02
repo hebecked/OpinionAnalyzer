@@ -3,6 +3,7 @@
 import math
 import time
 from datetime import datetime, date, timedelta
+import pytz
 import spiegel_scraper as spon
 import dataCollectors.templateScraper
 from utils.article import Article
@@ -24,6 +25,7 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
     SUBSET_LENGTH = 10  # threshold for database flush
     DELAY_SUBSET = 1  # sleep x every SUBSET_LENGTH html requests
     DELAY_INDIVIDUAL = 0  # sleep x every html request
+    RUN_THRESHOLD = 5
 
     def __init__(self):
         super(SpiegelOnlineScraper, self).__init__()
@@ -100,7 +102,7 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
         if 'id' in content.keys():
             if not art.set_body(
                     {'headline': content['headline']['main'], 'body': content['text'],
-                     'proc_timestamp': datetime.today()}):
+                     'proc_timestamp': datetime.now(pytz.timezone('Europe/Berlin'))}):
                 art.set_obsolete(True)
                 return False
             art.free_data = content['id']
@@ -207,7 +209,7 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
                 tmp_comment = Comment()
                 if not tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
                                       "level": comment_depth, "body": cmt['body'],
-                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id}):
+                                      "proc_timestamp": datetime.now(pytz.timezone('Europe/Berlin')), "external_id": cmt_ext_id}):
                     continue
                 tmp_comment.set_parent_id(parent_external_id)
                 if 'user' in cmt.keys():
@@ -283,7 +285,7 @@ def run_all():
         -------
         None
     """
-    start_time = datetime.today()
+    start_time = datetime.now(pytz.timezone('Europe/Berlin'))
     logger.info("full run step - started at " + str(start_time))
     spiegel_online_scraper = SpiegelOnlineScraper()
     db = DatabaseExchange()
@@ -307,7 +309,7 @@ def run_all():
                                        for i in range(0, num_processes)]
             _ = [p.get() for p in result]
         db.log_scraper_end(False)
-        logger.info("full run step - duration = " + str(datetime.today() - start_time))
+        logger.info("full run step - duration = " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
     db.close()
 
 
@@ -320,10 +322,15 @@ def run_regular():
         None
     """
     default_start_date = date.today() - timedelta(30)
-    start_time = datetime.today()
+    start_time = datetime.now(pytz.timezone('Europe/Berlin'))
     logger.info("regular run - started at " + str(start_time))
     spiegel_online_scraper = SpiegelOnlineScraper()
     db = DatabaseExchange()
+    time_since_last_start = db.check_scraper_running(spiegel_online_scraper.id)
+    if time_since_last_start < timedelta(hours=SpiegelOnlineScraper.RUN_THRESHOLD):
+        db.close()
+        logger.info("already running - exit without start ")
+        return
     db.log_scraper_start(spiegel_online_scraper.id)
     start = max(db.fetch_scraper_last_run(spiegel_online_scraper.id).date(), default_start_date)
     end = date.today()
@@ -336,7 +343,7 @@ def run_regular():
     todo_list = db.fetch_scraper_todo_list(spiegel_online_scraper.id)
     spiegel_online_scraper.get_write_articles_details(db, todo_list)
     db.log_scraper_end(not spiegel_online_scraper.has_errors)
-    logger.info("regular run - duration = " + str(datetime.today() - start_time))
+    logger.info("regular run - duration = " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
     db.close()
 
 

@@ -3,6 +3,7 @@
 import math
 import time
 from datetime import datetime, date, timedelta
+import pytz
 import dataCollectors.templateScraper
 from utils.article import Article
 from utils.comment import Comment
@@ -26,6 +27,7 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
     SUBSET_LENGTH = 10  # threshold for database flush
     DELAY_SUBSET = 1  # sleep x every SUBSET_LENGTH html requests
     DELAY_INDIVIDUAL = 0  # sleep x every html request
+    RUN_THRESHOLD = 5
 
     def __init__(self):
         super(FazScraper, self).__init__()
@@ -122,7 +124,7 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
                     'body': unicodedata.normalize('NFKD',
                                                faz_api_return['article_body_meta']['articleBody'].
                                                    replace("\n", ' ').replace("\t", ' ').strip()),
-                    'proc_timestamp': datetime.today()}):
+                    'proc_timestamp': datetime.now(pytz.timezone('Europe/Berlin'))}):
                 art.set_obsolete(True)
                 return False
         else:
@@ -241,7 +243,7 @@ class FazScraper(dataCollectors.templateScraper.Scraper):
                 if not tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
                                       "level": comment_depth,
                                       "body": unicodedata.normalize('NFKD', cmt['title'] + " " + cmt['body']),
-                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id}):
+                                      "proc_timestamp": datetime.now(pytz.timezone('Europe/Berlin')), "external_id": cmt_ext_id}):
                     print("comment error")
                     continue
                 tmp_comment.set_parent_id(parent_external_id)
@@ -310,10 +312,15 @@ def run_regular():
         None
     """
     default_start_date = date.today() - timedelta(20)
-    start_time = datetime.today()
+    start_time = datetime.now(pytz.timezone('Europe/Berlin'))
     logger.info("regular run - started at " + str(start_time))
     faz_scraper = FazScraper()
     db = DatabaseExchange()
+    time_since_last_start = db.check_scraper_running(faz_scraper.id)
+    if time_since_last_start < timedelta(hours=FazScraper.RUN_THRESHOLD):
+        db.close()
+        logger.info("already running - exit without start ")
+        return
     db.log_scraper_start(faz_scraper.id)
     start = max(db.fetch_scraper_last_run(faz_scraper.id).date(), default_start_date)
     end = date.today()
@@ -322,7 +329,7 @@ def run_regular():
     todo_list = db.fetch_scraper_todo_list(faz_scraper.id)
     faz_scraper.get_write_articles_details(db, todo_list, start - timedelta(1))
     db.log_scraper_end(not faz_scraper.has_errors)
-    logger.info("regular run - duration = " + str(datetime.today() - start_time))
+    logger.info("regular run - duration = " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
     db.close()
 
 
@@ -333,7 +340,7 @@ if __name__ == '__main__':
     logger.info("call parameters: " + str(sys.argv))
     run_regular()
     # faz_scraper = FazScraper()
-    # start_time = datetime.today()
+    # start_time = datetime.now(pytz.timezone('Europe/Berlin'))
     # todo = faz_scraper.get_article_list(date(2021, 1, 21), date(2021, 1, 21))
     # cmts = []
     # print("num articles: ", len(todo))
@@ -343,7 +350,7 @@ if __name__ == '__main__':
     #     t.set_body_id(i+1)
     #     faz_scraper.get_article_details(t)
     #     cmts += faz_scraper.get_comments_for_article(t)
-    # print("time of run: " + str(datetime.today() - start_time))
+    # print("time of run: " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
     # for t in todo[0:10]:
     #     t.print()
     # for c in cmts[0:10]:

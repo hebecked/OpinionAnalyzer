@@ -3,6 +3,7 @@
 import math
 import time
 from datetime import datetime, date, timedelta
+import pytz
 import dataCollectors.templateScraper
 from utils.article import Article
 from utils.comment import Comment
@@ -25,6 +26,7 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
     SUBSET_LENGTH = 10  # threshold for database flush
     DELAY_SUBSET = 1  # sleep x every SUBSET_LENGTH html requests
     DELAY_INDIVIDUAL = 0  # sleep x every html request
+    RUN_THRESHOLD = 5
 
     def __init__(self):
         super(WeltScraper, self).__init__()
@@ -105,7 +107,7 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
             if not art.set_body(
                 {'headline': unicodedata.normalize('NFKD', welt_api_return['headline'].replace("\n", ' ').replace("\t", ' ')),
                     'body': unicodedata.normalize('NFKD', welt_api_return['articleBody'].replace("\n", ' ').replace("\t", ' ')),
-                    'proc_timestamp': datetime.today()}):
+                    'proc_timestamp': datetime.now(pytz.timezone('Europe/Berlin'))}):
                 art.set_obsolete(True)
                 return False
         else:
@@ -214,7 +216,7 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
                                       "level": 0,
                                       "body": unicodedata.normalize('NFKD',
                                                                     cmt['contents'].replace("\n", ' ').replace("\t", ' ')),
-                                      "proc_timestamp": datetime.today(), "external_id": cmt_ext_id}):
+                                      "proc_timestamp": datetime.now(pytz.timezone('Europe/Berlin')), "external_id": cmt_ext_id}):
                     continue
                 if 'user' in cmt.keys():
                     tmp_comment.add_udf("author", unicodedata.normalize('NFKD', cmt['user']['displayName']))
@@ -252,7 +254,7 @@ def run_all():
         -------
         None
     """
-    start_time = datetime.today()
+    start_time = datetime.now(pytz.timezone('Europe/Berlin'))
     logger.info("full run step - started at " + str(start_time))
     welt_scraper = WeltScraper()
     db = DatabaseExchange()
@@ -276,7 +278,7 @@ def run_all():
                                        for i in range(0, num_processes)]
             _ = [p.get() for p in result]
         db.log_scraper_end(False)
-        logger.info("full run step - duration = " + str(datetime.today() - start_time))
+        logger.info("full run step - duration = " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
     db.close()
 
 
@@ -289,10 +291,15 @@ def run_regular():
         None
     """
     default_start_date = date.today() - timedelta(30)
-    start_time = datetime.today()
+    start_time = datetime.now(pytz.timezone('Europe/Berlin'))
     logger.info("regular run - started at " + str(start_time))
     welt_scraper = WeltScraper()
     db = DatabaseExchange()
+    time_since_last_start = db.check_scraper_running(welt_scraper.id)
+    if time_since_last_start < timedelta(hours=WeltScraper.RUN_THRESHOLD):
+        db.close()
+        logger.info("already running - exit without start ")
+        return
     db.log_scraper_start(welt_scraper.id)
     start = max(db.fetch_scraper_last_run(welt_scraper.id).date(), default_start_date)
     end = date.today()
@@ -305,7 +312,7 @@ def run_regular():
     todo_list = db.fetch_scraper_todo_list(welt_scraper.id)
     welt_scraper.get_write_articles_details(db, todo_list)
     db.log_scraper_end(not welt_scraper.has_errors)
-    logger.info("regular run - duration = " + str(datetime.today() - start_time))
+    logger.info("regular run - duration = " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
     db.close()
 
 
