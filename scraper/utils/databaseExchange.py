@@ -583,9 +583,12 @@ class DatabaseExchange(connectDb.Database):
         )
         result = cur.fetchall()  # last timestamp of successful run
         cur.close()
-        if result is None or result[0] is None or result[0][0] is None:
-            return dt.datetime.now(pytz.timezone('Europe/Berlin'))
-        return result[0][0]
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                return dt.datetime.now(pytz.timezone('Europe/Berlin'))
+            return result[0][0]
+        except IndexError:
+            return result[0][0]
 
     def fetch_scraper_last_run(self, source_id: int) -> dt.datetime:
         """
@@ -608,9 +611,12 @@ class DatabaseExchange(connectDb.Database):
         )
         result = cur.fetchall()  # last timestamp of successful run
         cur.close()
-        if result is None or result[0] is None or result[0][0] is None:
-            return dt.datetime(1990, 1, 1)
-        return result[0][0]
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                return dt.datetime(1990, 1, 1)
+            return result[0][0]
+        except IndexError:
+            return result[0][0]
 
     def check_scraper_running(self, source_id: int) -> dt.timedelta:
         """
@@ -633,12 +639,14 @@ class DatabaseExchange(connectDb.Database):
         )
         result = cur.fetchall()  # last timestamp of successful run
         cur.close()
-
-        if result is None or result[0] is None or result[0][0] is None:
-            return dt.timedelta(days=1000)
-        if result[0][1] is None:
-            return dt.datetime.now(pytz.timezone('Europe/Berlin')) - result[0][0]
-        return dt.timedelta(1000)
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                return dt.timedelta(days=1000)
+            if result[0][1] is None:
+                return dt.datetime.now(pytz.timezone('Europe/Berlin')) - result[0][0]
+            return dt.timedelta(1000)
+        except IndexError:
+            return dt.timedelta(1000)
 
     def log_scraper_start(self, source_id: int) -> bool:
         """
@@ -663,7 +671,10 @@ class DatabaseExchange(connectDb.Database):
         cur.execute(DatabaseExchange.__SQL_SCRAPER_FETCH_MAX_LOG_ID, (source_id,))
         result = cur.fetchall()  # id of last successful run
         cur.close()
-        if result is None or result[0] is None or result[0][0] is None:
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                return False
+        except IndexError:
             return False
         DatabaseExchange.__scraper_log_id = result[0][0]
 #        print("logId: ", DatabaseExchange.__scraper_log_id)
@@ -783,10 +794,13 @@ class DatabaseExchange(connectDb.Database):
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__SQL_ARTICLE_HEADER_FETCH_START_ID)
         result = cur.fetchall()  # last header id before current insert run
-        if result is None or result[0] is None or result[0][0] is None:
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                start_id = 0
+            else:
+                start_id = result[0][0]  # todo check if correct
+        except IndexError:
             start_id = 0
-        else:
-            start_id = result[0][0]  # todo check if correct
         for art in article_list:
             if art.set_header_complete():
                 hdr = art.get_article()["header"]
@@ -815,10 +829,13 @@ class DatabaseExchange(connectDb.Database):
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__SQL_ARTICLE_BODY_FETCH_START_ID)
         result = cur.fetchall()  # last body id before current insert run
-        if result is None or result[0] is None or result[0][0] is None:
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                start_id = 0
+            else:
+                start_id = result[0][0]   # todo check if correct
+        except IndexError:
             start_id = 0
-        else:
-            start_id = result[0][0]   # todo check if correct
         for art in article_list:
             if art.set_body_complete():
                 body_to_use = art.get_body_to_write()
@@ -1021,10 +1038,13 @@ class DatabaseExchange(connectDb.Database):
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__SQL_COMMENT_FETCH_START_ID)
         result = cur.fetchall()  # last comment id before current insert run
-        if result is None or result[0] is None or result[0][0] is None:
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                start_id = 0
+            else:
+                start_id = result[0]
+        except IndexError:
             start_id = 0
-        else:
-            start_id = result[0]
         for cmt in comment_list:
             if cmt.set_complete():
                 data = cmt.get_comment()["data"]
