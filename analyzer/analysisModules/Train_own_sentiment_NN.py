@@ -3,19 +3,33 @@ import json
 # import tensorflow as tf
 import numpy as np
 from scipy.special import softmax
-from scipy import spatial 
-from textblob_de import TextBlobDE as TextBlob
-import re
+#from scipy import spatial 
+#from textblob_de import TextBlobDE as TextBlob
+#import re
 # from flair.models import TextClassifier
 # from flair.data import Sentence
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, TFBertForSequenceClassification, BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments
-import fasttext
-import fasttext.util
-import nltk
+#import fasttext
+#import fasttext.util
+#import nltk
 import tensorflow as tf
 import pandas as pd
 import torch
+import wget
+import tarfile
+import os
 
+if not os.path.isfile("million_post_corpus.tar.bz2") and not os.path.isfile("million_post_corpus/corpus.sqlite3"):
+    dataset_URL = "https://github.com/OFAI/million-post-corpus/releases/download/v1.0.0/million_post_corpus.tar.bz2"
+    wget.download(dataset_URL)
+
+if not os.path.isfile("million_post_corpus/corpus.sqlite3"):
+    tar = tarfile.open("million_post_corpus.tar.bz2", "r:bz2")  
+    tar.extract("million_post_corpus/corpus.sqlite3") #corpus.sqlite3
+    tar.close()
+
+if os.path.isfile("million_post_corpus.tar.bz2"):  
+    os.remove("million_post_corpus.tar.bz2") 
 
 model = BertForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")#Alternative: "bert-base-uncased"
 tokenizer = BertTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
@@ -26,7 +40,7 @@ model.train()
 #implement dynamic download!!!
 dataset = tf.data.experimental.SqlDataset(
 										driver_name = "sqlite", 
-										data_source_name = "../Testdata/million-post-corpus/experiments/data/million_post_corpus/corpus.sqlite3", 
+										data_source_name = "./million_post_corpus/corpus.sqlite3", 
 										query = '''
                                             SELECT
                                                 p.ID_Post,
@@ -137,7 +151,7 @@ trainer.train()
 
 
 
-
+os.remove("million_post_corpus/corpus.sqlite3") 
 
 
 #The following contains different versions of the SQL Query
