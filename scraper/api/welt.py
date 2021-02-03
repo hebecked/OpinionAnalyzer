@@ -28,7 +28,10 @@ def get_article_comments_recursively(url: str, comments: [], minimum_created: da
 
     else:
         for comment in comments_rec_json['comments']:
-            comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S.%f")
+            if '.' in comment['created']:
+                comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S.%f")
+            else:
+                comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S")
             if comment_created < minimum_created:
                 minimum_created = comment_created
             comments.append(comment)
@@ -91,8 +94,16 @@ class Welt:
         # Retrieving meta data
         article_meta_data = soup.find('script', {'data-qa': 'StructuredData', 'type': 'application/ld+json'}).contents[0]
         article_meta_data_json = json.loads(article_meta_data)
-
-        article_meta_data_json['articleBody'] = BeautifulSoup(article_meta_data_json['articleBody'], "lxml").text
+        xml_style = BeautifulSoup(article_meta_data_json['articleBody'], "lxml")
+        # removing ending em paragraphs as they seem to be advertising or annotations, not real parts of article
+        p_all = xml_style.find_all('p')
+        p_all.reverse()
+        for p in p_all:
+            if p.find('em'):
+                p.replace_with("")
+            else:
+                break
+        article_meta_data_json['articleBody'] = xml_style.text
 
         return article_meta_data_json
 
@@ -119,7 +130,10 @@ class Welt:
 
         min_comment_created = datetime.datetime.now()
         for comment in comment_json['comments']:
-            comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S.%f")
+            if '.' in comment['created']:
+                comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S.%f")
+            else:
+                comment_created = datetime.datetime.strptime(comment['created'], "%Y-%m-%dT%H:%M:%S")
             if comment_created < min_comment_created:
                 min_comment_created = comment_created
             comments_list.append(comment)
@@ -133,7 +147,7 @@ if __name__ == '__main__':
     welt_api = Welt()
     link_list = welt_api.get_all_articles_from_dates(start=datetime.datetime(2021,1,1), end=datetime.datetime(2021,1,1))
     print(link_list)
-    for article_link in link_list:
+    for article_link in link_list[0:10]:
         a_json = welt_api.get_article_meta(article_link)
         print(a_json)
     all_comments = welt_api.get_article_comments(link_list[0])

@@ -4,33 +4,36 @@ import math
 import time
 from datetime import datetime, date, timedelta
 import pytz
-import spiegel_scraper as spon
 import dataCollectors.templateScraper
 from utils.article import Article
 from utils.comment import Comment
 from utils.comment import calculate_comment_external_id
 from utils.databaseExchange import DatabaseExchange
+from api.faz import Faz
 import logging
 import sys
 import os
 from multiprocessing import cpu_count, Pool
 from contextlib import closing
 import copy
+import unicodedata
+
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO,
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger()
 
 
-class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
+class FazScraper(dataCollectors.templateScraper.Scraper):
     SUBSET_LENGTH = 10  # threshold for database flush
     DELAY_SUBSET = 1  # sleep x every SUBSET_LENGTH html requests
     DELAY_INDIVIDUAL = 0  # sleep x every html request
     RUN_THRESHOLD = 5
 
     def __init__(self):
-        super(SpiegelOnlineScraper, self).__init__()
-        self.id = 1  # set corresponding datasource id here
+        super(FazScraper, self).__init__()
+        self.id = 3  # set corresponding datasource id here
         self.has_errors = False
+        self.api = Faz()
 
     def get_article_list(self, start_date: date = date(1900, 1, 1), end_date: date = date.today()) -> list:
         """
@@ -56,18 +59,21 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
         for dt in date_list:
             logger.info("process-id "+str(os.getpid())+" fetching article list for date " + str(dt))
             try:
-                full_list += (spon.archive.scrape_html(spon.archive.html_by_date(dt)))
-                pass
+                as_datetime = datetime.combine(dt, datetime.min.time())
+                url_list = self.api.get_all_articles_from_dates(as_datetime, as_datetime)
+                for url in url_list:
+                    full_list += [{'url': url, 'source_date': dt, 'is_paid': "/premiumContent" in url}]
             except:
                 logger.warning("process-id "+str(os.getpid())+" Article List crawl error!")
                 self.has_errors = True
-            time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)  # remove Comment for crawler delay
-        url_list = list(filter(lambda x: x['is_paid'] is False, full_list))  # remove paid articles without access
+            time.sleep(FazScraper.DELAY_SUBSET)  # remove Comment for crawler delay
+        url_list = list(filter(lambda x: x['is_paid'] is False, full_list))
         for url in url_list:
             try:
+
                 art = Article()
                 art.set_header(
-                    {'source_date': url['date_published'].date(), 'source_id': self.id, 'url': str(url['url'])})
+                    {'source_date': url['source_date'], 'source_id': self.id, 'url': str(url['url'])})
                 article_return_list += [art]
             except:
                 logger.warning("process-id "+str(os.getpid())+" Article incomplete: " + str(url))
@@ -91,41 +97,64 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
 
         """
         try:
-            html = spon.article.html_by_url(art.get_article()['header']['url'])
-            content = spon.article.scrape_html(html)
+            faz_api_return = self.api.get_article_meta(art.get_article()['header']['url'])
         except:
             logger.warning("process-id "+str(os.getpid())+" Article crawl error fetching details: article url = "
                            + str(art.get_article()['header']['url']))
             self.has_errors = True
             art.set_obsolete(True)
             return False
-        if 'id' in content.keys():
+        if 'article_meta' not in faz_api_return.keys() or 'article_body_meta' not in faz_api_return.keys():
+            art.set_obsolete(True)
+            self.has_errors = True
+            return False
+        header_keys = faz_api_return['article_meta'].keys()
+        body_keys = faz_api_return['article_body_meta'].keys()
+        if ('isAccessibleForFree' in body_keys and 'False' in
+            faz_api_return['article_body_meta']['isAccessibleForFree'])\
+                or ('article' in header_keys and 'type' in faz_api_return['article_meta']['article'].keys() and
+                    'Bezahlartikel' in faz_api_return['article_meta']['article']['type']):
+            art.set_obsolete(True)  # paid article can not be detected earlier
+            return False
+        if 'headline' in body_keys and 'articleBody' in body_keys:
             if not art.set_body(
-                    {'headline': content['headline']['main'], 'body': content['text'],
-                     'proc_timestamp': datetime.now(pytz.timezone('Europe/Berlin'))}):
+                    {'headline': unicodedata.normalize('NFKD',
+                                                   faz_api_return['article_body_meta']['headline'].
+                                                   replace("\n", ' ').replace("\t", ' ').strip()),
+                    'body': unicodedata.normalize('NFKD',
+                                               faz_api_return['article_body_meta']['articleBody'].
+                                                   replace("\n", ' ').replace("\t", ' ').strip()),
+                    'proc_timestamp': datetime.now(pytz.timezone('Europe/Berlin'))}):
                 art.set_obsolete(True)
                 return False
-            art.free_data = content['id']
+        else:
+            art.set_obsolete(True)
+            return False
         # add udfs
-        if 'topics' in content.keys():
-            for topic in content['topics']:
-                art.add_udf('label', topic)
-        if 'author' in content.keys():
-            for author in content['author']['names']:
-                art.add_udf('author', author)
-        if 'date_created' in content.keys():
-            art.add_udf('date_created', content['date_created'])
+        if 'author' in body_keys:
+            if type(faz_api_return['article_body_meta']['author']) == dict \
+                    and 'name' in faz_api_return['article_body_meta']['author'].keys():
+                art.add_udf('author', unicodedata.normalize('NFKD',
+                                                            faz_api_return['article_body_meta']['author']['name'].
+                                                   replace("\n", ' ').replace("\t", ' ').strip()))
+            elif type(faz_api_return['article_body_meta']['author']) == list:
+                for aut in faz_api_return['article_body_meta']['author']:
+                    if type(aut) == dict and 'name' in aut.keys():
+                        art.add_udf('author', unicodedata.normalize('NFKD', aut['name'].
+                                                   replace("\n", ' ').replace("\t", ' ').strip()))
+
+        if 'article' in header_keys and 'publishedFirst' in faz_api_return['article_meta']['article'].keys():
+            art.add_udf('date_created', faz_api_return['article_meta']['article']['publishedFirst'])
+            art.add_udf('date_published', faz_api_return['article_meta']['article']['publishedFirst'])
             try:
-                art.set_body_counter(max(
-                    int(math.log((date.today() - date.fromisoformat(content['date_created'][0:10])).days * 24, 2)) - 1,
-                    0))
+                art.set_body_counter(max(int(math.log((date.today() - datetime.strptime(faz_api_return
+                                        ['article_meta']['article']['publishedFirst'][0:10], '%d.%m.%Y')
+                                                       .date()).days * 24, 2))-1, 0))
             except:
                 # use default
                 pass
-        if 'date_modified' in content.keys():
-            art.add_udf('date_modified', content['date_modified'])
-        if 'date_published' in content.keys():
-            art.add_udf('date_published', content['date_published'])
+        if 'dateModified' in body_keys:
+            art.add_udf('date_modified', faz_api_return['article_body_meta']['dateModified'])
         return True
 
     def get_write_articles_details(self, writer: DatabaseExchange, article_list: list,
@@ -152,21 +181,21 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
             return False
         start_list_elem = 0
         while start_list_elem < len(article_list):
-            for art in article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)]:
+            for art in article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)]:
                 logger.info("process-id "+str(os.getpid())+" fetching article: " + str(art.get_article()['header']['url']))
                 self.get_article_details(art)
-                time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)
-            writer.write_articles(article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)])
-            fetch_comments_list = list(filter(lambda x:  x.is_in_db() and not x.get_article()['header']['obsolete'],
-                                         article_list[start_list_elem:(start_list_elem + SpiegelOnlineScraper.SUBSET_LENGTH)]))
+                time.sleep(FazScraper.DELAY_INDIVIDUAL)
+            writer.write_articles(article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)])
+            fetch_comments_list = list(filter(lambda x: x.is_in_db() and not x.get_article()['header']['obsolete'],
+                                         article_list[start_list_elem:(start_list_elem + FazScraper.SUBSET_LENGTH)]))
             for art in fetch_comments_list:
                 logger.info("process-id "+str(os.getpid())+" fetching comments for " + str(art.get_article()['header']['url']))
                 comment_list = self.get_comments_for_article(art, start_date)
                 if comment_list:
                     writer.write_comments(comment_list)
-                time.sleep(SpiegelOnlineScraper.DELAY_INDIVIDUAL)
-            start_list_elem += SpiegelOnlineScraper.SUBSET_LENGTH
-            time.sleep(SpiegelOnlineScraper.DELAY_SUBSET)
+                time.sleep(FazScraper.DELAY_INDIVIDUAL)
+            start_list_elem += FazScraper.SUBSET_LENGTH
+            time.sleep(FazScraper.DELAY_SUBSET)
         return True
 
     def flatten_comments(self, art: Article, comment_list: list, parent_external_id: int = None, comment_depth=0,
@@ -202,22 +231,28 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
         for cmt in comment_list:
             if type(cmt) != dict:
                 continue
-            if cmt['body'] is not None and cmt['user'] is not None and cmt['created_at'] is not None:
+            cmt_keys = cmt.keys()
+            if 'body' in cmt_keys and 'title' in cmt_keys and 'author' in cmt_keys and 'created_at' in cmt_keys and \
+                    cmt['body'] is not None and cmt['title'] is not None and cmt['author'] is not None \
+                    and cmt['created_at'] is not None:
                 cmt_ext_id = calculate_comment_external_id(
-                    art.get_article()["header"]["url"], cmt['user']['username'], cmt['body']
+                    art.get_article()["header"]["url"], cmt['author'],
+                    unicodedata.normalize('NFKD', cmt['title'] + " " + cmt['body'])
                 )
                 tmp_comment = Comment()
                 if not tmp_comment.set_data({"article_body_id": art.get_body_to_write()["body"]["id"],
-                                      "level": comment_depth, "body": cmt['body'],
+                                      "level": comment_depth,
+                                      "body": unicodedata.normalize('NFKD', cmt['title'] + " " + cmt['body']),
                                       "proc_timestamp": datetime.now(pytz.timezone('Europe/Berlin')), "external_id": cmt_ext_id}):
+                    print("comment error")
                     continue
                 tmp_comment.set_parent_id(parent_external_id)
-                if 'user' in cmt.keys():
-                    tmp_comment.add_udf("author", cmt['user']['username'])
+                tmp_comment.add_udf("headline", cmt['title'])
+                tmp_comment.add_udf("author", cmt['author'])
                 tmp_comment.add_udf("date_created", cmt['created_at'])
                 if start_date <= date.fromisoformat(cmt['created_at'][0:10]) <= end_date:
                     comment_return_list += [tmp_comment]
-                if 'replies' in cmt.keys():
+                if 'replies' in cmt_keys:
                     tmp_comment.add_udf("replies", str(len(cmt['replies'])))
                     comment_return_list += self.flatten_comments(art, cmt['replies'], cmt_ext_id, comment_depth + 1,
                                                                  start_date, end_date)
@@ -245,16 +280,12 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
 
         """
         comment_return_list = []
-        if type(art.free_data) == str:
-            article_id = art.free_data
-        else:
-            self.get_article_details(art)
-            article_id = art.free_data
         try:
-            comments = spon.comments.by_article_id(article_id)
+            comments = self.api.get_article_comments(art.get_article()['header']['url'])
             comment_return_list += self.flatten_comments(art, comments, None, 0, start_date, end_date)
         except:
-            logger.warning("process-id "+str(os.getpid())+" Comment crawl error for article_id : " + str(article_id))
+            logger.warning("process-id "+str(os.getpid())+" Comment crawl error for article_id : "
+                           + str(art.get_article()['header']['id']))
             self.has_errors = True
         return comment_return_list
 
@@ -272,47 +303,6 @@ class SpiegelOnlineScraper(dataCollectors.templateScraper.Scraper):
         return True
 
 
-def run_all():
-    """
-       full run of Scraper.
-       Fetching all articles - starting today and moving backwards in chunks of one week
-       will first add article-headers, then crawl bodies and comments
-       restart with next (older) week
-       
-       running on cpu_count-1 cores at the same time to concurrently crawl the pages at faster pace
-
-        Returns
-        -------
-        None
-    """
-    start_time = datetime.now(pytz.timezone('Europe/Berlin'))
-    logger.info("full run step - started at " + str(start_time))
-    spiegel_online_scraper = SpiegelOnlineScraper()
-    db = DatabaseExchange()
-    end_date = date.today()
-    while True:
-        db.log_scraper_start(spiegel_online_scraper.id)
-        start_date = end_date - timedelta(weeks=1)
-        article_header_list = spiegel_online_scraper.get_article_list(start_date, end_date)
-        end_date = start_date - timedelta(1)
-        if len(article_header_list) == 0:
-            break
-        db.write_articles(article_header_list)
-        todo_list = db.fetch_scraper_todo_list(spiegel_online_scraper.id)
-        if not todo_list:
-            continue
-        num_processes = min(cpu_count() - 1, 5)  # num processes reduced. IP-ban with 9 processes after about 1,5 hours
-        chunk_size = math.ceil(len(todo_list) / num_processes)
-        with closing(Pool(processes=num_processes)) as pool:
-            result = [pool.apply_async(spiegel_online_scraper.wrap_get_write_articles_parallel,
-                                       args=(copy.deepcopy(todo_list[i * chunk_size:(i + 1) * chunk_size]),))
-                                       for i in range(0, num_processes)]
-            _ = [p.get() for p in result]
-        db.log_scraper_end(False)
-        logger.info("full run step - duration = " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
-    db.close()
-
-
 def run_regular():
     """
        Regular run of Scraper. Fetching new articles since last run or default date (if no complete run finished so far)
@@ -321,28 +311,24 @@ def run_regular():
         -------
         None
     """
-    default_start_date = date.today() - timedelta(30)
+    default_start_date = date.today() - timedelta(20)
     start_time = datetime.now(pytz.timezone('Europe/Berlin'))
     logger.info("regular run - started at " + str(start_time))
-    spiegel_online_scraper = SpiegelOnlineScraper()
+    faz_scraper = FazScraper()
     db = DatabaseExchange()
-    time_since_last_start = db.check_scraper_running(spiegel_online_scraper.id)
-    if time_since_last_start < timedelta(hours=SpiegelOnlineScraper.RUN_THRESHOLD):
+    time_since_last_start = db.check_scraper_running(faz_scraper.id)
+    if time_since_last_start < timedelta(hours=FazScraper.RUN_THRESHOLD):
         db.close()
         logger.info("already running - exit without start ")
         return
-    db.log_scraper_start(spiegel_online_scraper.id)
-    start = max(db.fetch_scraper_last_run(spiegel_online_scraper.id).date(), default_start_date)
+    db.log_scraper_start(faz_scraper.id)
+    start = max(db.fetch_scraper_last_run(faz_scraper.id).date(), default_start_date)
     end = date.today()
-    article_header_list = spiegel_online_scraper.get_article_list(start, end)
+    article_header_list = faz_scraper.get_article_list(start, end)
     db.write_articles(article_header_list)
-    end_historical = db.fetch_scraper_oldest(spiegel_online_scraper.id)
-    start_historical = end_historical - timedelta(2)
-    article_header_list = spiegel_online_scraper.get_article_list(start_historical, end_historical)
-    db.write_articles(article_header_list)
-    todo_list = db.fetch_scraper_todo_list(spiegel_online_scraper.id)
-    spiegel_online_scraper.get_write_articles_details(db, todo_list)
-    db.log_scraper_end(not spiegel_online_scraper.has_errors)
+    todo_list = db.fetch_scraper_todo_list(faz_scraper.id)
+    faz_scraper.get_write_articles_details(db, todo_list, start - timedelta(1))
+    db.log_scraper_end(not faz_scraper.has_errors)
     logger.info("regular run - duration = " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
     db.close()
 
@@ -350,14 +336,24 @@ def run_regular():
 if __name__ == '__main__':
     print("\n\n")
     print("-------------------------------------------------\n")
-    print("Starting SpiegelOnlineScraper testcases here:\n\n")
+    print("Starting FazScraper testcases here:\n\n")
     logger.info("call parameters: " + str(sys.argv))
-    if len(sys.argv) > 1:
-        if sys.argv[1] == 'all':
-            run_all()
-        else:
-            run_regular()
-    else:
-        run_regular()
+    run_regular()
+    # faz_scraper = FazScraper()
+    # start_time = datetime.now(pytz.timezone('Europe/Berlin'))
+    # todo = faz_scraper.get_article_list(date(2021, 1, 21), date(2021, 1, 21))
+    # cmts = []
+    # print("num articles: ", len(todo))
+    # for i, t in enumerate(todo):
+    #     print("crawling article", i)
+    #     t.set_header_id(i+1)
+    #     t.set_body_id(i+1)
+    #     faz_scraper.get_article_details(t)
+    #     cmts += faz_scraper.get_comments_for_article(t)
+    # print("time of run: " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
+    # for t in todo[0:10]:
+    #     t.print()
+    # for c in cmts[0:10]:
+    #     c.print()
 
 
