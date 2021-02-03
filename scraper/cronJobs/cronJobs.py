@@ -22,5 +22,5 @@ class CronJobs:
             for job in self.jobs:
                 if pycron.is_now(job["schedule"]):
                     logger.info("Firing CronJob: " + job["module"])
-                    os.system('python3 -u ' + data_collectors_path + job["module"])
+                    os.system('python3 -u ' + data_collectors_path + job["module"] + '&')
             time.sleep(60)
