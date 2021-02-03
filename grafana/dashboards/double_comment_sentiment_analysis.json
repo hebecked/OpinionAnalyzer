@@ -1,0 +1,861 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 2,
+  "id": 4,
+  "iteration": 1612038312146,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 9,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 5,
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 1
+          },
+          "hiddenSeries": false,
+          "id": 2,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "percentage": false,
+          "pluginVersion": "7.1.5",
+          "pointradius": 0.5,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "count_comments",
+              "yaxis": 2
+            },
+            {
+              "alias": "# Comments",
+              "yaxis": 2
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT \n\tCASE\n\t\tWHEN (udfs.udf_value IS NULL) THEN hdr.source_date\n\t\tELSE to_date(\"substring\"((udfs.udf_value)::text, 1, 10), 'YYYY-MM-DD'::text)\n\tEND AS time,\n\tSUM(sentiment_value/ (error_value * error_value )) / SUM(1 / (error_value * error_value)) AS \"Sentiment1 Error Weighted\",\n\tAVG(sentiment_value) AS \"Sentiment2 Simple Average\"\nFROM news_meta_data.analyzer1_result AS rslt, \n\t\tnews_meta_data.article_body AS bdy,\n\t\tnews_meta_data.article_header AS hdr,\n\t\tnews_meta_data.comment AS cmt\n\tLEFT JOIN\n\t\tnews_meta_data.udf_values as udfs\n\t\tON udfs.object_id = cmt.id\nWHERE \n\t\trslt.sub_id = 1 AND\n\t\trslt.comment_id = cmt.id AND\n\t\tcmt.article_body_id = bdy.id AND\n\t\thdr.id = bdy.article_id AND\n\t\tudfs.object_type = 2 AND\n\t\tudfs.udf_id = 4 AND\n\t\tcmt.body ilike '% $comment_search_1%'\n\nGROUP BY time\nORDER BY time DESC\n",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Sentiment Over Time",
+          "tooltip": {
+            "shared": false,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transparent": true,
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": "1",
+              "min": "-1",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 5,
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 1
+          },
+          "hiddenSeries": false,
+          "id": 7,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "percentage": false,
+          "pluginVersion": "7.1.5",
+          "pointradius": 0.5,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "count_comments",
+              "yaxis": 2
+            },
+            {
+              "alias": "# Comments",
+              "yaxis": 2
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT \n\tCASE\n\t\tWHEN (udfs.udf_value IS NULL) THEN hdr.source_date\n\t\tELSE to_date(\"substring\"((udfs.udf_value)::text, 1, 10), 'YYYY-MM-DD'::text)\n\tEND AS time,\n\tSUM(sentiment_value/ (error_value * error_value )) / SUM(1 / (error_value * error_value)) AS \"Sentiment1 Error Weighted\",\n\tAVG(sentiment_value) AS \"Sentiment2 Simple Average\"\nFROM news_meta_data.analyzer1_result AS rslt, \n\t\tnews_meta_data.article_body AS bdy,\n\t\tnews_meta_data.article_header AS hdr,\n\t\tnews_meta_data.comment AS cmt\n\tLEFT JOIN\n\t\tnews_meta_data.udf_values as udfs\n\t\tON udfs.object_id = cmt.id\nWHERE \n\t\trslt.sub_id = 1 AND\n\t\trslt.comment_id = cmt.id AND\n\t\tcmt.article_body_id = bdy.id AND\n\t\thdr.id = bdy.article_id AND\n\t\tudfs.object_type = 2 AND\n\t\tudfs.udf_id = 4 AND\n\t\tcmt.body ilike '% $comment_search_2%'\n\nGROUP BY time\nORDER BY time DESC\n",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Sentiment Over Time",
+          "tooltip": {
+            "shared": false,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transparent": true,
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": "1",
+              "min": "-1",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {
+            "# Comments": "rgb(71, 219, 255)"
+          },
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 5,
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "hiddenSeries": false,
+          "id": 4,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "percentage": false,
+          "pluginVersion": "7.1.5",
+          "pointradius": 0.5,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "count_comments",
+              "yaxis": 2
+            },
+            {
+              "alias": "# Comments",
+              "yaxis": 1
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT \n\tCASE\n\t\tWHEN (udfs.udf_value IS NULL) THEN hdr.source_date\n\t\tELSE to_date(\"substring\"((udfs.udf_value)::text, 1, 10), 'YYYY-MM-DD'::text)\n\tEND AS time,\n\tcount(cmt.id) as \"# Comments\"\nFROM news_meta_data.analyzer1_result AS rslt, \n\t\tnews_meta_data.article_body AS bdy,\n\t\tnews_meta_data.article_header AS hdr,\n\t\tnews_meta_data.comment AS cmt\n\tLEFT JOIN\n\t\tnews_meta_data.udf_values as udfs\n\t\tON udfs.object_id = cmt.id\nWHERE \n\t\trslt.sub_id = 1 AND\n\t\trslt.comment_id = cmt.id AND\n\t\tcmt.article_body_id = bdy.id AND\n\t\thdr.id = bdy.article_id AND\n\t\tudfs.object_type = 2 AND\n\t\tudfs.udf_id = 4 AND\n\t\tcmt.body ilike '% $comment_search_1%'\n\nGROUP BY time\nORDER BY time DESC\n",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "# Comments Over Time",
+          "tooltip": {
+            "shared": false,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transparent": true,
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {
+            "# Comments": "rgb(71, 219, 255)"
+          },
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 5,
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "hiddenSeries": false,
+          "id": 6,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "percentage": false,
+          "pluginVersion": "7.1.5",
+          "pointradius": 0.5,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "count_comments",
+              "yaxis": 2
+            },
+            {
+              "alias": "# Comments",
+              "yaxis": 1
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT \n\tCASE\n\t\tWHEN (udfs.udf_value IS NULL) THEN hdr.source_date\n\t\tELSE to_date(\"substring\"((udfs.udf_value)::text, 1, 10), 'YYYY-MM-DD'::text)\n\tEND AS time,\n\tcount(cmt.id) as \"# Comments\"\nFROM news_meta_data.analyzer1_result AS rslt, \n\t\tnews_meta_data.article_body AS bdy,\n\t\tnews_meta_data.article_header AS hdr,\n\t\tnews_meta_data.comment AS cmt\n\tLEFT JOIN\n\t\tnews_meta_data.udf_values as udfs\n\t\tON udfs.object_id = cmt.id\nWHERE \n\t\trslt.sub_id = 1 AND\n\t\trslt.comment_id = cmt.id AND\n\t\tcmt.article_body_id = bdy.id AND\n\t\thdr.id = bdy.article_id AND\n\t\tudfs.object_type = 2 AND\n\t\tudfs.udf_id = 4 AND\n\t\tcmt.body ilike '% $comment_search_2%'\n\nGROUP BY time\nORDER BY time DESC\n",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "# Comments Over Time",
+          "tooltip": {
+            "shared": false,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transparent": true,
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "title": "Sentiment Comparison",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 11,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 5,
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 2
+          },
+          "hiddenSeries": false,
+          "id": 5,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "percentage": false,
+          "pluginVersion": "7.1.5",
+          "pointradius": 0.5,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "count_comments",
+              "yaxis": 2
+            },
+            {
+              "alias": "# Comments",
+              "yaxis": 2
+            }
+          ],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "WITH comment_1 AS (\nSELECT \n\tCASE\n\t\tWHEN (udfs.udf_value IS NULL) THEN hdr.source_date\n\t\tELSE to_date(\"substring\"((udfs.udf_value)::text, 1, 10), 'YYYY-MM-DD'::text)\n\tEND AS time,\n\tSUM(sentiment_value/ (error_value * error_value )) / SUM(1 / (error_value * error_value)) AS \"Sentiment1 Error Weighted\",\n\tAVG(sentiment_value) AS \"Sentiment2 Simple Average\"\nFROM news_meta_data.analyzer1_result AS rslt, \n\t\tnews_meta_data.article_body AS bdy,\n\t\tnews_meta_data.article_header AS hdr,\n\t\tnews_meta_data.comment AS cmt\n\tLEFT JOIN\n\t\tnews_meta_data.udf_values as udfs\n\t\tON udfs.object_id = cmt.id\nWHERE \n\t\trslt.sub_id = 1 AND\n\t\trslt.comment_id = cmt.id AND\n\t\tcmt.article_body_id = bdy.id AND\n\t\thdr.id = bdy.article_id AND\n\t\tudfs.object_type = 2 AND\n\t\tudfs.udf_id = 4 AND\n\t\tcmt.body ilike '% $comment_search_1%'\n\nGROUP BY time\nORDER BY time DESC\n),\ncomment_2 AS (\nSELECT \n\tCASE\n\t\tWHEN (udfs.udf_value IS NULL) THEN hdr.source_date\n\t\tELSE to_date(\"substring\"((udfs.udf_value)::text, 1, 10), 'YYYY-MM-DD'::text)\n\tEND AS time,\n\tSUM(sentiment_value/ (error_value * error_value )) / SUM(1 / (error_value * error_value)) AS \"Sentiment1 Error Weighted\",\n\tAVG(sentiment_value) AS \"Sentiment2 Simple Average\"\nFROM news_meta_data.analyzer1_result AS rslt, \n\t\tnews_meta_data.article_body AS bdy,\n\t\tnews_meta_data.article_header AS hdr,\n\t\tnews_meta_data.comment AS cmt\n\tLEFT JOIN\n\t\tnews_meta_data.udf_values as udfs\n\t\tON udfs.object_id = cmt.id\nWHERE \n\t\trslt.sub_id = 1 AND\n\t\trslt.comment_id = cmt.id AND\n\t\tcmt.article_body_id = bdy.id AND\n\t\thdr.id = bdy.article_id AND\n\t\tudfs.object_type = 2 AND\n\t\tudfs.udf_id = 4 AND\n\t\tcmt.body ilike '% $comment_search_2%'\n\nGROUP BY time\nORDER BY time DESC\n)\n\nSELECT\n  c1.time,\n  c1.\"Sentiment1 Error Weighted\" - c2.\"Sentiment1 Error Weighted\" AS \"Delta Sentiment1 Error Weighted\",\n  c1.\"Sentiment2 Simple Average\" - c2.\"Sentiment2 Simple Average\" AS \"Delta Sentiment2 Simple Average\"\nFROM\n  comment_1 c1\n  INNER JOIN comment_2 c2 ON c1.time = c2.time\nORDER BY \n  1 DESC\n\n",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Difference (Left and Right) Sentiment Over Time",
+          "tooltip": {
+            "shared": false,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transparent": true,
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "decimals": 2,
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": "1",
+              "min": "-1",
+              "show": true
+            },
+            {
+              "decimals": 5,
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {
+            "Comment1-Comment2-Ratio": "rgb(71, 219, 255)"
+          },
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName"
+                },
+                "properties": []
+              }
+            ]
+          },
+          "fill": 1,
+          "fillGradient": 4,
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 2
+          },
+          "hiddenSeries": false,
+          "id": 13,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "percentage": false,
+          "pluginVersion": "7.1.5",
+          "pointradius": 0.5,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "WITH comment_1 AS (\nSELECT \n\tCASE\n\t\tWHEN (udfs.udf_value IS NULL) THEN hdr.source_date\n\t\tELSE to_date(\"substring\"((udfs.udf_value)::text, 1, 10), 'YYYY-MM-DD'::text)\n\tEND AS time,\n\tcount(cmt.id) as \"# Comments\"\nFROM news_meta_data.analyzer1_result AS rslt, \n\t\tnews_meta_data.article_body AS bdy,\n\t\tnews_meta_data.article_header AS hdr,\n\t\tnews_meta_data.comment AS cmt\n\tLEFT JOIN\n\t\tnews_meta_data.udf_values as udfs\n\t\tON udfs.object_id = cmt.id\nWHERE \n\t\trslt.sub_id = 1 AND\n\t\trslt.comment_id = cmt.id AND\n\t\tcmt.article_body_id = bdy.id AND\n\t\thdr.id = bdy.article_id AND\n\t\tudfs.object_type = 2 AND\n\t\tudfs.udf_id = 4 AND\n\t\tcmt.body ilike '% $comment_search_1%'\n\nGROUP BY time\nORDER BY time DESC\n),\ncomment_2 AS (\nSELECT \n\tCASE\n\t\tWHEN (udfs.udf_value IS NULL) THEN hdr.source_date\n\t\tELSE to_date(\"substring\"((udfs.udf_value)::text, 1, 10), 'YYYY-MM-DD'::text)\n\tEND AS time,\n\tcount(cmt.id) as \"# Comments\"\nFROM news_meta_data.analyzer1_result AS rslt, \n\t\tnews_meta_data.article_body AS bdy,\n\t\tnews_meta_data.article_header AS hdr,\n\t\tnews_meta_data.comment AS cmt\n\tLEFT JOIN\n\t\tnews_meta_data.udf_values as udfs\n\t\tON udfs.object_id = cmt.id\nWHERE \n\t\trslt.sub_id = 1 AND\n\t\trslt.comment_id = cmt.id AND\n\t\tcmt.article_body_id = bdy.id AND\n\t\thdr.id = bdy.article_id AND\n\t\tudfs.object_type = 2 AND\n\t\tudfs.udf_id = 4 AND\n\t\tcmt.body ilike '% $comment_search_2%'\n\nGROUP BY time\nORDER BY time DESC\n)\n\nSELECT\n  c1.time,\n  c1.\"# Comments\"/c2.\"# Comments\"::NUMERIC AS \"Comment1-Comment2-Ratio\"\nFROM\n  comment_1 c1\n  INNER JOIN comment_2 c2 ON c1.time = c2.time\nORDER BY \n  1 DESC",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Comment Ratio",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "transparent": true,
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "title": "Comperative Analysis",
+      "type": "row"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 26,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "Wetter",
+          "value": "Wetter"
+        },
+        "hide": 0,
+        "label": "Comment Search (Left)",
+        "name": "comment_search_1",
+        "options": [
+          {
+            "selected": true,
+            "text": "Wetter",
+            "value": "Wetter"
+          }
+        ],
+        "query": "Wetter",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "Schnee",
+          "value": "Schnee"
+        },
+        "hide": 0,
+        "label": "Comment Search (Right)",
+        "name": "comment_search_2",
+        "options": [
+          {
+            "selected": true,
+            "text": "Schnee",
+            "value": "Schnee"
+          }
+        ],
+        "query": " Schnee",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Double Comment Sentiment Analysis",
+  "uid": "B0vg-cYGk",
+  "version": 2
+}

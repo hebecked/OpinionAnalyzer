@@ -20,3 +20,13 @@ datasources:
       connMaxLifetime: 14400
       postgresVersion: 1000   # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false
+
+  - name: Prometheus
+    url: http://prometheus:9090
+    type: prometheus
+    access: proxy
+    jsonData:
+      graphiteVersion: "1.1"
+      tlsAuth: false
+      tlsAuthWithCACert: false
+    editable: true
