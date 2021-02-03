@@ -94,8 +94,16 @@ class Welt:
         # Retrieving meta data
         article_meta_data = soup.find('script', {'data-qa': 'StructuredData', 'type': 'application/ld+json'}).contents[0]
         article_meta_data_json = json.loads(article_meta_data)
-
-        article_meta_data_json['articleBody'] = BeautifulSoup(article_meta_data_json['articleBody'], "lxml").text
+        xml_style = BeautifulSoup(article_meta_data_json['articleBody'], "lxml")
+        # removing ending em paragraphs as they seem to be advertising or annotations, not real parts of article
+        p_all = xml_style.find_all('p')
+        p_all.reverse()
+        for p in p_all:
+            if p.find('em'):
+                p.replace_with("")
+            else:
+                break
+        article_meta_data_json['articleBody'] = xml_style.text
 
         return article_meta_data_json
 
