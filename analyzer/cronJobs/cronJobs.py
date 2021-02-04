@@ -19,7 +19,7 @@ class CronJobs:
         analyis_modules_path = '/usr/src/app/analysisModules/'
 
         for job in self.jobs:
-            if job["onBoot"]:
+            if job["onInit"]:
                 logger.info("Found job to fire on init: " + job["module"])
                 logger.info("Init...")
                 time.sleep(20)
