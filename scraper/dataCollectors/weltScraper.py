@@ -306,7 +306,7 @@ def run_regular():
     article_header_list = welt_scraper.get_article_list(start, end)
     db.write_articles(article_header_list)
     end_historical = db.fetch_scraper_oldest(welt_scraper.id)
-    start_historical = end_historical - timedelta(2)
+    start_historical = end_historical - timedelta(7)
     article_header_list = welt_scraper.get_article_list(start_historical, end_historical)
     db.write_articles(article_header_list)
     todo_list = db.fetch_scraper_todo_list(welt_scraper.id)
