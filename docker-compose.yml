@@ -56,7 +56,7 @@ services:
       - GF_PG_USER=${GF_PG_USER}
       - GF_PG_PASSWORD=${GF_PG_PASSWORD}
     ports:
-      - '8080:3000'
+      - '8081:3000'
     user: "root"
     volumes:
       - grafana_storage:/var/lib/grafana
@@ -135,18 +135,19 @@ services:
     restart: unless-stopped
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.38.7
+    image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    command: privileged=true
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      #- /var/lib/docker:/var/lib/docker:ro
-      #- /cgroup:/cgroup:ro #doesn't work on MacOS only for Linux
+    privileged: true
+    command: -logtostderr -v=4 -docker_only
+    volumes:    
+      - '/:/rootfs:ro'
+      - '/var/run:/var/run:rw'
+      - '/sys:/sys:ro'
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker|rootfs/var/lib/docker|rootfs/run/docker|rootfs/var/lib/docker)($$|/)"
+      - "^/(sys|proc|dev|host|etc|rootfs/cgroup|rootfs/cgroup)($$|/)"
     restart: unless-stopped
-    expose:
-      - 8079
+    ports:
+      - 8080:8080
 
 volumes:
   dbdata:
