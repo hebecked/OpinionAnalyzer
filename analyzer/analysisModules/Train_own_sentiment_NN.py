@@ -35,9 +35,14 @@ model = BertForSequenceClassification.from_pretrained("nlptown/bert-base-multili
 tokenizer = BertTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
 
 #model.summary()
+print(model)
+exit()
 model.train()
 
 #implement dynamic download!!!
+#Send DB output to Akbik
+# use and modify https://huggingface.co/transformers/_modules/transformers/models/bert/modeling_bert.html#BertForSequenceClassification
+Just change input file or modify manually
 dataset = tf.data.experimental.SqlDataset(
 										driver_name = "sqlite", 
 										data_source_name = "./million_post_corpus/corpus.sqlite3", 
@@ -89,8 +94,10 @@ for i, data in enumerate(dataset):
         train_dataset["labels"].append(sentiment)
         train_dataset["text_input"].append(str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
 
+#convert numpy label arrays to pytorch tensors
+
 #get tokens
-train_tokens = tokenizer(train_dataset["text_input"], truncation=True, padding=True)
+train_tokens = tokenizer.tokenize(train_dataset["text_input"], truncation=True, padding=True)
 train_dataset.update(train_tokens)
 val_tokens = tokenizer(val_dataset["text_input"], truncation=True, padding=True)
 val_dataset.update(val_tokens)
@@ -121,7 +128,12 @@ class DatasetCorpus(torch.utils.data.Dataset):
 train_dataset=DatasetCorpus(train_dataset)
 val_dataset=DatasetCorpus(val_dataset)
 test_dataset=DatasetCorpus(test_dataset)
+#
 
+optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5) # pytorch ?
+loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+
+model.compile(optimizer=optimizer, loss=loss)
 
 training_args = TrainingArguments(
     output_dir='./results',          # output directory
