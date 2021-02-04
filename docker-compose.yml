@@ -116,8 +116,8 @@ services:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
     restart: unless-stopped
-    expose:
-      - 9093
+    ports:
+      - 9093:9093
 
   prometheus:
     image: prom/prometheus:v2.1.0
