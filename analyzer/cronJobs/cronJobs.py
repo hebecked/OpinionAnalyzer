@@ -24,7 +24,7 @@ class CronJobs:
                 logger.info("Init...")
                 time.sleep(20)
                 logger.info("Firing Module on init: " + job["module"])
-                os.system('python3 -u ' + analyis_modules_path + job["module"] + '&')
+                os.system('python3 -u ' + analyis_modules_path + job["module"])
 
         while True:
             for job in self.jobs:
