@@ -189,7 +189,7 @@ os.remove("million_post_corpus/corpus.sqlite3")
 
 print("Testing:")
 model.eval()
-print(model(**test_dataset))
+print(model(test_dataset))
 
 
 #The following contains different versions of the SQL Query
