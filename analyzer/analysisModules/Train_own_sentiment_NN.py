@@ -190,6 +190,7 @@ os.removedirs("million_post_corpus")
 print("Testing:")
 model.eval()
 for test_data in test_dataset:
+    print(test_data)
     result = model(**test_data) 
     print(test_data["text_input"])
     print(test_data['labels'], softmax(result.logits.detach().numpy()) )
