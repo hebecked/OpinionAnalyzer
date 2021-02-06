@@ -182,11 +182,14 @@ trainer.train()
 
 
 
-torch.save(model.state_dict(), 'bert_self_trained_model')
+#torch.save(model.state_dict(), 'results/bert_self_trained_model')
+model.save_pretrained("/results/bert_self_trained_model")
 os.remove("million_post_corpus/corpus.sqlite3") 
 
 
-
+print("Testing:")
+model.eval()
+print(model(test_dataset))
 
 
 #The following contains different versions of the SQL Query
