@@ -154,7 +154,7 @@ model.train()
 training_args = TrainingArguments(
     output_dir='./results',          # output directory
     num_train_epochs=3,              # total number of training epochs
-    per_device_train_batch_size=48,  # batch size per device during training (16)?
+    per_device_train_batch_size=16,  # batch size per device during training (16)?
     per_device_eval_batch_size=64,   # batch size for evaluation
     warmup_steps=500,                # number of warmup steps for learning rate scheduler
     weight_decay=0.01,               # strength of weight decay
@@ -170,7 +170,7 @@ trainer = Trainer(
 )
 
 print("Starting training")
-exit()
+#exit()
 trainer.train()
 
 
