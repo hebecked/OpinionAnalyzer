@@ -189,9 +189,11 @@ os.removedirs("million_post_corpus")
 
 print("Testing:")
 model.eval()
-for test_data in test_dataset: 
-    print(model(**test_data))
-
+for test_data in test_dataset:
+    result = model(**test_data) 
+    print(test_data["text_input"])
+    print(test_data['labels'], softmax(result.logits.detach().numpy()) )
+    print(result)
 
 #The following contains different versions of the SQL Query
 '''
