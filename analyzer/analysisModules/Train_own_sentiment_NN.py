@@ -109,11 +109,11 @@ for i, data in enumerate(dataset):
 #convert numpy label arrays to pytorch tensors
 
 #get tokens
-train_tokens = tokenizer(train_dataset["text_input"], truncation=True, padding=True)
+train_tokens = tokenizer(train_dataset["text_input"], truncation=True, padding=True, return_tensors="pt")
 train_dataset.update(train_tokens)
-val_tokens = tokenizer(val_dataset["text_input"], truncation=True, padding=True)
+val_tokens = tokenizer(val_dataset["text_input"], truncation=True, padding=True, return_tensors="pt")
 val_dataset.update(val_tokens)
-test_tokens = tokenizer(test_dataset["text_input"], truncation=True, padding=True)
+test_tokens = tokenizer(test_dataset["text_input"], truncation=True, padding=True, return_tensors="pt")
 test_dataset.update(test_tokens)
 
 
