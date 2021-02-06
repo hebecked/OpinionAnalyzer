@@ -144,7 +144,7 @@ test_dataset=DatasetCorpus(test_dataset)
 
 #Instructions for manual training: https://towardsdatascience.com/transformers-for-multilabel-classification-71a1a0daf5e1
 #optimizer = AdamW(model.parameters(),lr=2e-5) # pytorch ! #learning_rate=3e-5 ?
-#loss = BCEWithLogitsLoss()
+loss = BCEWithLogitsLoss()
 model.classifier = nn.Linear(768,3)
 model.num_labels = 3
 model.train()
@@ -162,7 +162,14 @@ training_args = TrainingArguments(
     logging_steps=10,
 )
 
-trainer = Trainer(
+class MyTrainer(Trainer):
+    def compute_loss(self, model, inputs):
+        labels = inputs.pop("labels")
+        outputs = model(**inputs)
+        logits = outputs[0]
+        return loss(logits, labels)
+
+trainer = MyTrainer(
     model=model,                         # the instantiated 🤗 Transformers model to be trained
     args=training_args,                  # training arguments, defined above
     train_dataset=train_dataset,         # training dataset
