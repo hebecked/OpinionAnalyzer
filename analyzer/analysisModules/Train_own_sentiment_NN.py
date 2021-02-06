@@ -82,8 +82,8 @@ with open('../Testdata/dataset.csv', 'w', newline='') as csvfile:
 
 #split in train val and test (80,10,10)
 train_dataset = {"DB_id": [], "labels": [], 'text_input': []}
-val_dataset = train_dataset.copy()
-test_dataset = train_dataset.copy()
+val_dataset = {"DB_id": [], "labels": [], 'text_input': []}
+test_dataset = {"DB_id": [], "labels": [], 'text_input': []}
 for i, data in enumerate(dataset):
     if data[3].numpy() == -1:
         sentiment = [1., 0., 0.]
@@ -146,6 +146,7 @@ test_dataset=DatasetCorpus(test_dataset)
 #optimizer = AdamW(model.parameters(),lr=2e-5) # pytorch ! #learning_rate=3e-5 ?
 #loss = BCEWithLogitsLoss()
 model.classifier = nn.Linear(768,3)
+model.num_labels = 3
 model.train()
 
 #model.compile(optimizer=optimizer, loss=loss)
@@ -169,7 +170,7 @@ trainer = Trainer(
 )
 
 print("Starting training")
-
+exit()
 trainer.train()
 
 
