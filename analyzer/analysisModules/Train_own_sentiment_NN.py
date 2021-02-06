@@ -142,6 +142,7 @@ val_dataset=DatasetCorpus(val_dataset)
 test_dataset=DatasetCorpus(test_dataset)
 #
 
+#Instructions for manual training: https://towardsdatascience.com/transformers-for-multilabel-classification-71a1a0daf5e1
 #optimizer = AdamW(model.parameters(),lr=2e-5) # pytorch ! #learning_rate=3e-5 ?
 #loss = BCEWithLogitsLoss()
 model.classifier = nn.Linear(768,3)
