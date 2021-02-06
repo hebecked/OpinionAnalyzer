@@ -8,7 +8,7 @@ from scipy.special import softmax
 #import re
 # from flair.models import TextClassifier
 # from flair.data import Sentence
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TFBertForSequenceClassification, BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, TFBertForSequenceClassification, BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments, AdamW
 #import fasttext
 #import fasttext.util
 #import nltk
@@ -18,6 +18,9 @@ import torch
 import wget
 import tarfile
 import os
+from torch.nn import BCEWithLogitsLoss, BCELoss
+from torch import nn
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 
 if not os.path.isfile("million_post_corpus.tar.bz2") and not os.path.isfile("million_post_corpus/corpus.sqlite3"):
     dataset_URL = "https://github.com/OFAI/million-post-corpus/releases/download/v1.0.0/million_post_corpus.tar.bz2"
@@ -31,18 +34,20 @@ if not os.path.isfile("million_post_corpus/corpus.sqlite3"):
 if os.path.isfile("million_post_corpus.tar.bz2"):  
     os.remove("million_post_corpus.tar.bz2") 
 
-model = BertForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")#Alternative: "bert-base-uncased"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+n_gpu = torch.cuda.device_count()
+#torch.cuda.get_device_name(0)
+
+model = BertForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")#, num_labels=6)#Alternative: "bert-base-uncased"
 tokenizer = BertTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
 
 #model.summary()
-print(model)
-exit()
-model.train()
+#model.cuda()
 
-#implement dynamic download!!!
+#dynamic download
 #Send DB output to Akbik
 # use and modify https://huggingface.co/transformers/_modules/transformers/models/bert/modeling_bert.html#BertForSequenceClassification
-Just change input file or modify manually
+#Just change input file or modify manually
 dataset = tf.data.experimental.SqlDataset(
 										driver_name = "sqlite", 
 										data_source_name = "./million_post_corpus/corpus.sqlite3", 
@@ -68,36 +73,43 @@ dataset = tf.data.experimental.SqlDataset(
 										output_types = (tf.int32, tf.string, tf.string, tf.int32)
 										)
 
+
+import csv
+with open('../Testdata/dataset.csv', 'w', newline='') as csvfile:
+    spamwriter = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    for i, data in enumerate(dataset):
+        spamwriter.writerow([data[0].numpy(), str(data[1].numpy(), encoding="UTF-8"), str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
+
 #split in train val and test (80,10,10)
 train_dataset = {"DB_id": [], "labels": [], 'text_input': []}
 val_dataset = train_dataset.copy()
 test_dataset = train_dataset.copy()
 for i, data in enumerate(dataset):
     if data[3].numpy() == -1:
-        sentiment = [1,0,0]
+        sentiment = [1., 0., 0.]
     elif data[3].numpy() == 0:
-        sentiment = [0,1,0]
+        sentiment = [0., 1., 0.]
     elif data[3].numpy() == 1:
-        sentiment = [0,0,1]
+        sentiment = [0., 0., 1.]
     else:
         print("Error!")
     if i % 10 == 0:
         test_dataset["DB_id"].append(data[0].numpy())
         test_dataset["labels"].append(sentiment)
-        test_dataset["text_input"].append(str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
+        test_dataset["text_input"].append( str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
     elif i % 10 -1 == 0:
         val_dataset["DB_id"].append(data[0].numpy())
         val_dataset["labels"].append(sentiment)
-        val_dataset["text_input"].append(str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
+        val_dataset["text_input"].append( str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
     else:
         train_dataset["DB_id"].append(data[0].numpy())
         train_dataset["labels"].append(sentiment)
-        train_dataset["text_input"].append(str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
+        train_dataset["text_input"].append( str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
 
 #convert numpy label arrays to pytorch tensors
 
 #get tokens
-train_tokens = tokenizer.tokenize(train_dataset["text_input"], truncation=True, padding=True)
+train_tokens = tokenizer(train_dataset["text_input"], truncation=True, padding=True)
 train_dataset.update(train_tokens)
 val_tokens = tokenizer(val_dataset["text_input"], truncation=True, padding=True)
 val_dataset.update(val_tokens)
@@ -112,7 +124,7 @@ class DatasetCorpus(torch.utils.data.Dataset):
         encodings["input_ids"] = dataset["input_ids"]
         encodings["attention_mask"] = dataset["attention_mask"]
         self.encodings = encodings
-        self.labels = dataset["labels"]
+        self.labels = [torch.tensor(i) for i in dataset["labels"]]
         self.data = dataset
 
     def __getitem__(self, idx):
@@ -130,10 +142,12 @@ val_dataset=DatasetCorpus(val_dataset)
 test_dataset=DatasetCorpus(test_dataset)
 #
 
-optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5) # pytorch ?
-loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+#optimizer = AdamW(model.parameters(),lr=2e-5) # pytorch ! #learning_rate=3e-5 ?
+#loss = BCEWithLogitsLoss()
+model.classifier = nn.Linear(768,3)
+model.train()
 
-model.compile(optimizer=optimizer, loss=loss)
+#model.compile(optimizer=optimizer, loss=loss)
 
 training_args = TrainingArguments(
     output_dir='./results',          # output directory
@@ -158,12 +172,12 @@ print("Starting training")
 trainer.train()
 
 
-#from sklearn.model_selection import train_test_split
-#train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, train_labels, test_size=.2)
 
-
-
+torch.save(model.state_dict(), 'bert_self_trained_model')
 os.remove("million_post_corpus/corpus.sqlite3") 
+
+
+
 
 
 #The following contains different versions of the SQL Query
