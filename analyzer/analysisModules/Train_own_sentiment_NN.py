@@ -177,7 +177,7 @@ trainer = MyTrainer(
 )
 
 print("Starting training")
-exit()
+#exit()
 trainer.train()
 
 
