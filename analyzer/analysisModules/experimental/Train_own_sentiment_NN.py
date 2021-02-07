@@ -79,41 +79,30 @@ with open('../Testdata/dataset.csv', 'w', newline='') as csvfile:
         spamwriter.writerow([data[0].numpy(), str(data[1].numpy(), encoding="UTF-8"), str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
 
 #split in train val and test (80,10,10)
-
-combined_dataset = []
-for data in dataset:
-    combined_dataset.append([str(data[1].numpy() + "\n" + data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
-    if data[1].numpy() is not "":
-        combined_dataset.append([str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
-
-original_length=len(combined_dataset)
-for i, data in enumerate(combined_dataset):
-    for j in range(original_length-i-1):
-        if data[1] == combined_dataset[j+1][1]:
-            combined_dataset.append([data[0] + " " + combined_dataset[j+1][0], data[1]])
-
-
-train_dataset = {"labels": [], 'text_input': []}
-val_dataset = {"labels": [], 'text_input': []}
-test_dataset = {"labels": [], 'text_input': []}
-for i, data in enumerate(combined_dataset):
-    if  data[1] == -1:
+train_dataset = {"DB_id": [], "labels": [], 'text_input': []}
+val_dataset = {"DB_id": [], "labels": [], 'text_input': []}
+test_dataset = {"DB_id": [], "labels": [], 'text_input': []}
+for i, data in enumerate(dataset):
+    if data[3].numpy() == -1:
         sentiment = [1., 0., 0.]
-    elif data[1] == 0:
+    elif data[3].numpy() == 0:
         sentiment = [0., 1., 0.]
-    elif data[1] == 1:
+    elif data[3].numpy() == 1:
         sentiment = [0., 0., 1.]
     else:
         print("Error!")
     if i % 10 == 0:
+        test_dataset["DB_id"].append(data[0].numpy())
         test_dataset["labels"].append(sentiment)
-        test_dataset["text_input"].append( data[0] )
+        test_dataset["text_input"].append( str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
     elif i % 10 -1 == 0:
+        val_dataset["DB_id"].append(data[0].numpy())
         val_dataset["labels"].append(sentiment)
-        val_dataset["text_input"].append( data[0] )
+        val_dataset["text_input"].append( str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
     else:
+        train_dataset["DB_id"].append(data[0].numpy())
         train_dataset["labels"].append(sentiment)
-        train_dataset["text_input"].append( data[0] )
+        train_dataset["text_input"].append( str(data[1].numpy()+data[2].numpy(), encoding="UTF-8"))
 
 #convert numpy label arrays to pytorch tensors
 
