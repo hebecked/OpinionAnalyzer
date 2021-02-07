@@ -119,14 +119,14 @@ for i, data in enumerate(combined_dataset):
 
 #convert numpy label arrays to pytorch tensors
 
-#get tokens
+print("Creating tokens...")# tokens
 train_tokens = tokenizer(train_dataset["text_input"], truncation=True, padding=True, return_tensors="pt")
 train_dataset.update(train_tokens)
 val_tokens = tokenizer(val_dataset["text_input"], truncation=True, padding=True, return_tensors="pt")
 val_dataset.update(val_tokens)
 test_tokens = tokenizer(test_dataset["text_input"], truncation=True, padding=True, return_tensors="pt")
 test_dataset.update(test_tokens)
-
+print("Done.")
 
 #Dataset class
 class DatasetCorpus(torch.utils.data.Dataset):
