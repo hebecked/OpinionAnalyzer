@@ -86,11 +86,12 @@ for data in dataset:
     if data[1].numpy() is not "":
         combined_dataset.append([str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
 
+print("Creating additional training data...")
 original_length=len(combined_dataset)
 for i, data in enumerate(combined_dataset):
     for j in range(original_length-i-1):
-        if data[1] == combined_dataset[j+1][1]:
-            combined_dataset.append([data[0] + " " + combined_dataset[j+1][0], data[1]])
+        if data[1] == combined_dataset[i+j+1][1]:
+            combined_dataset.append([data[0] + " " + combined_dataset[i+j+1][0], data[1]])
 
 
 train_dataset = {"labels": [], 'text_input': []}
