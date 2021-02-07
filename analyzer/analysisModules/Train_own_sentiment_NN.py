@@ -183,13 +183,15 @@ trainer.train()
 
 
 #torch.save(model.state_dict(), 'results/bert_self_trained_model') 
-model.config["_num_labels"] = 3
-model.config['id2label'] = {'0': 'NEGATIVE',
+config = model.config
+config["_num_labels"] = 3
+config['id2label'] = {'0': 'NEGATIVE',
    '1': 'NEUTRAL',
    '2': 'POSITIVE'}
-model.config['label2id'] = {'NEGATIVE': 0,
+config['label2id'] = {'NEGATIVE': 0,
    'NEUTRAL': 1,
    'POSITIVE': 2}
+model.config = config
 model.save_pretrained("./results/bert_self_trained_model")
 tokenizer
 #os.remove("./results/bert_self_trained_model/config.json") 
