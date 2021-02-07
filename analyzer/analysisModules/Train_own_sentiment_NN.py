@@ -8,7 +8,7 @@ from scipy.special import softmax
 #import re
 # from flair.models import TextClassifier
 # from flair.data import Sentence
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TFBertForSequenceClassification, BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments, AdamW
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, TFBertForSequenceClassification, BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments, AdamW, PretrainedConfig
 #import fasttext
 #import fasttext.util
 #import nltk
@@ -177,20 +177,34 @@ trainer = MyTrainer(
 )
 
 print("Starting training")
-#exit()
+exit()
 trainer.train()
 
 
 
-#torch.save(model.state_dict(), 'results/bert_self_trained_model')
+#torch.save(model.state_dict(), 'results/bert_self_trained_model') 
+model.config["_num_labels"] = 3
+model.config['id2label'] = {'0': 'NEGATIVE',
+   '1': 'NEUTRAL',
+   '2': 'POSITIVE'}
+model.config['label2id'] = {'NEGATIVE': 0,
+   'NEUTRAL': 1,
+   'POSITIVE': 2}
 model.save_pretrained("./results/bert_self_trained_model")
+tokenizer
+#os.remove("./results/bert_self_trained_model/config.json") 
+#PretrainedConfig.get_config_dict("nlptown/bert-base-multilingual-uncased-sentiment")
+#new_config = PretrainedConfig.from_dict(new_config_dic)
+#new_config.save_pretrained("./results/bert_self_trained_model")
 os.remove("million_post_corpus/corpus.sqlite3") 
 os.removedirs("million_post_corpus") 
 
 print("Testing:")
 model.eval()
 for test_data in test_dataset:
-    print(test_data)
+    test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
+    test_data['attention_mask']= test_data['attention_mask'].reshape([1,-1])
+    test_data["labels"]= test_data["labels"].reshape([1,-1])
     result = model(**test_data) 
     print(test_data["text_input"])
     print(test_data['labels'], softmax(result.logits.detach().numpy()) )
