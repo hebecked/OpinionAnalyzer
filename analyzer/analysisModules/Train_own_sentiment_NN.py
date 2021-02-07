@@ -92,6 +92,7 @@ for i, data in enumerate(combined_dataset):
     for j in range(original_length-i-1):
         if data[1] == combined_dataset[i+j+1][1]:
             combined_dataset.append([data[0] + " " + combined_dataset[i+j+1][0], data[1]])
+print("Done.")
 
 
 train_dataset = {"labels": [], 'text_input': []}
