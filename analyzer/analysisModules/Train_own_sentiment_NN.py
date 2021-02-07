@@ -203,6 +203,8 @@ os.remove("million_post_corpus/corpus.sqlite3")
 os.removedirs("million_post_corpus") 
 
 print("Testing:")
+device = torch.device("cpu")
+model.to(device)
 model.eval()
 for test_data in test_dataset:
     test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
