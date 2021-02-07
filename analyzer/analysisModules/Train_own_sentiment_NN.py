@@ -209,7 +209,7 @@ model.eval()
 for i, test_data in enumerate(test_dataset):
     test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
     test_data['attention_mask']= test_data['attention_mask'].reshape([1,-1])
-    label=test_data.pop("labels")
+    label=test_data.pop("labels").reshape([1,-1])
     result = model(**test_data) 
     print(test_dataset.data["text_input"][i])
     verluste = loss(label, softmax(result.logits.detach().numpy()))
