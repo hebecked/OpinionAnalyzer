@@ -209,10 +209,10 @@ model.eval()
 for test_data in test_dataset:
     test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
     test_data['attention_mask']= test_data['attention_mask'].reshape([1,-1])
-    test_data["labels"]= test_data["labels"].reshape([1,-1])
+    label=test_data.pop("labels")
     result = model(**test_data) 
     print(test_data["text_input"])
-    print(test_data['labels'], softmax(result.logits.detach().numpy()) )
+    print(label, softmax(result.logits.detach().numpy()) )
     print(result)
 
 #The following contains different versions of the SQL Query
