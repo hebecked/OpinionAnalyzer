@@ -192,7 +192,7 @@ config['id2label'] = {'0': 'NEGATIVE',
 config['label2id'] = {'NEGATIVE': 0,
    'NEUTRAL': 1,
    'POSITIVE': 2}
-model.config = config
+model.config = PretrainedConfig.from_dict(config)
 model.save_pretrained("./results/bert_self_trained_model")
 tokenizer
 #os.remove("./results/bert_self_trained_model/config.json") 
