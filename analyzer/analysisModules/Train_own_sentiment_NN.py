@@ -184,6 +184,7 @@ trainer.train()
 
 #torch.save(model.state_dict(), 'results/bert_self_trained_model') 
 config = model.config
+config = config.to_dict()
 config["_num_labels"] = 3
 config['id2label'] = {'0': 'NEGATIVE',
    '1': 'NEUTRAL',
