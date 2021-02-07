@@ -206,12 +206,12 @@ print("Testing:")
 device = torch.device("cpu")
 model.to(device)
 model.eval()
-for test_data in test_dataset:
+for i, test_data in enumerte(test_dataset):
     test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
     test_data['attention_mask']= test_data['attention_mask'].reshape([1,-1])
     label=test_data.pop("labels")
     result = model(**test_data) 
-    print(test_data["text_input"])
+    print(test_dataset.data["text_input"][i])
     print(label, softmax(result.logits.detach().numpy()) )
     print(result)
 
