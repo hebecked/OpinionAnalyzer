@@ -212,7 +212,8 @@ for i, test_data in enumerate(test_dataset):
     label=test_data.pop("labels")
     result = model(**test_data) 
     print(test_dataset.data["text_input"][i])
-    print(label, softmax(result.logits.detach().numpy()) )
+    verluste = loss(label, softmax(result.logits.detach().numpy()))
+    print(verluste, label, softmax(result.logits.detach().numpy()))
     print(result)
 
 #The following contains different versions of the SQL Query
