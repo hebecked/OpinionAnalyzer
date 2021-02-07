@@ -206,7 +206,7 @@ print("Testing:")
 device = torch.device("cpu")
 model.to(device)
 model.eval()
-for i, test_data in enumerte(test_dataset):
+for i, test_data in enumerate(test_dataset):
     test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
     test_data['attention_mask']= test_data['attention_mask'].reshape([1,-1])
     label=test_data.pop("labels")
