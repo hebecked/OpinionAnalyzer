@@ -82,7 +82,7 @@ with open('../Testdata/dataset.csv', 'w', newline='') as csvfile:
 
 combined_dataset = []
 for data in dataset:
-    combined_dataset.append([str(data[1].numpy() + "\n" + data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
+    combined_dataset.append([str(data[1].numpy(), encoding="UTF-8") + "\n" + str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
     if data[1].numpy() is not "":
         combined_dataset.append([str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
 
