@@ -3,7 +3,7 @@ services:
 
   # Running postgres on port 5432
   postgres:
-    image: postgres:13.1
+    image: postgres:12.5
     container_name: postgres
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
