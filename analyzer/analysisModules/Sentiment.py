@@ -324,7 +324,7 @@ if __name__ == "__main__":
     model_objects=dict()
     for model in models.keys():
         parameter = models[model]
-        exec("model_objects[model] = %s(%s)" % (model, parameter))
+        exec("model_objects[model] = %s(\"%s\")" % (model, parameter))
 
     print("Running ", Test_cases, " tests + one overlength sample.")
     accu = []
@@ -345,9 +345,9 @@ if __name__ == "__main__":
     accu = str().join(accu)
     results = dict()
     for model in model_objects.keys():
-        results[model] =  model_objects[model].analyze(comment["body"])
+        results[model] =  model_objects[model].analyze(accu)
     result_string = str().join([model + ": " + str(results[model]) + "\n"  for model in results.keys()])
-    print("Large comment: \n", comment["body"], "\n", result_string)
+    print("Large comment: \n", "---Long text omitted---", "\n", result_string)
     print("Tests completed successfully.")
 
 

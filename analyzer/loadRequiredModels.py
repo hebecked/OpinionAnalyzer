@@ -9,6 +9,7 @@ _ = AutoModelForSequenceClassification.from_pretrained("nlptown/bert-base-multil
 _ = AutoTokenizer.from_pretrained("oliverguhr/german-sentiment-bert")
 _ = AutoModelForSequenceClassification.from_pretrained("oliverguhr/german-sentiment-bert")
 _ = nltk.download("stopwords")
+_ = nltk.download("punkt")
 fasttext.util.download_model('de', if_exists='ignore')
 ft = fasttext.load_model('cc.de.300.bin')
 fasttext.util.reduce_model(ft, 50)
