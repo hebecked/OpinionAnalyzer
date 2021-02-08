@@ -120,7 +120,7 @@ class baselineFastTextSentiment(baselineSentiment):
                     closest_index = i
             if closest_distance > 0.25:
                 continue
-            print(closest_distance, clean_word, self.ft_sentiment[closest_index][0])
+            #print(closest_distance, clean_word, self.ft_sentiment[closest_index][0])
             values.append(self.ft_sentiment[closest_index][2])
         if len(values) == 0:
             result = 0
@@ -193,8 +193,7 @@ class german_bert_sentiment:
     def analyze(self, text):
         averages = []
         errors = []
-        inputs = self.tokenizer(text,
-                                return_tensors="pt")  # , max_length=512, stride=0, return_overflowing_tokens=True, truncation=True, padding=True)
+        inputs = self.tokenizer(text, return_tensors="pt")  # , max_length=512, stride=0, return_overflowing_tokens=True, truncation=True, padding=True)
         length = len(inputs['input_ids'][0])
         while length > 0:
             if length > self.max_length:
@@ -210,6 +209,49 @@ class german_bert_sentiment:
             averages.append(average)
             errors.append(
                 np.sqrt(np.average(np.array(np.linspace(1, -1, 3) - average) ** 2, weights=weights))
+            )
+            # from IPython import embed; embed()
+            if self.truncate:
+                break
+            if next_inputs:
+                inputs = next_inputs
+            else:
+                break
+            length = len(inputs['input_ids'][0])
+        average = np.average(averages, weights=1. / np.array(errors) ** 2)
+        error = np.sqrt(1. / np.sum(1. / np.array(errors) ** 2)) #*5./3.
+        return [average, error]
+
+
+class custom_model_sentiment:
+    """
+    Sentiment analyzer module based on custom trained NN-models
+    """
+
+    def __init__(self, model_path, tokenizer_path, truncate=False):
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_path) #3 Classes in the following order: Negative, Neutral, Positive,
+        self.truncate = truncate
+        self.max_length = 512
+
+    def analyze(self, text):
+        averages = []
+        errors = []
+        inputs = self.tokenizer(text, return_tensors="pt")  # , max_length=512, stride=0, return_overflowing_tokens=True, truncation=True, padding=True)
+        length = len(inputs['input_ids'][0])
+        while length > 0:
+            if length > self.max_length:
+                next_inputs = {k: (i[0][self.max_length:]).reshape(1, len(i[0][self.max_length:])) for k, i in inputs.items()}
+                inputs = {k: (i[0][:self.max_length]).reshape(1, len(i[0][:self.max_length])) for k, i in inputs.items()}
+            else:
+                next_inputs = False
+            proOrCon = self.model(**inputs)
+            weights = proOrCon[0].detach().numpy()[0]
+            weights = softmax(weights)
+            average = np.average(np.linspace(-1, 1, 3), weights=weights)
+            averages.append(average)
+            errors.append(
+                np.sqrt(np.average(np.array(np.linspace(-1, 1, 3) - average) ** 2, weights=weights))
             )
             # from IPython import embed; embed()
             if self.truncate:
@@ -277,13 +319,12 @@ if __name__ == "__main__":
     with open('../Testdata/TestComments.json') as f:
         testComments = json.load(f)
 
+    models = {"multilang_bert_sentiment":"", "german_bert_sentiment":"", "EnsembleSentiment":"", "baselineSentiment":"", "baselineFastTextSentiment":"", "TextblobSentiment":""}#, "custom_model_sentiment":""}
     print("Loading NLP models.")
-    SentimentModel1 = multilang_bert_sentiment()
-    SentimentModel2 = german_bert_sentiment(truncate=True)
-    SentimentModel3 = EnsembleSentiment()
-    baseline = baselineSentiment()
-    ft_baseline = baselineFastTextSentiment()
-    #baseline.print_sentiments()
+    model_objects=dict()
+    for model in models.keys():
+        parameter = models[model]
+        exec("model_objects[model] = %s(%s)" % (model, parameter))
 
     print("Running ", Test_cases, " tests + one overlength sample.")
     accu = []
@@ -291,25 +332,22 @@ if __name__ == "__main__":
         if comment["user"] is not None and comment["body"] is not None:
             # sentence = Sentence(comment["body"])
             # Tourette = classifier.predict(sentence)
-
-            result1 = SentimentModel1.analyze(comment["body"])
-            result2 = SentimentModel2.analyze(comment["body"])
-            result3 = SentimentModel3.analyze(comment["body"])
-            result4 = TextblobSentiment().analyze(comment["body"])
-            resultB = baseline.analyze(comment["body"])
-            result_ftB = ft_baseline.analyze(comment["body"])
+            results = dict()
+            for model in model_objects.keys():
+                results[model] =  model_objects[model].analyze(comment["body"])
+            result_string = str().join([model + ": " + str(results[model]) + "\n"  for model in results.keys()])
+            print("Comment " + str(i) + ":\n", comment["body"], "\n\n" + result_string)
             accu.extend(comment["body"])
-            print("Comment: ", i, " Results 1,2,3,4,B,ftB: ", "%.2f" % result1[0], "%.2f" % result2[0], "%.2f" % result3[0], "%.2f" % result4[0], "%.2f" % resultB[0], "%.2f" % result_ftB[0])
+
+            
         if i >= Test_cases:
             break
     accu = str().join(accu)
-    result1 = SentimentModel1.analyze(accu)
-    result2 = SentimentModel2.analyze(accu)
-    result3 = SentimentModel3.analyze(accu)
-    result4 = TextblobSentiment().analyze(accu)
-    resultB = baseline.analyze(accu)
-    result_ftB = ft_baseline.analyze(accu)
-    print("Large Comment Results 1,2,3,4,B,ftB: ", "%.2f" % result1[0], "%.2f" % result2[0], "%.2f" % result3[0], "%.2f" % result4[0], "%.2f" % resultB[0], "%.2f" % result_ftB[0])
+    results = dict()
+    for model in model_objects.keys():
+        results[model] =  model_objects[model].analyze(comment["body"])
+    result_string = str().join([model + ": " + str(results[model]) + "\n"  for model in results.keys()])
+    print("Large comment: \n", comment["body"], "\n", result_string)
     print("Tests completed successfully.")
 
 
