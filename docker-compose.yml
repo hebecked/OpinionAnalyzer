@@ -3,7 +3,7 @@ services:
 
   # Running postgres on port 5432
   postgres:
-    image: postgres:11.1
+    image: postgres:13.1
     container_name: postgres
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
@@ -12,7 +12,7 @@ services:
       - 5432:5432
     volumes:
       - dbdata:/var/lib/postgresql/data
-    restart: unless-stopped
+    restart: always
 
   # Running pgAdmin on port 5555
   # Note: On deployment you need to set the server configs after login into the pgAdmin client. Use the postgres
@@ -28,7 +28,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
       - SERVER_MODE=True
-    restart: unless-stopped
+    restart: always
 
   # A service container to
   dbs-configurator:
@@ -42,7 +42,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - GF_PG_USER=${GF_PG_USER}
       - GF_PG_PASSWORD=${GF_PG_PASSWORD}
-    restart: unless-stopped
+    restart: always
 
   # Running grafana on port 8080
   grafana:
@@ -60,7 +60,7 @@ services:
     user: "root"
     volumes:
       - grafana_storage:/var/lib/grafana
-    restart: unless-stopped
+    restart: always
 
 
   # Data analytics and NLP worker 
@@ -74,7 +74,7 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    restart: unless-stopped
+    restart: always
 
   # Data analytics and NLP worker
   scraper:
@@ -87,7 +87,7 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    restart: unless-stopped
+    restart: always
 
   # Server monitoring tools - node exporter
   # Will only run on Linux OS
@@ -105,7 +105,7 @@ services:
       - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
     ports:
       - 9100:9100
-    restart: unless-stopped
+    restart: always
 
   prometheus:
     image: prom/prometheus:v2.1.0
@@ -120,7 +120,7 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
       - 9090:9090
-    restart: unless-stopped
+    restart: always
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -133,7 +133,7 @@ services:
       - '/sys:/sys:ro'
       - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker|rootfs/var/lib/docker|rootfs/run/docker|rootfs/var/lib/docker)($$|/)"
       - "^/(sys|proc|dev|host|etc|rootfs/cgroup|rootfs/cgroup)($$|/)"
-    restart: unless-stopped
+    restart: always
     ports:
       - 8080:8080
 
