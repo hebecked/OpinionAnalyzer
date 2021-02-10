@@ -6,7 +6,7 @@ const query = fs.readFileSync("/usr/src/app/sqlStorage/alter_tables/alter_tables
 exports.up = function(knex) {
   return knex.schema.raw(query.toString())
       .then(function () {
-      logger.log("Successfully added contraints!");
+      logger.log("Successfully added constraints!");
     });
 };
 
