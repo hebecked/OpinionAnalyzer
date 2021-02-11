@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 6,
-  "iteration": 1612807062858,
+  "id": 5,
+  "iteration": 1613045215739,
   "links": [],
   "panels": [
     {
@@ -83,7 +83,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  COUNT(DISTINCT ah.id)\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ah.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) AND sh.source IN ($news_outlet)",
+          "rawSql": "SELECT\n  COUNT(DISTINCT ah.id)\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id",
           "refId": "A",
           "select": [
             [
@@ -162,7 +162,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  COUNT(DISTINCT ct.id)\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ah.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) AND sh.source IN ($news_outlet)",
+          "rawSql": "SELECT\n  COUNT(DISTINCT ct.id)\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id",
           "refId": "A",
           "select": [
             [
@@ -241,7 +241,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ah.source_date AS time,\n  SUM(a1r.sentiment_value/ (a1r.error_value * a1r.error_value )) / SUM(1 / (a1r.error_value * a1r.error_value)) AS \"Sentiment1 Error Weighted\",\n  AVG(a1r.sentiment_value) AS \"Sentiment2 Simple Average\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ah.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) AND sh.source IN ($news_outlet)\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
+          "rawSql": "SELECT\n  ah.source_date AS time,\n  SUM(a1r.sentiment_value/ (a1r.error_value * a1r.error_value )) / SUM(1 / (a1r.error_value * a1r.error_value)) AS \"Sentiment1 Error Weighted\",\n  AVG(a1r.sentiment_value) AS \"Sentiment2 Simple Average\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
           "refId": "A",
           "select": [
             [
@@ -370,7 +370,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  COUNT(DISTINCT ah.id)\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ah.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND ab.body ILIKE '%$article_filter%'",
+          "rawSql": "SELECT\n  COUNT(DISTINCT ah.id)\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id AND ab.body ILIKE '%$article_filter%'",
           "refId": "A",
           "select": [
             [
@@ -449,7 +449,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  COUNT(DISTINCT ct.id)\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ah.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND ab.body ILIKE '%$article_filter%'",
+          "rawSql": "SELECT\n  COUNT(DISTINCT ct.id)\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id AND ab.body ILIKE '%$article_filter%'",
           "refId": "A",
           "select": [
             [
@@ -528,7 +528,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ah.source_date AS time,\n  SUM(a1r.sentiment_value/ (a1r.error_value * a1r.error_value )) / SUM(1 / (a1r.error_value * a1r.error_value)) AS \"Sentiment1 Error Weighted\",\n  AVG(a1r.sentiment_value) AS \"Sentiment2 Simple Average\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ah.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND ab.body ILIKE '%$article_filter%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
+          "rawSql": "SELECT\n  ah.source_date AS time,\n  SUM(a1r.sentiment_value/ (a1r.error_value * a1r.error_value )) / SUM(1 / (a1r.error_value * a1r.error_value)) AS \"Sentiment1 Error Weighted\",\n  AVG(a1r.sentiment_value) AS \"Sentiment2 Simple Average\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id AND ab.body ILIKE '%$article_filter%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
           "refId": "A",
           "select": [
             [
@@ -646,6 +646,32 @@
         "query": "Wetter",
         "skipUrlSync": false,
         "type": "textbox"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "3",
+          "value": "3"
+        },
+        "datasource": "Postgres",
+        "definition": "SELECT DISTINCT sub_id FROM news_meta_data.analyzer1_result",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Analyzer ID",
+        "multi": false,
+        "name": "sub_id",
+        "options": [],
+        "query": "SELECT DISTINCT sub_id FROM news_meta_data.analyzer1_result",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
       }
     ]
   },
