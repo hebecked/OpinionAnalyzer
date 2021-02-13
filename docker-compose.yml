@@ -77,6 +77,19 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     restart: always
+    
+  # Data analytics and NLP worker 
+  topic_detector:
+    build:
+      context: './topic_detector'
+    container_name: topic_detector
+    depends_on:
+      - postgres
+      - dbs-configurator
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    restart: always
 
   # Data analytics and NLP worker
   scraper:
