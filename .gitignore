@@ -8,4 +8,4 @@ analyzer/Testdata/german_word2vec.model
 cc.de.50.bin
 cc.de.100.bin
 cc.de.300.bin
-analyzer/analysisModules/million_post_corpus/
+*/million_post_corpus/
