@@ -113,6 +113,10 @@ class DatasetCorpus(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.labels)
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+n_gpu = torch.cuda.device_count()
+#torch.cuda.get_device_name(0)
+
 print("Loading pretrained model.")
 model = BertForMultiLabelSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")#Alternative: "bert-base-uncased"
 model.reconfigure(num_labels=3)
