@@ -37,7 +37,7 @@ class BertForMultiLabelSequenceClassification(BertForSequenceClassification): # 
         self.config = PretrainedConfig.from_dict(config)
  
     def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None):
-        _, pooled_output = self.bert(input_ids, token_type_ids, attention_mask) # , output_all_encoded_layers=False # outdated actually to be placed in init or config under the name output_hidden_states
+        pooled_output = self.bert(input_ids, token_type_ids, attention_mask) # , output_all_encoded_layers=False # outdated actually to be placed in init or config under the name output_hidden_states
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
 
