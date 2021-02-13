@@ -124,8 +124,14 @@ training_args = TrainingArguments(
     logging_steps=10,
 )
 
+class MyTrainer(Trainer):
+    def compute_loss(self, model, inputs):
+        labels = inputs.pop("labels")
+        outputs = model(**inputs)
+        logits = outputs[0]
+        return loss(logits, labels)
 
-trainer = Trainer(
+trainer = MyTrainer(
     model=model,                         # the instantiated 🤗 Transformers model to be trained
     args=training_args,                  # training arguments, defined above
     train_dataset=train_dataset,         # training dataset
