@@ -4,31 +4,62 @@ import os
 import numpy as np
 import pandas as pd
 from scipy.special import softmax
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TFBertForSequenceClassification, BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments, AdamW, PretrainedConfig
+#from transformers import AutoTokenizer, AutoModelForSequenceClassification, TFBertForSequenceClassification, BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments, AdamW, PretrainedConfig
 from torch.nn import BCEWithLogitsLoss, BCELoss
 from torch import nn
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+from transformers import *
+
+class BertForMultiLabelSequenceClassification(BertForSequenceClassification): # For newer version use BertPreTrainedModel,For older versions use: PreTrainedBertModel
+    """BERT model for classification.
+    This module is composed of the BERT model with a linear layer on top of
+    the pooled output.
+    """
+
+    def __init__(self, config):
+        super(BertForMultiLabelSequenceClassification, self).__init__(config)
+        self.bert = BertModel(config)
+
+    def reconfigure(self, num_labels=3):
+        self.num_labels = num_labels
+        self.dropout = torch.nn.Dropout(self.config.hidden_dropout_prob)
+        self.classifier = torch.nn.Linear(self.config.hidden_size, num_labels)
+        #self.apply(self.init_bert_weights)
+        config = self.config.to_dict()
+        config["_num_labels"] = 3
+        config['id2label'] = {'0': 'NEGATIVE',
+           '1': 'NEUTRAL',
+           '2': 'POSITIVE'}
+        config['label2id'] = {'NEGATIVE': 0,
+           'NEUTRAL': 1,
+           'POSITIVE': 2}
+        config["model_type"]= "bert"
+        self.config = PretrainedConfig.from_dict(config)
+ 
+    def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None):
+        _, pooled_output = self.bert(input_ids, token_type_ids, attention_mask) # , output_all_encoded_layers=False # outdated actually to be placed in init or config under the name output_hidden_states
+        pooled_output = self.dropout(pooled_output)
+        logits = self.classifier(pooled_output)
+
+        if labels is not None:
+            loss_fct = BCEWithLogitsLoss()
+            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1, self.num_labels))
+            return loss
+        else:
+            return logits
+        
+    def freeze_bert_encoder(self):
+        for param in self.bert.parameters():
+            param.requires_grad = False
+    
+    def unfreeze_bert_encoder(self):
+        for param in self.bert.parameters():
+            param.requires_grad = True
 
 
-print("Read datasets from file.")
-datasets = {"train_dataset": None, "val_dataset": None, "test_dataset": None}
-for dataset in datasets.keys():
-    with open( "../Testdata/" + dataset + '_dataset.json', 'r') as fp:
-        datasets[dataset] = json.load(fp)
-
-
-#convert numpy label arrays to pytorch tensors
-print("Creating tokens...")# tokens
-train_tokens = tokenizer(train_dataset["text_input"], truncation=True, padding=True, return_tensors="pt")
-train_dataset.update(train_tokens)
-val_tokens = tokenizer(val_dataset["text_input"], truncation=True, padding=True, return_tensors="pt")
-val_dataset.update(val_tokens)
-test_tokens = tokenizer(test_dataset["text_input"], truncation=True, padding=True, return_tensors="pt")
-test_dataset.update(test_tokens)
-print("Done.")
-
-#Dataset class
 class DatasetCorpus(torch.utils.data.Dataset):
+    """Container class to supply dataset content to the training algorithm."""
+
     def __init__(self, dataset):
         encodings = dict()
         encodings["input_ids"] = dataset["input_ids"]
@@ -45,18 +76,39 @@ class DatasetCorpus(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.labels)
 
+print("Loading pretrained model.")
+model = BertForMultiLabelSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")#Alternative: "bert-base-uncased"
+model.reconfigure(num_labels=3)
+tokenizer = BertTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
 
 
-train_dataset=DatasetCorpus(train_dataset)
-val_dataset=DatasetCorpus(val_dataset)
-test_dataset=DatasetCorpus(test_dataset)
+print("Read datasets from file.")
+datasets = {"train_dataset": None, "val_dataset": None, "test_dataset": None}
+for dataset in datasets.keys():
+    with open( "../Testdata/" + dataset + '_dataset.json', 'r') as fp:
+        datasets[dataset] = json.load(fp)
+
+
+#convert numpy label arrays to pytorch tensors
+print("Creating tokens...")# tokens
+train_tokens = tokenizer(datasets["train_dataset"]["text_input"], truncation=True, padding=True, return_tensors="pt")
+datasets["train_dataset"].update(train_tokens)
+val_tokens = tokenizer(datasets["val_dataset"]["text_input"], truncation=True, padding=True, return_tensors="pt")
+datasets["val_dataset"].update(val_tokens)
+test_tokens = tokenizer(datasets["test_dataset"]["text_input"], truncation=True, padding=True, return_tensors="pt")
+datasets["test_dataset"].update(test_tokens)
+print("Done.")
+
+
+
+train_dataset=DatasetCorpus(datasets["train_dataset"])
+val_dataset=DatasetCorpus(datasets["val_dataset"])
+test_dataset=DatasetCorpus(datasets["test_dataset"])
 #
 
 #Instructions for manual training: https://towardsdatascience.com/transformers-for-multilabel-classification-71a1a0daf5e1
 #optimizer = AdamW(model.parameters(),lr=2e-5) # pytorch ! #learning_rate=3e-5 ?
-loss = BCEWithLogitsLoss()
-model.classifier = nn.Linear(768,3)
-model.num_labels = 3
+
 model.train()
 
 #model.compile(optimizer=optimizer, loss=loss)
@@ -72,14 +124,8 @@ training_args = TrainingArguments(
     logging_steps=10,
 )
 
-class MyTrainer(Trainer):
-    def compute_loss(self, model, inputs):
-        labels = inputs.pop("labels")
-        outputs = model(**inputs)
-        logits = outputs[0]
-        return loss(logits, labels)
 
-trainer = MyTrainer(
+trainer = Trainer(
     model=model,                         # the instantiated 🤗 Transformers model to be trained
     args=training_args,                  # training arguments, defined above
     train_dataset=train_dataset,         # training dataset
@@ -92,26 +138,8 @@ trainer.train()
 
 
 
-#torch.save(model.state_dict(), 'results/bert_self_trained_model') 
-config = model.config
-config = config.to_dict()
-config["_num_labels"] = 3
-config['id2label'] = {'0': 'NEGATIVE',
-   '1': 'NEUTRAL',
-   '2': 'POSITIVE'}
-config['label2id'] = {'NEGATIVE': 0,
-   'NEUTRAL': 1,
-   'POSITIVE': 2}
-config["model_type"]= "bert"
-model.config = PretrainedConfig.from_dict(config)
-model.save_pretrained("./results/bert_self_trained_model")
-tokenizer
-#os.remove("./results/bert_self_trained_model/config.json") 
-#PretrainedConfig.get_config_dict("nlptown/bert-base-multilingual-uncased-sentiment")
-#new_config = PretrainedConfig.from_dict(new_config_dic)
-#new_config.save_pretrained("./results/bert_self_trained_model")
-os.remove("million_post_corpus/corpus.sqlite3") 
-os.removedirs("million_post_corpus") 
+model.save_pretrained("../models/bert_self_trained_model")
+
 
 print("Testing:")
 device = torch.device("cpu")
@@ -126,37 +154,4 @@ for i, test_data in enumerate(test_dataset):
     print(label, softmax(result.logits.detach().numpy()))
     print(result)
 
-#The following contains different versions of the SQL Query
-'''
-    SELECT Posts.ID_Post, Headline, Body, Value
-    FROM Posts INNER JOIN Annotations_consolidated
-    ON Posts.ID_Post = Annotations_consolidated.ID_Post
-    WHERE Category = "SentimentNegative" or Category = "SentimentNeutral" or Category = "SentimentPositive"
-    ;
-'''
 
-
-"""
-WITH proof AS (
-SELECT
-    p.ID_Post,
-    p.Headline,
-    p.Body,
-    CASE 
-        WHEN ac.Category = 'SentimentNegative' THEN -1
-        WHEN ac.Category = 'SentimentNeutral' THEN 0
-        WHEN ac.Category = 'SentimentPositive' THEN 1
-        ELSE NULL
-    END
-FROM
-    Posts p
-    INNER JOIN Annotations_consolidated ac ON p.ID_Post = ac.ID_Post
-WHERE
-    ac.Category IN ('SentimentNegative', 'SentimentNeutral', 'SentimentPositive')
-    AND ac.Value = 1)
-SELECT
-  COUNT(ID_Post) AS count,
-  COUNT(DISTINCT ID_Post) AS distinct_count
-FROM
-  proof
-"""

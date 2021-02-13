@@ -127,3 +127,7 @@ datasets = {"train_dataset": train_dataset, "val_dataset": val_dataset, "test_da
 for dataset in datasets.keys():
     with open( "../Testdata/" + dataset + '_dataset.json', 'w') as fp:
         json.dump(datasets[dataset], fp)
+
+pritn("Cleaning up.")
+os.remove("million_post_corpus/corpus.sqlite3") 
+os.removedirs("million_post_corpus") 
