@@ -79,12 +79,13 @@ with open('../Testdata/dataset.csv', 'w', newline='') as csvfile:
         spamwriter.writerow([data[0].numpy(), str(data[1].numpy(), encoding="UTF-8"), str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
 
 #split in train val and test (80,10,10)
-
 combined_dataset = []
 for data in dataset:
+    count[data[3].numpy()+1]+=1
     combined_dataset.append([str(data[1].numpy(), encoding="UTF-8") + "\n" + str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
-    if data[1].numpy() is not "":
+    if data[1].numpy() != "":
         combined_dataset.append([str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
+
 
 print("Creating additional training data...")
 original_length=len(combined_dataset)
@@ -203,6 +204,7 @@ config['id2label'] = {'0': 'NEGATIVE',
 config['label2id'] = {'NEGATIVE': 0,
    'NEUTRAL': 1,
    'POSITIVE': 2}
+config["model_type"]= "bert"
 model.config = PretrainedConfig.from_dict(config)
 model.save_pretrained("./results/bert_self_trained_model")
 tokenizer
