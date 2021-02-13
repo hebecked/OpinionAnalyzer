@@ -10,6 +10,7 @@ from torch import nn
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from transformers import *
 from transformers.modeling_outputs import SequenceClassifierOutput
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 class BertForMultiLabelSequenceClassification(BertForSequenceClassification): # For newer version use BertPreTrainedModel,For older versions use: PreTrainedBertModel
     """BERT model for classification.
@@ -129,6 +130,7 @@ for dataset in datasets.keys():
     with open( "../Testdata/" + dataset + '_dataset.json', 'r') as fp:
         datasets[dataset] = json.load(fp)
 
+print(len(datasets["train_dataset"]["text_input"]))
 
 #convert numpy label arrays to pytorch tensors
 print("Creating tokens...")# tokens
@@ -139,7 +141,6 @@ datasets["val_dataset"].update(val_tokens)
 test_tokens = tokenizer(datasets["test_dataset"]["text_input"], truncation=True, padding=True, return_tensors="pt")
 datasets["test_dataset"].update(test_tokens)
 print("Done.")
-
 
 
 train_dataset=DatasetCorpus(datasets["train_dataset"])
@@ -173,11 +174,24 @@ class MyTrainer(Trainer):
         logits = outputs[0]
         return loss(logits, labels)
 
+def compute_metrics(pred):
+    labels = pred.label_ids
+    preds = pred.predictions.argmax(-1)
+    precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='binary')
+    acc = accuracy_score(labels, preds)
+    return {
+        'accuracy': acc,
+        'f1': f1,
+        'precision': precision,
+        'recall': recall
+    }
+
 trainer = MyTrainer(
     model=model,                         # the instantiated 🤗 Transformers model to be trained
     args=training_args,                  # training arguments, defined above
     train_dataset=train_dataset,         # training dataset
-    eval_dataset=val_dataset             # evaluation dataset
+    eval_dataset=val_dataset,            # evaluation dataset
+    compute_metrics=compute_metrics
 )
 
 print("Starting training")
@@ -201,7 +215,16 @@ for i, test_data in enumerate(test_dataset):
     print(test_dataset.data["text_input"][i])
     print(label, softmax(result.logits.detach().numpy()))
     print(result)
-    if i > 100:
+    if i > 10:
         break
 
-
+match = 0
+for i, test_data in enumerate(test_dataset):
+    test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
+    test_data['attention_mask']= test_data['attention_mask'].reshape([1,-1])
+    label=test_data.pop("labels").reshape([1,-1])
+    result = model(**test_data) 
+    sentiment = np.argmax(softmax(result.logits.detach().numpy()))
+    match += label[sentiment]
+accuracy = float(match) / float(len(test_dataset)) 
+print("The model has an accuracy of", accuracy)
