@@ -14,7 +14,7 @@ pycron
 validators
 HanTa
 fasttext
-
+sklearn
 
 #Alternative Python packages for NLP:
 #    spacy==2.0.11

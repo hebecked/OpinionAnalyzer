@@ -130,7 +130,7 @@ for dataset in datasets.keys():
     with open( "../Testdata/" + dataset + '_dataset.json', 'r') as fp:
         datasets[dataset] = json.load(fp)
 
-print(len(datasets["train_dataset"]["text_input"]))
+#print("Traindataset size:", len(datasets["train_dataset"]["text_input"]))
 
 #convert numpy label arrays to pytorch tensors
 print("Creating tokens...")# tokens
@@ -225,6 +225,6 @@ for i, test_data in enumerate(test_dataset):
     label=test_data.pop("labels").reshape([1,-1])
     result = model(**test_data) 
     sentiment = np.argmax(softmax(result.logits.detach().numpy()))
-    match += label[sentiment]
+    match += label[0][sentiment]
 accuracy = float(match) / float(len(test_dataset)) 
 print("The model has an accuracy of", accuracy)
