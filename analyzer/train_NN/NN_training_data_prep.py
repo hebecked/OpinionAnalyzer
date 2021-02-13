@@ -26,6 +26,7 @@ if not os.path.isfile("million_post_corpus/corpus.sqlite3"):
 
 if os.path.isfile("million_post_corpus.tar.bz2"):  
     os.remove("million_post_corpus.tar.bz2") 
+print("Done.")
 
 print("Reading from DB.")
 dataset = tf.data.experimental.SqlDataset(
@@ -69,7 +70,7 @@ with open('../Testdata/positive_labeled_comments.csv', newline='') as csvfile:
         if row[3] == "1" and row[4] == "":
             count[2]+=1
             original_dataset.append([row[2], 1])
-    
+print("Done.")
 print("Original data distribution [Negative, Neutral, Positive]:", count)
 shuffle(original_dataset)
 
@@ -96,7 +97,8 @@ for sentiment in [-1,0,1]:
     for i in range(label_set_size-count[sentiment+1]):
         if extended_dataset[i][1] == sentiment:
             original_dataset.append(extended_dataset[i])
-
+shuffle(original_dataset)
+print("Done.")
 
 print("Splitting in train, val and test dataset with a ratio (80,10,10)")
 train_dataset = {"labels": [], 'text_input': []}
@@ -128,6 +130,6 @@ for dataset in datasets.keys():
     with open( "../Testdata/" + dataset + '_dataset.json', 'w') as fp:
         json.dump(datasets[dataset], fp)
 
-pritn("Cleaning up.")
+print("Cleaning up.")
 os.remove("million_post_corpus/corpus.sqlite3") 
 os.removedirs("million_post_corpus") 

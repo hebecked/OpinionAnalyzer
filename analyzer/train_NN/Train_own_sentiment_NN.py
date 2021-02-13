@@ -107,7 +107,7 @@ class DatasetCorpus(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-        item['labels'] = torch.tensor(self.labels[idx])
+        item['labels'] = torch.tensor(self.labels[idx]).clone().detach()
         return item
 
     def __len__(self):
@@ -197,5 +197,7 @@ for i, test_data in enumerate(test_dataset):
     print(test_dataset.data["text_input"][i])
     print(label, softmax(result.logits.detach().numpy()))
     print(result)
+    if i > 100:
+        break
 
 
