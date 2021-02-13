@@ -19,7 +19,7 @@ if not os.path.isfile("million_post_corpus.tar.bz2") and not os.path.isfile("mil
     wget.download(dataset_URL)
 
 if not os.path.isfile("million_post_corpus/corpus.sqlite3"):
-    print("Extracting ...")
+    print("\nExtracting ...")
     tar = tarfile.open("million_post_corpus.tar.bz2", "r:bz2")  
     tar.extract("million_post_corpus/corpus.sqlite3") #corpus.sqlite3
     tar.close()
@@ -94,9 +94,11 @@ for i, num in enumerate(count2):
 label_set_size = min(count3)
 print("Merging original and generated data with", label_set_size, "elements for each sentiment.")
 for sentiment in [-1,0,1]:
+    j = 0
     for i in range(label_set_size-count[sentiment+1]):
-        if extended_dataset[i][1] == sentiment:
-            original_dataset.append(extended_dataset[i])
+        while extended_dataset[j][1] != sentiment and j < len(extended_dataset):
+            j += 1
+        original_dataset.append(extended_dataset[j])
 shuffle(original_dataset)
 print("Done.")
 
