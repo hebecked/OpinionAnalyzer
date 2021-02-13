@@ -124,6 +124,7 @@ training_args = TrainingArguments(
     logging_steps=10,
 )
 
+loss = BCEWithLogitsLoss()
 class MyTrainer(Trainer):
     def compute_loss(self, model, inputs):
         labels = inputs.pop("labels")
