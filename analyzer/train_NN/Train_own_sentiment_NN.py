@@ -9,6 +9,7 @@ from torch.nn import BCEWithLogitsLoss, BCELoss
 from torch import nn
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from transformers import *
+from transformers.modeling_outputs import SequenceClassifierOutput
 
 class BertForMultiLabelSequenceClassification(BertForSequenceClassification): # For newer version use BertPreTrainedModel,For older versions use: PreTrainedBertModel
     """BERT model for classification.
