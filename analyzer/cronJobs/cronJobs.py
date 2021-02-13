@@ -10,8 +10,8 @@ class CronJobs:
 
     def __init__(self):
         self.jobs = [
-            {"schedule": '0 0 * * *', "module": 'AnalyseComments.py', "onInit": True},
-            #{"schedule": '0 1 * * *', "module": 'AnalyseArticles.py', "onInit": True}
+            {"schedule": '*/5 * * * *', "module": 'AnalyseComments.py', "onInit": True},
+            #{"schedule": '0 * * * *', "module": 'AnalyseArticles.py', "onInit": True}
         ]
 
     def cronInit(self):

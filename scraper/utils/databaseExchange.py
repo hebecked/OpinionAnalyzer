@@ -219,6 +219,18 @@ class DatabaseExchange(connectDb.Database):
                                      news_meta_data.{}
                                 """  # {} needed to add data not wrapped in ''
 
+    __SQL_ANALYZER_CHECK_RUNNING = """
+                                    SELECT
+                                        start_timestamp,
+                                        end_timestamp
+                                    FROM
+                                         news_meta_data.analyzer_log
+                                    WHERE
+                                        analyzer_id = %s
+                                    ORDER BY id DESC
+                                    FETCH FIRST 1 ROW ONLY;
+                                    """
+
     __SQL_ANALYZER_LOG_START = """
                                   INSERT INTO 
                                     news_meta_data.analyzer_log (analyzer_id, comment_id, start_timestamp) 
@@ -525,6 +537,36 @@ class DatabaseExchange(connectDb.Database):
             if result['comment_id'] in keys:
                 del DatabaseExchange.__analyzer_ids[result['comment_id']]
         return True
+
+    def check_analyzer_running(self, analyzer_id: int) -> dt.timedelta:
+        """
+
+        Parameters
+        ----------
+        analyzer_id : int
+            analyzer unique id
+
+        Returns
+        -------
+        TYPE
+            datetime.timedelta object for the time after the last start of this scraper
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_ANALYZER_CHECK_RUNNING,
+            (analyzer_id,)
+        )
+        result = cur.fetchall()  # last timestamp of successful run
+        cur.close()
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                return dt.timedelta(days=1000)
+            if result[0][1] is None:
+                return dt.datetime.now(pytz.timezone('Europe/Berlin')) - result[0][0]
+            return dt.timedelta(1000)
+        except IndexError:
+            return dt.timedelta(1000)
 
     def fetch_scraper_todo_list(self, source_id: int) -> list:
         """

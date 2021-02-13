@@ -4,6 +4,7 @@ pycron
 validators
 scrapy
 bs4
+pytz
 
 # flask
 
