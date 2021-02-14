@@ -1,7 +1,7 @@
 const fs = require('fs');
 const logger = require("tracer").console();
 
-const query = fs.readFileSync("/usr/src/app/sqlStorage/indices/create_index3.sql");
+const query = fs.readFileSync("/usr/src/app/sqlStorage/indices/create_index4.sql");
 
 exports.up = function(knex) {
   return knex.schema.raw(query.toString())
