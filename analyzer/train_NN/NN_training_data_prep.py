@@ -60,14 +60,16 @@ count = [0,0,0]
 original_dataset = []
 for data in dataset:
     count[data[3].numpy()+1]+=1
-    original_dataset.append([str(data[1].numpy(), encoding="UTF-8") + "\n" + str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
-    if data[1].numpy() != "":
+    if data[1].numpy() != "" or data[2].numpy() != "":
+        if data[1].numpy() != "":
+            original_dataset.append([str(data[1].numpy(), encoding="UTF-8") + "\n" + str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
         original_dataset.append([str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
+
 
 with open('../Testdata/positive_labeled_comments.csv', newline='') as csvfile:
     readfile = csv.reader(csvfile, delimiter=',', quotechar='|')
     for row in readfile:
-        if row[3] == "1" and row[4] == "":
+        if row[3] == "1" and row[4] == "" and row[2] != "":
             count[2]+=1
             original_dataset.append([row[2], 1])
 print("Done.")
@@ -98,7 +100,11 @@ for sentiment in [-1,0,1]:
     for i in range(label_set_size-count[sentiment+1]):
         while extended_dataset[j][1] != sentiment and j < len(extended_dataset):
             j += 1
+        if j >= len(extended_dataset):
+            print("Error!!!")
+            break
         original_dataset.append(extended_dataset[j])
+
 shuffle(original_dataset)
 print("Done.")
 
