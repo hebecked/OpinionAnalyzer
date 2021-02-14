@@ -2,17 +2,22 @@ import json
 import numpy as np
 import tensorflow as tf
 import pandas as pd
-import torch
 import wget
 import tarfile
 import os
 import csv
 from random import shuffle
-from torch.nn import BCEWithLogitsLoss, BCELoss
-from torch import nn
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 
-print("Checking if DB is available otherwise it will be downlaoded.")
+"""
+This program prepares datasets to train, eval and test sentiment detection ML tasks.
+Center piece is the million post corpus, which is augmented with additional positive sentiment examples that were manually annotated from our own datasets.
+To generate additional samples short samples are combined to create additional samples.
+Sentiments are Negative:-1, Neutral:0, Positive:1.
+The sentiment with the fewest samples creates an upper limit for the amount of samples for each sentiment in the final dataset.
+"""
+
+
+print("Checking if DB with annotations is available otherwise it will be downlaoded.")
 if not os.path.isfile("million_post_corpus.tar.bz2") and not os.path.isfile("million_post_corpus/corpus.sqlite3"):
     print("Downloading ...")
     dataset_URL = "https://github.com/OFAI/million-post-corpus/releases/download/v1.0.0/million_post_corpus.tar.bz2"
@@ -28,6 +33,8 @@ if os.path.isfile("million_post_corpus.tar.bz2"):
     os.remove("million_post_corpus.tar.bz2") 
 print("Done.")
 
+
+print("Reading annotated datasets.")
 print("Reading from DB.")
 dataset = tf.data.experimental.SqlDataset(
 										driver_name = "sqlite", 
@@ -55,7 +62,6 @@ dataset = tf.data.experimental.SqlDataset(
 										)
 
 empty = ("", "\n", "\r", "\r\n", "\t", " ", b'')
-
 count = [0,0,0]
 original_dataset = []
 for data in dataset:
@@ -67,7 +73,7 @@ for data in dataset:
             original_dataset.append([str(data[1].numpy(), encoding="UTF-8") + "\n" + str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
         original_dataset.append([str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
 
-
+print("Reading additional positive sentiments that were manually annotated.")
 with open('../Testdata/positive_labeled_comments.csv', newline='', encoding='utf-8') as csvfile:
     readfile = csv.reader(csvfile, delimiter=',', quotechar='|')
     for row in readfile:
@@ -79,7 +85,7 @@ print("Original data distribution [Negative, Neutral, Positive]:", count)
 shuffle(original_dataset)
 
 
-print("Creating additional training data...")
+print("Creating additional training data from annotated sets...")
 original_length = len(original_dataset)
 extended_dataset = []
 count2 = [0,0,0]
@@ -91,6 +97,7 @@ for i, data in enumerate(original_dataset):
 shuffle(extended_dataset)
 print("Done.")
 print("Generated data distribution [Negative, Neutral, Positive]:", count2)
+
 
 count3 = count.copy()
 for i, num in enumerate(count2):
@@ -109,6 +116,7 @@ for sentiment in [-1,0,1]:
 
 shuffle(original_dataset)
 print("Done.")
+
 
 print("Splitting in train, val and test dataset with a ratio (80,10,10)")
 train_dataset = {"labels": [], 'text_input': []}
@@ -137,7 +145,7 @@ for i, data in enumerate(original_dataset):
 print("Writing datasets to file.")
 datasets = {"train_dataset": train_dataset, "val_dataset": val_dataset, "test_dataset": test_dataset}
 for dataset in datasets.keys():
-    with open( "../Testdata/" + dataset + '_dataset.json', 'w') as fp:
+    with open( "../Testdata/" + dataset + '.json', 'w') as fp:
         json.dump(datasets[dataset], fp)
 
 print("Cleaning up.")

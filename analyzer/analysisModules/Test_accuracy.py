@@ -40,7 +40,7 @@ tokenizer = BertTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncase
 
 
 print("Read datasets from file.")
-with open( '../Testdata/test_dataset_dataset.json', 'r') as fp:
+with open( '../Testdata/test_dataset.json', 'r') as fp:
     test_dataset = json.load(fp)
 
 print("Test dataset size:", len(test_dataset["text_input"]))
@@ -53,11 +53,6 @@ print("Done.")
 
 
 test_dataset=DatasetCorpus(test_dataset)
-#
-
-#Instructions for manual training: https://towardsdatascience.com/transformers-for-multilabel-classification-71a1a0daf5e1
-#optimizer = AdamW(model.parameters(),lr=2e-5) # pytorch ! #learning_rate=3e-5 ?
-
 
 print("Testing:")
 device = torch.device("cpu")
@@ -74,7 +69,10 @@ for i, test_data in enumerate(test_dataset):
     if i > 10:
         break
 
+print("Calculating accuracy.\nThis may take a while...")
 match = 0
+#set a limit to speed-up the evaluation and reduce the sample size used 
+limit = 100
 for i, test_data in enumerate(test_dataset):
     test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
     test_data['attention_mask']= test_data['attention_mask'].reshape([1,-1])
@@ -82,5 +80,11 @@ for i, test_data in enumerate(test_dataset):
     result = model(**test_data) 
     sentiment = np.argmax(softmax(result.logits.detach().numpy()))
     match += label.numpy()[0][sentiment]
-accuracy = float(match) / float(len(test_dataset)) 
-print("The model has an accuracy of", accuracy)
+    if limit is not None and i >= limit:
+        break 
+if limit is not None:
+    sample_size = float(limit)
+else:
+    sample_size = float(len(test_dataset))
+accuracy = float(match) / sample_size
+print("Done\nThe model has an accuracy of", accuracy, "\nThis is based on a sample size of", sample_size)

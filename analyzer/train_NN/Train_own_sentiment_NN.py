@@ -127,7 +127,7 @@ tokenizer = BertTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncase
 print("Read datasets from file.")
 datasets = {"train_dataset": None, "val_dataset": None, "test_dataset": None}
 for dataset in datasets.keys():
-    with open( "../Testdata/" + dataset + '_dataset.json', 'r') as fp:
+    with open( "../Testdata/" + dataset + '.json', 'r') as fp:
         datasets[dataset] = json.load(fp)
 
 #print("Traindataset size:", len(datasets["train_dataset"]["text_input"]))
