@@ -35,7 +35,7 @@ class DatasetCorpus(torch.utils.data.Dataset):
 
 
 print("Loading pretrained model.")
-model = AutoModelForSequenceClassification.from_pretrained("../models/balanced_model")
+model = AutoModelForSequenceClassification.from_pretrained("../models/new_balanced_model")
 tokenizer = BertTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
 
 

@@ -219,6 +219,7 @@ for i, test_data in enumerate(test_dataset):
     if i > 10:
         break
 
+print("The accuracy will be determined now. (The program may be canceled at this point.)")
 match = 0
 for i, test_data in enumerate(test_dataset):
     test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
