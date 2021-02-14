@@ -54,19 +54,21 @@ dataset = tf.data.experimental.SqlDataset(
 										output_types = (tf.int32, tf.string, tf.string, tf.int32)
 										)
 
-
+empty = ("", "\n", "\r", "\r\n", "\t", " ", b'')
 
 count = [0,0,0]
 original_dataset = []
 for data in dataset:
-    count[data[3].numpy()+1]+=1
-    if data[1].numpy() != "" or data[2].numpy() != "":
-        if data[1].numpy() != "":
+    if data[1].numpy() not in empty or data[2].numpy() not in empty:
+        count[data[3].numpy()+1]+=1
+        if data[1].numpy() not in empty:
+            print(data[1].numpy())
+            count[data[3].numpy()+1]+=1
             original_dataset.append([str(data[1].numpy(), encoding="UTF-8") + "\n" + str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
         original_dataset.append([str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
 
 
-with open('../Testdata/positive_labeled_comments.csv', newline='') as csvfile:
+with open('../Testdata/positive_labeled_comments.csv', newline='', encoding='utf-8') as csvfile:
     readfile = csv.reader(csvfile, delimiter=',', quotechar='|')
     for row in readfile:
         if row[3] == "1" and row[4] == "" and row[2] != "":
