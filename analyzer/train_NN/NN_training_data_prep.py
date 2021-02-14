@@ -70,7 +70,7 @@ for data in dataset:
         if data[1].numpy() not in empty:
             print(data[1].numpy())
             count[data[3].numpy()+1]+=1
-            original_dataset.append([str(data[1].numpy(), encoding="UTF-8") + "\n" + str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
+            original_dataset.append([str(data[1].numpy(), encoding="UTF-8") + " " + str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
         original_dataset.append([str(data[2].numpy(), encoding="UTF-8"), data[3].numpy()])
 
 print("Reading additional positive sentiments that were manually annotated.")
