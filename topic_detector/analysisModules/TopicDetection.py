@@ -5,13 +5,19 @@ import re
 import csv
 import nltk
 from HanTa import HanoverTagger as HT
+from flair.data import Sentence
+from flair.models import SequenceTagger
 
 
 class BaselineTopicDetection:
 
-	def __init__(self):
+	def __init__(self, use_flair: bool = False):
 		self.tagger = HT.HanoverTagger('morphmodel_ger.pgz')
-		self.commonGerWords=[]
+		self.use_flair = False
+		if use_flair:
+			self.flair_tagger = SequenceTagger.load('de-ner')
+			self.use_flair = True
+		self.commonGerWords = []
 		other_stopwords = set(nltk.corpus.stopwords.words("german"))
 		if __name__ == "__main__": #TODO move file readin to private sub-function
 			stop_word_path = '../Testdata/CommonGerWords.csv'
@@ -38,7 +44,7 @@ class BaselineTopicDetection:
 				self.commonGerWords.append(word)  # add additional stopwords from lib
 		self.commonGerWords = set(self.commonGerWords)
 
-	def get_word_frequency(self, article: str, just_nouns: bool = True) -> dict:
+	def get_word_frequency(self, article: str, just_nouns: bool = True, use_flair: bool = False) -> dict:
 		"""
 		Extract the most frequent words from an article body.
 
@@ -47,23 +53,30 @@ class BaselineTopicDetection:
 		:return: Topics determined from the article body.
 		:rtype: dict[str: int]
 		"""
-		word_list = article.split()
-		word_freq = dict()
-		for word in word_list:
-			# clean up the strings from punctuations
-			tokenized_sent = nltk.tokenize.word_tokenize(word, language='german')
-			tagged_sentence = self.tagger.tag_sent(tokenized_sent)
-			word = tagged_sentence[0][1]
-			tag = tagged_sentence[0][2]
-			# if desired all non-nouns can be removed here
-			if just_nouns and tag not in {'NN', 'NE'}:
-				continue
-			word = re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', word).lower()  # remove numbers?
-			# Check if the word is already in the dictionary 
-			if word in word_freq.keys():
-				word_freq[word] = word_freq[word] + 1
-			else:
-				word_freq[word] = 1
+		word_freq = {}
+		sentence_list = nltk.sent_tokenize(article, language='german')
+		for sentence in sentence_list:
+			tokenized_sent = nltk.tokenize.word_tokenize(sentence, language='german')
+			tokens = self.tagger.tag_sent(tokenized_sent)
+			for token in tokens:
+				if just_nouns and token[2] not in {'NN'}:
+					continue
+				if token[2] == 'NE':
+					continue
+				word = re.sub('[^A-Za-z0-9üäößÄÖÜ]+', '', token[1]).lower()
+				if word in word_freq.keys():
+					word_freq[word] = word_freq[word] + 1
+				else:
+					word_freq[word] = 1
+			if self.use_flair and use_flair:
+				flair_sentence = Sentence(sentence)
+				self.flair_tagger.predict(flair_sentence)
+				for named_entity in flair_sentence.get_spans('ner', .95):
+					word = named_entity.text
+					if word in word_freq.keys():
+						word_freq[word] = word_freq[word] + 1
+					else:
+						word_freq[word] = 1
 		return word_freq
 		
 	def get_topics(self, article: str) -> list:
