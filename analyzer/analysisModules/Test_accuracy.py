@@ -72,7 +72,7 @@ for i, test_data in enumerate(test_dataset):
 print("Calculating accuracy.\nThis may take a while...")
 match = 0
 #set a limit to speed-up the evaluation and reduce the sample size used 
-limit = 100
+limit = None
 for i, test_data in enumerate(test_dataset):
     test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
     test_data['attention_mask']= test_data['attention_mask'].reshape([1,-1])
