@@ -23,10 +23,11 @@ for article_body_id, article in articles.items():
 	result = bltd.get_word_frequency(analyze, True)
 	print(result)  # accumulate and write as a block to DB
 	for lemma, count in result.items():
-		result_list += [{'lemma': lemma, 'article_body_id': article_body_id, 'lemma_count': count}]
+		if 2 <= len(lemma) <= 30:
+			result_list += [{'lemma': lemma, 'article_body_id': article_body_id, 'lemma_count': count}]
 	# write type: dict(lemma, article_body_id, lemma_count)
 if db.write_lemmas(result_list, 1):
-	print("successfully written to db)")
+	print("successfully written to db")
 else:
 	print("some error writing")
 db.close()

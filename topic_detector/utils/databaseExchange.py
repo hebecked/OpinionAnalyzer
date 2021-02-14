@@ -381,7 +381,8 @@ class DatabaseExchange(connectDb.Database):
         for lemma in lemmas:
             if 'lemma' not in lemma.keys():
                 continue
-            cur.execute(DatabaseExchange.__SQL_LEMMA_INSERT_HEADER, (lemma['lemma'],))  # todo add source_id
+            if len(lemma['lemma']) <= 30:
+                cur.execute(DatabaseExchange.__SQL_LEMMA_INSERT_HEADER, (lemma['lemma'],))  # todo add source_id
         self.conn.commit()
         cur.execute(DatabaseExchange.__SQL_LEMMA_FETCH_HEADER)
         result = cur.fetchall()
@@ -392,7 +393,7 @@ class DatabaseExchange(connectDb.Database):
             if res[1] in lemma_lookup_table.keys():
                 continue
             else:
-                lemma_lookup_table[res[1]] = {'id': res[0]}
+                lemma_lookup_table[res[1]] = res[0]
         lemma_lookup_keys = lemma_lookup_table.keys()
         for lemma in lemmas:
             lemma_keys = lemma.keys()
