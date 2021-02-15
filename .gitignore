@@ -3,6 +3,7 @@ node_modules
 package-lock.json
 .idea
 idea
+set-credentials.sh
 __pycache__/
 analyzer/Testdata/german_word2vec.model
 cc.de.50.bin

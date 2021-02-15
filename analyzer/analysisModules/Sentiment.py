@@ -154,6 +154,7 @@ class multilang_bert_sentiment:
             if length > self.max_length:
                 next_inputs = {k: (i[0][self.max_length:]).reshape(1, len(i[0][self.max_length:])) for k, i in inputs.items()}  
                 inputs = {k: (i[0][:self.max_length]).reshape(1, len(i[0][:self.max_length])) for k, i in inputs.items()}
+                print("#Zeichen: ", len(text), "#Token: ", length, text)
             else:
                 next_inputs = False
             proOrCon = self.model(**inputs)
@@ -199,6 +200,7 @@ class german_bert_sentiment:
             if length > self.max_length:
                 next_inputs = {k: (i[0][self.max_length:]).reshape(1, len(i[0][self.max_length:])) for k, i in inputs.items()}
                 inputs = {k: (i[0][:self.max_length]).reshape(1, len(i[0][:self.max_length])) for k, i in inputs.items()}
+                print("#Zeichen: ", len(text), "#Token: ", length, text)
             else:
                 next_inputs = False
             proOrCon = self.model(**inputs)
@@ -302,7 +304,7 @@ class EnsembleSentiment():
         result = np.average(results.T[0], weights=1. / results.T[1] ** 2)
         #sqrt__weighted_variance = np.sqrt(np.average((results.T[0] - result) ** 2, weights=1. / results.T[1] ** 2)) # Error determination including discrepancy between outputs 
         error = np.sqrt(1. / np.sum(1. / results.T[1] ** 2)) # physically correct error determination
-        return [result, error]
+        return [[result, error], result1, result2]
 
 
 # classifier = TextClassifier.load('de-offensive-language') # en-sentiment

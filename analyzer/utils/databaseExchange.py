@@ -3,6 +3,7 @@
 # todo: open tasks marked with todo
 
 import datetime as dt
+import pytz
 
 import utils.connectDb as connectDb
 from utils.article import Article
@@ -32,6 +33,18 @@ class DatabaseExchange(connectDb.Database):
                                         AND source_id = %s;
                                    """
 
+    __SQL_SCRAPER_CHECK_RUNNING = """
+                                    SELECT
+                                        start_timestamp,
+                                        end_timestamp
+                                    FROM
+                                         news_meta_data.crawl_log
+                                    WHERE
+                                        source_id = %s
+                                    ORDER BY id desc
+                                    FETCH FIRST 1 ROW ONLY;
+                                    """
+
     __SQL_SCRAPER_FETCH_TODO = """
                                   SELECT 
                                     article_id, 
@@ -46,6 +59,15 @@ class DatabaseExchange(connectDb.Database):
                                   WHERE 
                                     src_id = %s;
                                """
+
+    __SQL_SCRAPER_FETCH_OLDEST = """
+                                    SELECT 
+                                        MIN(source_date)
+                                    FROM
+                                        news_meta_data.article_header
+                                    WHERE
+                                        source_id = %s;
+                                """
 
     __SQL_SCRAPER_LOG_START = """
                                  INSERT INTO 
@@ -85,6 +107,15 @@ class DatabaseExchange(connectDb.Database):
                                      VALUES (%s, %s, %s, %s) 
                                      ON CONFLICT DO NOTHING;
                                   """
+
+    __SQL_ARTICLE_HEADER_SET_OBSOLETE = """
+                                        UPDATE 
+                                            news_meta_data.article_header
+                                        SET
+                                            obsolete = true
+                                        WHERE 
+                                            id = %s;
+                                    """
 
     __SQL_ARTICLE_HEADER_FETCH_ID = """
                                        SELECT 
@@ -188,6 +219,18 @@ class DatabaseExchange(connectDb.Database):
                                      news_meta_data.{}
                                 """  # {} needed to add data not wrapped in ''
 
+    __SQL_ANALYZER_CHECK_RUNNING = """
+                                    SELECT
+                                        start_timestamp,
+                                        end_timestamp
+                                    FROM
+                                         news_meta_data.analyzer_log
+                                    WHERE
+                                        analyzer_id = %s
+                                    ORDER BY id DESC
+                                    FETCH FIRST 1 ROW ONLY;
+                                    """
+
     __SQL_ANALYZER_LOG_START = """
                                   INSERT INTO 
                                     news_meta_data.analyzer_log (analyzer_id, comment_id, start_timestamp) 
@@ -256,6 +299,7 @@ class DatabaseExchange(connectDb.Database):
         super().__init__()
         print("initializing database exchange...")
         self.connect()
+        print("connected")
         DatabaseExchange.__analyzer_database_structure = self.__fetch_analyzer_tables()
 #        print("Analyzer tables: ", DatabaseExchange.__analyzer_database_structure)
 
@@ -346,6 +390,8 @@ class DatabaseExchange(connectDb.Database):
         for res in result:
             data_set |= {res}
         todo_list = list(data_set)
+        if not todo_list:
+            return todo_list
         self.__log_analyzer_start(analyzer_id, list(c[0] for c in todo_list))
         return todo_list
 
@@ -368,7 +414,7 @@ class DatabaseExchange(connectDb.Database):
         """
         if analyzer_id not in DatabaseExchange.__analyzer_database_structure.keys():
             return False
-        self.__analyzer_start_timestamp = dt.datetime.today()
+        self.__analyzer_start_timestamp = dt.datetime.now(pytz.timezone('Europe/Berlin'))
         cur = self.conn.cursor()
         for comment_id in comment_id_list:
             cur.execute(
@@ -461,7 +507,7 @@ class DatabaseExchange(connectDb.Database):
             return False
         if analyzer_id not in DatabaseExchange.__analyzer_database_structure.keys():
             return False
-        analyzer_end_timestamp = dt.datetime.today()
+        analyzer_end_timestamp = dt.datetime.now(pytz.timezone('Europe/Berlin'))
         target_columns = self.__fetch_analyzer_columns(analyzer_id)
         cols = tuple(DatabaseExchange.ANALYZER_RESULT_DEFAULT_COLUMNS[1:] + target_columns)
         columns_as_string = '(' + ','.join(cols) + ')'
@@ -491,6 +537,36 @@ class DatabaseExchange(connectDb.Database):
             if result['comment_id'] in keys:
                 del DatabaseExchange.__analyzer_ids[result['comment_id']]
         return True
+
+    def check_analyzer_running(self, analyzer_id: int) -> dt.timedelta:
+        """
+
+        Parameters
+        ----------
+        analyzer_id : int
+            analyzer unique id
+
+        Returns
+        -------
+        TYPE
+            datetime.timedelta object for the time after the last start of this scraper
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_ANALYZER_CHECK_RUNNING,
+            (analyzer_id,)
+        )
+        result = cur.fetchall()  # last timestamp of successful run
+        cur.close()
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                return dt.timedelta(days=1000)
+            if result[0][1] is None:
+                return dt.datetime.now(pytz.timezone('Europe/Berlin')) - result[0][0]
+            return dt.timedelta(1000)
+        except IndexError:
+            return dt.timedelta(1000)
 
     def fetch_scraper_todo_list(self, source_id: int) -> list:
         """
@@ -529,6 +605,33 @@ class DatabaseExchange(connectDb.Database):
             todo_list += [art]
         return todo_list
 
+    def fetch_scraper_oldest(self, source_id: int) -> dt.datetime:
+        """
+        Parameters
+        ----------
+        source_id : int
+            scraper unique id corresponding to id in source_header table
+
+        Returns
+        -------
+        TYPE
+            datetime.date object for the oldest source date in article_header table for this scraper
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_SCRAPER_FETCH_OLDEST,
+            (source_id,)
+        )
+        result = cur.fetchall()  # last timestamp of successful run
+        cur.close()
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                return dt.datetime.now(pytz.timezone('Europe/Berlin'))
+            return result[0][0]
+        except IndexError:
+            return result[0][0]
+
     def fetch_scraper_last_run(self, source_id: int) -> dt.datetime:
         """
 
@@ -550,9 +653,42 @@ class DatabaseExchange(connectDb.Database):
         )
         result = cur.fetchall()  # last timestamp of successful run
         cur.close()
-        if result[0][0] is None:
-            return dt.datetime(1990, 1, 1)
-        return result[0][0]
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                return dt.datetime(1990, 1, 1)
+            return result[0][0]
+        except IndexError:
+            return result[0][0]
+
+    def check_scraper_running(self, source_id: int) -> dt.timedelta:
+        """
+
+        Parameters
+        ----------
+        source_id : int
+            scraper unique id corresponding to id in source_header table
+
+        Returns
+        -------
+        TYPE
+            datetime.timedelta object for the time after the last start of this scraper
+
+        """
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_SCRAPER_CHECK_RUNNING,
+            (source_id,)
+        )
+        result = cur.fetchall()  # last timestamp of successful run
+        cur.close()
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                return dt.timedelta(days=1000)
+            if result[0][1] is None:
+                return dt.datetime.now(pytz.timezone('Europe/Berlin')) - result[0][0]
+            return dt.timedelta(1000)
+        except IndexError:
+            return dt.timedelta(1000)
 
     def log_scraper_start(self, source_id: int) -> bool:
         """
@@ -572,12 +708,15 @@ class DatabaseExchange(connectDb.Database):
         """
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__SQL_SCRAPER_LOG_START,
-                    (source_id, dt.datetime.today().replace(microsecond=0).isoformat()))
+                    (source_id, dt.datetime.now(pytz.timezone('Europe/Berlin'))))
         self.conn.commit()
         cur.execute(DatabaseExchange.__SQL_SCRAPER_FETCH_MAX_LOG_ID, (source_id,))
         result = cur.fetchall()  # id of last successful run
         cur.close()
-        if result[0][0] is None:
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                return False
+        except IndexError:
             return False
         DatabaseExchange.__scraper_log_id = result[0][0]
 #        print("logId: ", DatabaseExchange.__scraper_log_id)
@@ -599,7 +738,7 @@ class DatabaseExchange(connectDb.Database):
         """
         cur = self.conn.cursor()
         update_tuple = (
-            dt.datetime.today().replace(microsecond=0).isoformat(), success, DatabaseExchange.__scraper_log_id
+            dt.datetime.now(pytz.timezone('Europe/Berlin')), success, DatabaseExchange.__scraper_log_id
         )
         cur.execute(
             DatabaseExchange.__SQL_SCRAPER_LOG_END,
@@ -665,6 +804,21 @@ class DatabaseExchange(connectDb.Database):
         body_ids = list(result)
         return dict(body_ids)
 
+    def __set_articles_obsolete(self, article_list: list):
+        """
+        sets column obsolete = True in article_header table for all articles in article_list
+
+        Parameters
+        ----------
+        article_list
+            list of articles to mark as obsolete in database
+        """
+        cur = self.conn.cursor()
+        for art in article_list:
+            cur.execute(DatabaseExchange.__SQL_ARTICLE_HEADER_SET_OBSOLETE, (art.get_article()['header']['id'],))
+        self.conn.commit()
+        cur.close()
+
     def __write_article_headers(self, article_list: list):
         """
         writes header data for Article objects in article_list to article_header table
@@ -682,10 +836,13 @@ class DatabaseExchange(connectDb.Database):
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__SQL_ARTICLE_HEADER_FETCH_START_ID)
         result = cur.fetchall()  # last header id before current insert run
-        if result[0][0] is None:
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                start_id = 0
+            else:
+                start_id = result[0][0]  # todo check if correct
+        except IndexError:
             start_id = 0
-        else:
-            start_id = result[0][0]  # todo check if correct
         for art in article_list:
             if art.set_header_complete():
                 hdr = art.get_article()["header"]
@@ -714,10 +871,13 @@ class DatabaseExchange(connectDb.Database):
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__SQL_ARTICLE_BODY_FETCH_START_ID)
         result = cur.fetchall()  # last body id before current insert run
-        if result[0][0] is None:
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                start_id = 0
+            else:
+                start_id = result[0][0]   # todo check if correct
+        except IndexError:
             start_id = 0
-        else:
-            start_id = result[0][0]   # todo check if correct
         for art in article_list:
             if art.set_body_complete():
                 body_to_use = art.get_body_to_write()
@@ -748,7 +908,7 @@ class DatabaseExchange(connectDb.Database):
         """
         cur = self.conn.cursor()
         for art in article_list:
-            if art.get_body_to_write()["insert"]:
+            if art.get_body_to_write()["insert"] and 'id' in art.get_article()["body"].keys():
                 for udf in art.get_article()["udfs"]:
                     cur.execute(
                         DatabaseExchange.__SQL_UDF_INSERT,
@@ -828,12 +988,15 @@ class DatabaseExchange(connectDb.Database):
             work_list = list(
                 filter(lambda x: type(x) == Article,
                        article_list[start:start + DatabaseExchange.SUBSET_LENGTH]))
+            obsolete = list(filter(lambda x:  x.is_in_db() and x.get_article()['header']['obsolete'], work_list))
+            self.__set_articles_obsolete(obsolete)
             headers = list(filter(lambda x: not (x.is_in_db()), work_list))
             self.__write_article_headers(headers)
 #            print("Article headers written and id added") # todo delete line (debugging purposes only)
             bodies = list(filter(lambda x: x.is_in_db(), work_list))
             self.__write_article_bodies(bodies)
 #            print("Article bodies written and id added") # todo delete line (debugging purposes only)
+            bodies = list(filter(lambda x: x.is_in_db() and not x.get_article()['header']['obsolete'], work_list))
             self.__write_article_udfs(bodies)
 #            print("Article udfs written") # todo delete line (debugging purposes only)
             start += DatabaseExchange.SUBSET_LENGTH
@@ -917,10 +1080,13 @@ class DatabaseExchange(connectDb.Database):
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__SQL_COMMENT_FETCH_START_ID)
         result = cur.fetchall()  # last comment id before current insert run
-        if result[0][0] is None:
+        try:
+            if not result or not result[0] or result[0][0] is None:
+                start_id = 0
+            else:
+                start_id = result[0]
+        except IndexError:
             start_id = 0
-        else:
-            start_id = result[0]
         for cmt in comment_list:
             if cmt.set_complete():
                 data = cmt.get_comment()["data"]
@@ -1010,7 +1176,7 @@ def test():
         {"url": "http://www.google.de", "obsolete": False, "source_id": 1, "source_date": dt.date(2020, 12, 1)})
     # test_article.setBody({"proc_timestamp":dt.datetime(2020,12,2,22,0,33),"headline":"example of headline","body":"testText","proc_counter":2,"id":1})
     # test_article.setBodyOld()
-    test_article.set_body({"proc_timestamp": dt.datetime.today(), "headline": "example of headline", "body": "testText"})
+    test_article.set_body({"proc_timestamp": dt.datetime.now(pytz.timezone('Europe/Berlin')), "headline": "example of headline", "body": "testText"})
     test_article.add_udf("author", "me")
     test_article.add_udf("label", "smart")
     print("plain Article print")
@@ -1022,7 +1188,7 @@ def test():
     writer.write_articles([test_article])
     test_comment = Comment()
     test_comment.set_data(
-        {"article_body_id": 141, "level": 0, "body": "i'm a Comment", "proc_timestamp": dt.datetime.today()})
+        {"article_body_id": 141, "level": 0, "body": "i'm a Comment", "proc_timestamp": dt.datetime.now(pytz.timezone('Europe/Berlin'))})
     test_comment.add_udf("author", "brilliant me")
     test_comment.set_external_id((hash("brilliant me" + test_comment.get_comment()["data"]["body"])))
     print("plain Comment print")
@@ -1043,6 +1209,6 @@ if __name__ == '__main__':
     # print(writer.fetch_analyzer_todo_list(1))
     # to_do_list=writer.fetch_analyzer_todo_list(1)
     #    writer.write_analyzer_results(1,[{'comment_id':x[0], 'sentiment_value':-1, 'error_value':1} for x in to_do_list])
-    print(writer.fetch_topicizer_data())
+    print("Topic data fetched: ", len(writer.fetch_topicizer_data()))
     writer.close()
     print("further test deactivated")

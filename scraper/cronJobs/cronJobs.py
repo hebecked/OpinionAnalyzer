@@ -10,7 +10,9 @@ class CronJobs:
     def __init__(self):
         self.jobs = [
             #{"schedule": '* * * * *', "module": 'test.py'},  # Execute every minute "test.py"
-            {"schedule": '* */24 * * *', "module": 'spiegelOnlineScraper.py'},  # Execute every 30 minutes "spiegelCollector.py"
+            {"schedule": '0 * * * *', "module": 'spiegelOnlineScraper.py'},  # Execute every hour at x:00
+            {"schedule": '15 * * * *', "module": 'weltScraper.py'},  # Execute every hour at x:15
+            {"schedule": '30 * * * *', "module": 'FazScraper.py'},  # Execute every hour at x:30
         ]
 
     def cronInit(self):
@@ -20,5 +22,5 @@ class CronJobs:
             for job in self.jobs:
                 if pycron.is_now(job["schedule"]):
                     logger.info("Firing CronJob: " + job["module"])
-                    os.system('python3 -u ' + data_collectors_path + job["module"])
+                    os.system('python3 -u ' + data_collectors_path + job["module"] + '&')
             time.sleep(60)
