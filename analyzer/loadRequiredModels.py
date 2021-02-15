@@ -2,7 +2,7 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import nltk
 import fasttext.util
-import OS
+import os
 
 _ = AutoTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
 _ = AutoModelForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")

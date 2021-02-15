@@ -4,6 +4,11 @@ FROM python:3.8-slim-buster
 # Set root as default usr
 USER root
 
+# Update compiler
+RUN apt-get update
+RUN apt-get install -y g++
+# gcc cpp glibc-devel glibc-headers kernel-headers libmpc libstdc++-devel mpfr 
+
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
