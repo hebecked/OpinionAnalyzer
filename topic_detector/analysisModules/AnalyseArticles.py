@@ -26,7 +26,7 @@ for article_body_id, article in articles.items():
 		if 2 <= len(lemma) <= 30:
 			result_list += [{'lemma': lemma, 'article_body_id': article_body_id, 'lemma_count': count}]
 	# write type: dict(lemma, article_body_id, lemma_count)
-if db.write_lemmas(result_list, 1):
+if db.write_lemmas(result_list):
 	print("successfully written to db")
 else:
 	print("some error writing")

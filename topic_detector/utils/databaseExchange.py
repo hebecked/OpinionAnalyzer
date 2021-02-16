@@ -296,27 +296,22 @@ class DatabaseExchange(connectDb.Database):
 # topic related SQL queries
     __SQL_TOPICIZER_FETCH_TODO = """
                                     SELECT 
-                                        b.id, 
-                                        b.body, 
-                                        b.headline, 
-                                        u.udf_value 
+                                        ab_id, 
+                                        body, 
+                                        headline
                                     FROM 
-                                        news_meta_data.article_body as b,
-                                        news_meta_data.udf_values as u
+                                        news_meta_data.v_todo_lemmatizer
                                     WHERE
-                                        b.id=u.object_id
-                                        AND u.object_type=1
-                                        AND u.udf_id=2
-                                        AND NOT b.body=''
+                                        not body=''
                                     FETCH FIRST 1000 ROWS ONLY;
-                                    """  # rewrite with VIEW
+                                    """
 
     __SQL_LEMMA_INSERT_HEADER = """
                                     INSERT INTO
                                         news_meta_data.lemma_header (lemma)
                                     VALUES (%s)
                                     ON CONFLICT DO NOTHING;    
-                                """  # todo add source_id
+                                """
 
     __SQL_LEMMA_FETCH_HEADER = """
                                     SELECT
@@ -368,13 +363,10 @@ class DatabaseExchange(connectDb.Database):
             return {}
         topicizer_data = {}
         for res in result:
-            if res[0] in topicizer_data.keys():
-                topicizer_data[res[0]]['topics'].append(res[3])
-            else:
-                topicizer_data[res[0]] = {'body': res[1], 'headline': res[2], 'topics': [res[3]]}
+            topicizer_data[res[0]] = {'body': res[1], 'headline': res[2]}
         return topicizer_data
 
-    def write_lemmas(self, lemmas: list, source_id: int) -> bool:
+    def write_lemmas(self, lemmas: list) -> bool:
         if not type(lemmas) == list:
             return False
         cur = self.conn.cursor()
@@ -382,7 +374,7 @@ class DatabaseExchange(connectDb.Database):
             if 'lemma' not in lemma.keys():
                 continue
             if len(lemma['lemma']) <= 30:
-                cur.execute(DatabaseExchange.__SQL_LEMMA_INSERT_HEADER, (lemma['lemma'],))  # todo add source_id
+                cur.execute(DatabaseExchange.__SQL_LEMMA_INSERT_HEADER, (lemma['lemma'],))
         self.conn.commit()
         cur.execute(DatabaseExchange.__SQL_LEMMA_FETCH_HEADER)
         result = cur.fetchall()

@@ -293,22 +293,39 @@ class DatabaseExchange(connectDb.Database):
                                       VALUES %s;
                                    """  # {} needed to add data not wrapped in ''
 
+# topic related SQL queries
     __SQL_TOPICIZER_FETCH_TODO = """
                                     SELECT 
-                                        b.id, 
-                                        b.body, 
-                                        b.headline, 
-                                        u.udf_value 
+                                        ab_id, 
+                                        body, 
+                                        headline
                                     FROM 
-                                        news_meta_data.article_body as b,
-                                        news_meta_data.udf_values as u
+                                        news_meta_data.v_todo_lemmatizer
                                     WHERE
-                                        b.id=u.object_id
-                                        AND u.object_type=1
-                                        AND u.udf_id=2
-                                        AND NOT b.body=''
+                                        not body=''
                                     FETCH FIRST 1000 ROWS ONLY;
-                                    """  # rewrite with VIEW
+                                    """
+
+    __SQL_LEMMA_INSERT_HEADER = """
+                                    INSERT INTO
+                                        news_meta_data.lemma_header (lemma)
+                                    VALUES (%s)
+                                    ON CONFLICT DO NOTHING;    
+                                """
+
+    __SQL_LEMMA_FETCH_HEADER = """
+                                    SELECT
+                                        id, lemma
+                                    FROM
+                                        news_meta_data.lemma_header;
+                                """
+
+    __SQL_LEMMA_INSERT_COUNT = """
+                                    INSERT INTO
+                                        news_meta_data.lemma_count (lemma_id, article_body_id, lemma_count)
+                                    VALUES (%s, %s, %s)
+                                    ON CONFLICT DO NOTHING;
+                                """
 
     def __init__(self):
         super().__init__()
@@ -346,11 +363,40 @@ class DatabaseExchange(connectDb.Database):
             return {}
         topicizer_data = {}
         for res in result:
-            if res[0] in topicizer_data.keys():
-                topicizer_data[res[0]]['topics'].append(res[3])
-            else:
-                topicizer_data[res[0]] = {'body': res[1], 'headline': res[2], 'topics': [res[3]]}
+            topicizer_data[res[0]] = {'body': res[1], 'headline': res[2]}
         return topicizer_data
+
+    def write_lemmas(self, lemmas: list) -> bool:
+        if not type(lemmas) == list:
+            return False
+        cur = self.conn.cursor()
+        for lemma in lemmas:
+            if 'lemma' not in lemma.keys():
+                continue
+            if len(lemma['lemma']) <= 30:
+                cur.execute(DatabaseExchange.__SQL_LEMMA_INSERT_HEADER, (lemma['lemma'],))
+        self.conn.commit()
+        cur.execute(DatabaseExchange.__SQL_LEMMA_FETCH_HEADER)
+        result = cur.fetchall()
+        lemma_lookup_table = {}
+        if len(result) == 0:
+            return False
+        for res in result:
+            if res[1] in lemma_lookup_table.keys():
+                continue
+            else:
+                lemma_lookup_table[res[1]] = res[0]
+        lemma_lookup_keys = lemma_lookup_table.keys()
+        for lemma in lemmas:
+            lemma_keys = lemma.keys()
+            if 'lemma' in lemma_keys and 'article_body_id' in lemma_keys and 'lemma_count' in lemma_keys\
+                    and lemma['lemma'] in lemma_lookup_keys:
+                cur.execute(DatabaseExchange.__SQL_LEMMA_INSERT_COUNT, (lemma_lookup_table[lemma['lemma']],
+                                                                         lemma['article_body_id'],
+                                                                         lemma['lemma_count']))
+        self.conn.commit()
+        cur.close()
+        return True
 
     def __fetch_analyzer_tables(self) -> dict:
         """
