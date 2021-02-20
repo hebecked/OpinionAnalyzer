@@ -11,80 +11,76 @@ from torch.utils.data import TensorDataset, DataLoader, RandomSampler, Sequentia
 from transformers import *
 from transformers.modeling_outputs import SequenceClassifierOutput
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
-#from Sentiment import custom_model_sentiment
-
-class DatasetCorpus(torch.utils.data.Dataset):
-    """Container class to supply dataset content to the training algorithm."""
-
-    def __init__(self, dataset):
-        encodings = dict()
-        encodings["input_ids"] = dataset["input_ids"]
-        encodings["attention_mask"] = dataset["attention_mask"]
-        self.encodings = encodings
-        self.labels = [torch.tensor(i) for i in dataset["labels"]]
-        self.data = dataset
-
-    def __getitem__(self, idx):
-        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-        item['labels'] = torch.tensor(self.labels[idx]).clone().detach()
-        return item
-
-    def __len__(self):
-        return len(self.labels)
+from Sentiment import *
+import time
 
 
 
-print("Loading pretrained model.")
-model = AutoModelForSequenceClassification.from_pretrained("../models/new_balanced_model")
-tokenizer = BertTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
+models = {  "multilang_bert_sentiment":"", 
+            "german_bert_sentiment":"", 
+            "EnsembleSentiment":"", 
+            "baselineSentiment":"", 
+            "baselineFastTextSentiment":"", 
+            "TextblobSentiment":"", 
+            "custom_model_sentiment":"model_path='../models/new_balanced_model', tokenizer_path='nlptown/bert-base-multilingual-uncased-sentiment'"
+            }
+print("Loading NLP models.")
+model_objects=dict()
+for model in models.keys():
+    parameter = models[model]
+    print("Loading: " + model + " " + parameter)
+    exec("model_objects[model] = %s(%s) " % (model, parameter))
+
 
 
 print("Read datasets from file.")
-with open( '../Testdata/test_dataset.json', 'r') as fp:
+datasets = ["accuracy_dataset.json", "test_dataset.json"]
+with open( '../Testdata/' + datasets[0], 'r') as fp:
     test_dataset = json.load(fp)
 
 print("Test dataset size:", len(test_dataset["text_input"]))
 
-#convert numpy label arrays to pytorch tensors
-print("Creating tokens...")# tokens
-test_tokens = tokenizer(test_dataset["text_input"], truncation=True, padding=True, return_tensors="pt")
-test_dataset.update(test_tokens)
-print("Done.")
 
 
-test_dataset=DatasetCorpus(test_dataset)
+print("Calculating accuracy.\nThis may take a while...")
+match = dict()
+for model in model_objects.keys():
+    match[model] = 0
+#set a limit to speed-up the evaluation and reduce the sample size used 
+limit = None
+for i, test_data in enumerate(test_dataset["text_input"]):
+    truth = test_dataset["labels"][i]
+    for model in model_objects.keys():
+        result =  model_objects[model].analyze(test_data)
+        if result[0] < -0.33:
+            sentiment = -1
+        elif result[0] < 0.33:
+            sentiment = 0
+        else:
+            sentiment = 1
+        match[model] += truth[sentiment+1]
+    if limit is not None and i >= limit:
+        break 
+if limit is not None and limit < float(len(test_dataset["text_input"])):
+    sample_size = float(limit)
+else:
+    sample_size = float(len(test_dataset["text_input"]))
+for model in model_objects.keys():
+    accuracy = float(match[model]) / sample_size
+    print("Done\nThe model " + model + " has an accuracy of", accuracy)
+print("This is based on a sample size of", sample_size)
+
+
+print("\nWaiting 20 seconds to continue individual tests.")
+time.sleep(20)
 
 print("Testing:")
-device = torch.device("cpu")
-model.to(device)
-model.eval()
-for i, test_data in enumerate(test_dataset):
-    test_data["input_ids"] = test_data["input_ids"].reshape([1,-1])
-    test_data['attention_mask'] = test_data['attention_mask'].reshape([1,-1])
-    label=test_data.pop("labels").reshape([1,-1])
-    result = model(**test_data)
-    print(test_dataset.data["text_input"][i])
-    print(label, softmax(result.logits.detach().numpy()), i, "\n")
+for i, test_data in enumerate(test_dataset["text_input"]):
+    print(test_data, "\nTruth " + str(i)+ ":", test_dataset["labels"][i])
+    for model in model_objects.keys():
+        result =  model_objects[model].analyze(test_data)
+        print(model + ":", result)
+    print("\n")
     #print(result)
     if i > 10:
         break
-
-print("Calculating accuracy.\nThis may take a while...")
-match = 0
-#set a limit to speed-up the evaluation and reduce the sample size used 
-limit = None
-for i, test_data in enumerate(test_dataset):
-    test_data["input_ids"]= test_data["input_ids"].reshape([1,-1])
-    test_data['attention_mask']= test_data['attention_mask'].reshape([1,-1])
-    label=test_data.pop("labels").reshape([1,-1])
-    result = model(**test_data) 
-    sentiment = np.argmax(softmax(result.logits.detach().numpy()))
-    match += label.numpy()[0][sentiment]
-    if limit is not None and i >= limit:
-        break 
-if limit is not None:
-    sample_size = float(limit)
-else:
-    sample_size = float(len(test_dataset))
-accuracy = float(match) / sample_size
-print("Done\nThe model has an accuracy of", accuracy, "\nThis is based on a sample size of", sample_size)

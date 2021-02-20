@@ -304,7 +304,7 @@ class EnsembleSentiment():
         result = np.average(results.T[0], weights=1. / results.T[1] ** 2)
         #sqrt__weighted_variance = np.sqrt(np.average((results.T[0] - result) ** 2, weights=1. / results.T[1] ** 2)) # Error determination including discrepancy between outputs 
         error = np.sqrt(1. / np.sum(1. / results.T[1] ** 2)) # physically correct error determination
-        return [[result, error], result1, result2]
+        return [result, error] #result1, result2]
 
 
 # classifier = TextClassifier.load('de-offensive-language') # en-sentiment
@@ -326,8 +326,7 @@ if __name__ == "__main__":
     model_objects=dict()
     for model in models.keys():
         parameter = models[model]
-        exec("model_objects[model] = %s(\"%s\")" % (model, parameter))
-
+        exec("model_objects[model] = %s(%s) " % (model, parameter))
     print("Running ", Test_cases, " tests + one overlength sample.")
     accu = []
     for i, comment in enumerate(testComments):
