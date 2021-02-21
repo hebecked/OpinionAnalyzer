@@ -288,10 +288,10 @@ class TextblobSentiment:
         return mood.subjectivity
 
 
-class EnsembleSentiment():
+class EnsembleSentiment:
     """Sentiment analyzer module combining the first two modules based on error weighted mean."""
 
-    def __init__(self, output_all_results = true):
+    def __init__(self, output_all_results = True):
         # Based on Amazonreview (1-5 stars)
         self.sentiment_model_1 = multilang_bert_sentiment()
         # Based on a range of sources including twitter, facebook, product reviews
