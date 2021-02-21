@@ -18,7 +18,7 @@ import time
 
 models = {  "multilang_bert_sentiment":"", 
             "german_bert_sentiment":"", 
-            "EnsembleSentiment":"", 
+            "EnsembleSentiment":"output_all_results = False", 
             "baselineSentiment":"", 
             "baselineFastTextSentiment":"", 
             "TextblobSentiment":"", 

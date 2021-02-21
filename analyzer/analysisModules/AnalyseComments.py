@@ -50,4 +50,6 @@ while counter < NUM_RUNS:
     logger.info('Analyzed comment ' + str(sentiments[1]["comment_id"]) + ' to ' + str(
         sentiments[-1]["comment_id"]) + " and wrote to DB.")
     counter += 1
+    
+db.close()
 

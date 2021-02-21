@@ -291,11 +291,12 @@ class TextblobSentiment:
 class EnsembleSentiment():
     """Sentiment analyzer module combining the first two modules based on error weighted mean."""
 
-    def __init__(self):
+    def __init__(self, output_all_results = true):
         # Based on Amazonreview (1-5 stars)
         self.sentiment_model_1 = multilang_bert_sentiment()
         # Based on a range of sources including twitter, facebook, product reviews
         self.sentiment_model_2 = german_bert_sentiment()
+        self.output_all_results = output_all_results
 
     def analyze(self, text):
         result1 = self.sentiment_model_1.analyze(text)
@@ -304,7 +305,10 @@ class EnsembleSentiment():
         result = np.average(results.T[0], weights=1. / results.T[1] ** 2)
         #sqrt__weighted_variance = np.sqrt(np.average((results.T[0] - result) ** 2, weights=1. / results.T[1] ** 2)) # Error determination including discrepancy between outputs 
         error = np.sqrt(1. / np.sum(1. / results.T[1] ** 2)) # physically correct error determination
-        return [result, error] #result1, result2]
+        if self.output_all_results:
+            return [[result, error] result1, result2]
+        else:
+            return [result, error] #result1, result2]
 
 
 # classifier = TextClassifier.load('de-offensive-language') # en-sentiment
