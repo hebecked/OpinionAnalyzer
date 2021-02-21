@@ -306,7 +306,7 @@ class EnsembleSentiment():
         #sqrt__weighted_variance = np.sqrt(np.average((results.T[0] - result) ** 2, weights=1. / results.T[1] ** 2)) # Error determination including discrepancy between outputs 
         error = np.sqrt(1. / np.sum(1. / results.T[1] ** 2)) # physically correct error determination
         if self.output_all_results:
-            return [[result, error] result1, result2]
+            return [[result, error], result1, result2]
         else:
             return [result, error] #result1, result2]
 
