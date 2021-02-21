@@ -61,22 +61,12 @@ class DatabaseExchange(connectDb.Database):
                                """
 
     __SQL_SCRAPER_FETCH_OLDEST = """
-                                    SELECT MIN(date)
-                                    FROM 
-                                    (	(SELECT 
-                                            MIN(source_date) AS date
-                                            FROM
-                                            news_meta_data.article_header
-                                            WHERE
-                                            source_id = %s) 
-                                    UNION
-                                        (SELECT 
+                                    SELECT 
                                             MIN(date_processed) AS date
                                             FROM
                                             news_meta_data.crawl_dates_proc
                                             WHERE
-                                            source_id = %s)
-                                    ) as tmp;
+                                            source_id = %s;
                                 """
     __SQL_SCRAPER_DATE_VISITED_INSERT = """
                                     INSERT INTO
@@ -636,7 +626,7 @@ class DatabaseExchange(connectDb.Database):
         cur = self.conn.cursor()
         cur.execute(
             DatabaseExchange.__SQL_SCRAPER_FETCH_OLDEST,
-            (source_id, source_id)
+            (source_id, )
         )
         result = cur.fetchall()  # last timestamp of successful run
         cur.close()
