@@ -35,7 +35,7 @@ for model in models.keys():
 
 print("Read datasets from file.")
 datasets = ["accuracy_dataset.json", "test_dataset.json"]
-with open( '../Testdata/' + datasets[0], 'r') as fp:
+with open( '../Testdata/' + datasets[1], 'r') as fp:
     test_dataset = json.load(fp)
 
 print("Test dataset size:", len(test_dataset["text_input"]))
@@ -45,9 +45,9 @@ print("Test dataset size:", len(test_dataset["text_input"]))
 print("Calculating accuracy.\nThis may take a while...")
 match = dict()
 for model in model_objects.keys():
-    match[model] = 0
+    match[model] = [0,0,0]
 #set a limit to speed-up the evaluation and reduce the sample size used 
-limit = None
+limit = 100 #None
 for i, test_data in enumerate(test_dataset["text_input"]):
     truth = test_dataset["labels"][i]
     for model in model_objects.keys():
@@ -58,7 +58,7 @@ for i, test_data in enumerate(test_dataset["text_input"]):
             sentiment = 0
         else:
             sentiment = 1
-        match[model] += truth[sentiment+1]
+        match[model][sentiment+1] += truth[sentiment+1]
     if limit is not None and i >= limit:
         break 
 if limit is not None and limit < float(len(test_dataset["text_input"])):
@@ -66,9 +66,11 @@ if limit is not None and limit < float(len(test_dataset["text_input"])):
 else:
     sample_size = float(len(test_dataset["text_input"]))
 for model in model_objects.keys():
-    accuracy = float(match[model]) / sample_size
+    accuracy = float(np.sum(match[model])) / sample_size
+    class_sample_size = np.sum(test_dataset["text_input"][0:limit],0)
     print("Done\nThe model " + model + " has an accuracy of", accuracy)
-print("This is based on a sample size of", sample_size)
+    print("Done\nThe model " + model + " has an individual class accuracy of", match[model]/class_sample_size)
+print("This is based on a sample size of", sample_size, "Split according to:", class_sample_size)
 
 
 print("\nWaiting 20 seconds to continue individual tests.")
