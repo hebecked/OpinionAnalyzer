@@ -67,7 +67,7 @@ else:
     sample_size = float(len(test_dataset["text_input"]))
 for model in model_objects.keys():
     accuracy = float(np.sum(match[model])) / sample_size
-    class_sample_size = np.sum(test_dataset["text_input"][0:limit],0)
+    class_sample_size = np.sum(test_dataset["labels"][0:limit],0)
     print("Done\nThe model " + model + " has an accuracy of", accuracy)
     print("Done\nThe model " + model + " has an individual class accuracy of", match[model]/class_sample_size)
 print("This is based on a sample size of", sample_size, "Split according to:", class_sample_size)
