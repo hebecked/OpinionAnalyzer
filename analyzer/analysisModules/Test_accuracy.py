@@ -45,7 +45,7 @@ print("Test dataset size:", len(test_dataset["text_input"]))
 print("Calculating accuracy.\nThis may take a while...")
 match = dict()
 for model in model_objects.keys():
-    match[model] = [0,0,0]
+    match[model] = np.array([0,0,0])
 #set a limit to speed-up the evaluation and reduce the sample size used 
 limit = 100 #None
 for i, test_data in enumerate(test_dataset["text_input"]):
