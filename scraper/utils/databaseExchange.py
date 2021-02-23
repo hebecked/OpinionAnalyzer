@@ -62,13 +62,18 @@ class DatabaseExchange(connectDb.Database):
 
     __SQL_SCRAPER_FETCH_OLDEST = """
                                     SELECT 
-                                        MIN(source_date)
-                                    FROM
-                                        news_meta_data.article_header
-                                    WHERE
-                                        source_id = %s;
+                                            MIN(date_processed) AS date
+                                            FROM
+                                            news_meta_data.crawl_dates_proc
+                                            WHERE
+                                            source_id = %s;
                                 """
-
+    __SQL_SCRAPER_DATE_VISITED_INSERT = """
+                                    INSERT INTO
+                                        news_meta_data.crawl_dates_proc (source_id, date_processed)
+                                    VALUES (%s,%s)
+                                    ON CONFLICT DO NOTHING;
+                                """
     __SQL_SCRAPER_LOG_START = """
                                  INSERT INTO 
                                    news_meta_data.crawl_log (source_id, start_timestamp, success) 
@@ -621,7 +626,7 @@ class DatabaseExchange(connectDb.Database):
         cur = self.conn.cursor()
         cur.execute(
             DatabaseExchange.__SQL_SCRAPER_FETCH_OLDEST,
-            (source_id,)
+            (source_id, )
         )
         result = cur.fetchall()  # last timestamp of successful run
         cur.close()
@@ -631,6 +636,35 @@ class DatabaseExchange(connectDb.Database):
             return result[0][0]
         except IndexError:
             return result[0][0]
+
+    def set_scraper_date_visited(self, source_id: int, start_date: dt.date, end_date: dt.date) -> bool:
+        """
+        marks given dates (from start_date to end_date, including both) as visited
+            by given crawler in table crawl_dates_proc
+
+        Parameters
+        ----------
+        source_id : int
+            scraper unique id corresponding to id in source_header table
+        start_date: dt.date
+            first date (oldest) to add to db as visited
+        end_date: dt.date
+            last date (newest) to add to db as visited
+
+        Returns
+        -------
+        bool
+            True if successful
+        """
+
+        num_of_days = (start_date - end_date).days
+        date_list = [(dt.timedelta(i) + end_date) for i in range(num_of_days, 1)]
+        cur = self.conn.cursor()
+        for date_visited in date_list:
+            cur.execute(DatabaseExchange.__SQL_SCRAPER_DATE_VISITED_INSERT, (source_id, date_visited))
+        self.conn.commit()  # writes pairs of source_id and date to table
+        cur.close()
+        return True
 
     def fetch_scraper_last_run(self, source_id: int) -> dt.datetime:
         """

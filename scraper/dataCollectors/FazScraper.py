@@ -326,6 +326,7 @@ def run_regular():
     end = date.today()
     article_header_list = faz_scraper.get_article_list(start, end)
     db.write_articles(article_header_list)
+    db.set_scraper_date_visited(faz_scraper.id, start, end)
     todo_list = db.fetch_scraper_todo_list(faz_scraper.id)
     faz_scraper.get_write_articles_details(db, todo_list, start - timedelta(1))
     db.log_scraper_end(not faz_scraper.has_errors)

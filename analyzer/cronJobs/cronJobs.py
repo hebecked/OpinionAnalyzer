@@ -17,12 +17,11 @@ class CronJobs:
     def cronInit(self):
         logger.info("CronJobs successfully initiated")
         analyis_modules_path = '/usr/src/app/analysisModules/'
-
         for job in self.jobs:
             if job["onInit"]:
                 logger.info("Found job to fire on init: " + job["module"])
                 logger.info("Init...")
-                time.sleep(20)
+                time.sleep(60)
                 logger.info("Firing Module on init: " + job["module"])
                 os.system('python3 -u ' + analyis_modules_path + job["module"])
 
