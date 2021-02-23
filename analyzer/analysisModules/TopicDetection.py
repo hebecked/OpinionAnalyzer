@@ -12,6 +12,9 @@ import re
 import csv
 import nltk
 from HanTa import HanoverTagger as ht
+import fasttext
+import fasttext.util
+from scipy import spatial 
 #import spacy
 #nlp = spacy.load('de')
 
@@ -29,6 +32,10 @@ from HanTa import HanoverTagger as ht
 
 
 class baseline_topic_detection:
+	"""
+	A primitive topic detection based on word frequency.
+	Stop words and other common words are removed and the most frequent words are selected. 
+	"""
 
 
 	def __init__(self):
@@ -115,6 +122,42 @@ class baseline_topic_detection:
 		return result
 
 
+class mean_distance_topic_detection(baseline_topic_detection):
+
+	def __init__(self):
+		super().__init__()
+		self.ft = fasttext.load_model('../Testdata/cc.de.50.bin')
+
+	def _get_ft_vectors(self, text):
+		words_n_vectors=[]
+		words = re.split('\s+', text)
+		for word in words:
+			clean_word = re.sub('[^A-Za-züäößÄÖÜ]+', '', word)
+			ft_word = self.ft.get_word_vector(clean_word)
+			words_n_vectors.append([clean_word,ft_word])
+		return words_n_vectors
+
+	def get_topics(self, text):
+		wnv = self._get_ft_vectors(text)
+		wnv_t = list(zip(*wnv))
+		doc_vec = np.mean(wnv_t[1], axis=0)
+		max_dist = 0
+		max_index = 0
+		results = dict()
+		for i, word_vec in enumerate(wnv):
+			distance = spatial.distance.cosine(word_vec[1],doc_vec)
+			results[word_vec[0]] = distance
+			if distance > max_dist:
+				max_dist = distance
+				max_index = i
+		print( wnv[max_index][0] )
+		return dict(sorted(results.items(), key=lambda item: item[1]))
+
+
+
+
+
+
 if __name__ == "__main__":
 
 	with open('../Testdata/TestArticle.json') as f:
@@ -130,3 +173,7 @@ if __name__ == "__main__":
 	results = bltd.get_topics( testArticle["text"] )
 	print( results )
 	print("Test ran successfully.")
+
+	mdtp = mean_distance_topic_detection()
+	sorted_topics = mdtp.get_topics(testArticle["text"])
+	print(sorted_topics)
