@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 12,
-  "iteration": 1614184403497,
+  "iteration": 1614190870172,
   "links": [],
   "panels": [
     {
@@ -402,8 +402,8 @@
       {
         "current": {
           "selected": false,
-          "text": "",
-          "value": ""
+          "text": "Berlin",
+          "value": "Berlin"
         },
         "description": "Aggregate data so that only comments with keywords are considered",
         "error": null,
@@ -412,19 +412,19 @@
         "name": "comment_key_word",
         "options": [
           {
-            "selected": true,
+            "selected": false,
             "text": "",
             "value": ""
           }
         ],
-        "query": "",
+        "query": "Berlin",
         "skipUrlSync": false,
         "type": "textbox"
       },
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": [
             "All"
           ],
