@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 3,
-  "iteration": 1614203807433,
+  "id": 4,
+  "iteration": 1614206529203,
   "links": [],
   "panels": [
     {
@@ -726,7 +726,7 @@
         "error": null,
         "hide": 0,
         "includeAll": false,
-        "label": "NLP Modell",
+        "label": "NLP Model",
         "multi": false,
         "name": "sub_id",
         "options": [

@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 6,
-  "iteration": 1614204180732,
+  "id": 1,
+  "iteration": 1614206392963,
   "links": [],
   "panels": [
     {
@@ -798,7 +798,7 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "",
+            "axisLabel": "Comment Ratio",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -1172,7 +1172,7 @@
     ]
   },
   "timezone": "",
-  "title": "Double Comment Sentiment Analysis",
+  "title": "Sentiment Comperative Analysis",
   "uid": "B0vg-cYGk",
   "version": 1
 }

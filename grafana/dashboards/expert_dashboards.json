@@ -1,0 +1,457 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 7,
+  "links": [],
+  "panels": [
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "content": "<style type=\"text/css\">\n.dashlist {\n  padding-top: 31px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(5, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist a {\n  background-color: #37d5d6;\n  background-image: linear-gradient(315deg, #37d5d6 0%, #361ba1 74%);\n  color: white;\n  text-decoration: none;\n  padding: 40px  60px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n</style>\n<div class=\"dashlist\">\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Sentiment Comperative Analysis\n</a>\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    News Outlet Statistics\n</a>\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Covid-19 Statistics\n</a>\n</div>",
+        "mode": "html"
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__time(time_column),\n  value1\nFROM\n  metric_table\nWHERE\n  $__timeFilter(time_column)\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Expert Section",
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#361ba1",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 3,
+        "y": 0
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "WITH article_headers AS (\n  SELECT\n    0 AS id,\n    COUNT(ah.id) AS \"# Article Headers\"\n  FROM \n    news_meta_data.article_header ah\n),\narticle_bodies AS (\n  SELECT\n    0 AS id,\n    COUNT(ab.id) AS \"# Article Bodies\"\n  FROM \n    news_meta_data.article_body ab\n),\ncomments AS (\n  SELECT\n    0 AS id,\n    COUNT(c.id) AS \"# Comments\"\n  FROM \n    news_meta_data.comment c\n),\nanalyzer AS (\n  SELECT\n    0 AS id,\n    COUNT(a1r.id) AS \"# Analyzed Comments\"\n  FROM \n    news_meta_data.analyzer1_result a1r\n  WHERE\n    sub_id = 1\n)\n\nSELECT \n  ROUND(a1.\"# Analyzed Comments\"/c.\"# Comments\"::NUMERIC*100, 2) AS \"% Comments Analyzed\"\nFROM \n  article_headers ah\n  LEFT JOIN article_bodies ab ON ah.id = ab.id\n  LEFT JOIN comments c ON ah.id = c.id\n  LEFT JOIN analyzer a1 ON ah.id = a1.id\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "% Comments Analyzed",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#361ba1",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 7,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  TO_CHAR(source_date, 'dd-MM-yyyy')\nFROM \n  news_meta_data.article_header\nORDER BY \n  source_date ASC\nLIMIT 1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Earliest Article Date",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#361ba1",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 11,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  TO_CHAR(source_date, 'dd-MM-yyyy')\nFROM \n  news_meta_data.article_header\nORDER BY \n  source_date DESC \nLIMIT 1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Latest Article Date",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "mappings": [],
+          "max": 10,
+          "min": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#37d5d6",
+                "value": null
+              },
+              {
+                "color": "#361ba1",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 3,
+        "y": 2
+      },
+      "id": 5,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "WITH article_headers AS (\n  SELECT\n    0 AS id,\n    COUNT(ah.id) AS \"# Article Headers\"\n  FROM \n    news_meta_data.article_header ah\n),\narticle_bodies AS (\n  SELECT\n    0 AS id,\n    COUNT(ab.id) AS \"# Article Bodies\"\n  FROM \n    news_meta_data.article_body ab\n),\ncomments AS (\n  SELECT\n    0 AS id,\n    COUNT(c.id) AS \"# Comments\"\n  FROM \n    news_meta_data.comment c\n),\nanalyzer AS (\n  SELECT\n    0 AS id,\n    COUNT(a1r.id) AS \"# Analyzed Comments\"\n  FROM \n    news_meta_data.analyzer1_result a1r\n  WHERE\n    sub_id = 1\n)\n\nSELECT \n  ah.\"# Article Headers\",\n  ab.\"# Article Bodies\",\n  c.\"# Comments\",\n  a1.\"# Analyzed Comments\"\nFROM \n  article_headers ah\n  LEFT JOIN article_bodies ab ON ah.id = ab.id\n  LEFT JOIN comments c ON ah.id = c.id\n  LEFT JOIN analyzer a1 ON ah.id = a1.id\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "General Database Statistics",
+      "type": "bargauge"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 0,
+        "y": 12
+      },
+      "id": 3,
+      "options": {
+        "content": "<style type=\"text/css\">\n.dashlist {\n  padding-top: 10px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(1, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist a {\n  background-color: #37d5d6;\n  background-image: linear-gradient(315deg, #37d5d6 0%, #361ba1 74%);\n  color: white;\n  text-decoration: none;\n  padding: 40px  20px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n</style>\n<div class=\"dashlist\">\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    VM System Status\n</a>\n</div>",
+        "mode": "html"
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
+        {
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__time(time_column),\n  value1\nFROM\n  metric_table\nWHERE\n  $__timeFilter(time_column)\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Project Section",
+      "type": "text"
+    }
+  ],
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Expert Dashboards",
+  "uid": "HC0LutsMk",
+  "version": 1
+}
