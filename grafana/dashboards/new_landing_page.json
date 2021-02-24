@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 12,
-  "iteration": 1614190870172,
+  "id": 4,
+  "iteration": 1614191086432,
   "links": [],
   "panels": [
     {
@@ -270,7 +270,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Comment Sentiment for: $news_outlet, modell: $sub_id, keyword: $comment_key_word",
+      "title": "Comment Sentiment for: $news_outlet, NLP Modell: $sub_id, Keyword: $comment_key_word",
       "type": "timeseries"
     },
     {
@@ -390,7 +390,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "# Comment for: $news_outlet and modell: $sub_id with keyword: $comment_key_word",
+      "title": "# Comments for: $news_outlet, NLP Modell: $sub_id, Keyword: $comment_key_word",
       "type": "timeseries"
     }
   ],
@@ -424,7 +424,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
+          "selected": true,
           "text": [
             "All"
           ],
@@ -491,5 +491,5 @@
   "timezone": "",
   "title": "Welcome to OpAna!",
   "uid": "v1ES4tsMk",
-  "version": 2
+  "version": 1
 }
