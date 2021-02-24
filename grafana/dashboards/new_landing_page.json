@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 4,
-  "iteration": 1614191086432,
+  "iteration": 1614191210579,
   "links": [],
   "panels": [
     {
@@ -129,13 +129,14 @@
     },
     {
       "datasource": null,
+      "description": "For News Outlets: $news_outlet, NLP Modell: $sub_id, Keyword: $comment_key_word",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "",
+            "axisLabel": "Sentiment",
             "axisPlacement": "left",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -270,11 +271,12 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Comment Sentiment for: $news_outlet, NLP Modell: $sub_id, Keyword: $comment_key_word",
+      "title": "Comment Sentiment",
       "type": "timeseries"
     },
     {
       "datasource": null,
+      "description": "For News Outlets: : $news_outlet, NLP Modell: $sub_id, Keyword: $comment_key_word",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -390,7 +392,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "# Comments for: $news_outlet, NLP Modell: $sub_id, Keyword: $comment_key_word",
+      "title": "# Comment",
       "type": "timeseries"
     }
   ],
