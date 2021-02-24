@@ -594,7 +594,7 @@ class DatabaseExchange(connectDb.Database):
             (analyzer_id,)
         )
         self.conn.commit()
-        cur.close
+        cur.close()
         return True
 
     def fetch_scraper_todo_list(self, source_id: int) -> list:
@@ -1227,7 +1227,7 @@ class DatabaseExchange(connectDb.Database):
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__SQL_COMMENT_UPDATE_DATE_CREATED)
         self.conn.commit()
-        cur.close
+        cur.close()
         return True
 
 def test():
