@@ -15,12 +15,12 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 6,
+  "id": 4,
+  "iteration": 1614193858070,
   "links": [],
   "panels": [
     {
       "datasource": null,
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -28,17 +28,17 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 24,
+        "h": 1,
+        "w": 21,
         "x": 0,
         "y": 0
       },
-      "id": 2,
+      "id": 6,
       "options": {
-        "content": "# Opinion Analyzer\n\nPeople have opinions and they do not hold back giving them especially on the internet with its anonymity.\n\nA felt truth is, that people tend to comment more and more vigorously when they disagree. But can this impression be substantiated with data? To create an information base we developed a tool that collects news articles along with the comments their readers left under them. We applied a sentiment analyzer to the collected data and assigned them their respective sentiment values. The results can be viewed and filtered through different reports.\n\nOur semesterproject team was made up of four computer science students (bachelor).\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n         ",
+        "content": "",
         "mode": "markdown"
       },
-      "pluginVersion": "7.1.0",
+      "pluginVersion": "7.4.3",
       "targets": [
         {
           "format": "time_series",
@@ -69,7 +69,8 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Who are we? And what is this, you are you looking at?",
+      "title": "",
+      "transparent": true,
       "type": "text"
     },
     {
@@ -80,22 +81,18 @@
         },
         "overrides": []
       },
-      "folderId": null,
       "gridPos": {
-        "h": 7,
-        "w": 10,
-        "x": 0,
-        "y": 6
+        "h": 14,
+        "w": 3,
+        "x": 21,
+        "y": 0
       },
-      "headings": true,
-      "id": 8,
-      "limit": 10,
-      "pluginVersion": "7.1.5",
-      "query": "",
-      "recent": false,
-      "search": false,
-      "starred": true,
-      "tags": [],
+      "id": 4,
+      "options": {
+        "content": "<style type=\"text/css\">\n.dashlist {\n  padding-top: 10px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(5, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist a {\n  background-color: #361ba1;\n  background-image: linear-gradient(315deg, #361ba1 0%, #37d5d6 74%);\n  color: white;\n  text-decoration: none;\n  padding: 10px  15px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n.dashlist-expert {\n  padding-top: 31px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(1, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist-expert a {\n  background-color: #36096d;\n  background-image: linear-gradient(315deg, #36096d 0%, #37d5d6 74%);\n  color: white;\n  text-decoration: none;\n  padding: 10px  15px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist-expert a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n</style>\n<div class=\"dashlist-expert\">\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Expert Dashboards\n</a>\n</div>\n<div class=\"dashlist\">\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    FAQ\n</a>\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Git\n</a>\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Who are we?\n</a>\n</div>",
+        "mode": "html"
+      },
+      "pluginVersion": "7.4.3",
       "targets": [
         {
           "format": "time_series",
@@ -126,51 +123,146 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Available Dashboards",
-      "type": "dashlist"
+      "title": "",
+      "transparent": true,
+      "type": "text"
     },
     {
       "datasource": null,
+      "description": "For News Outlets: $news_outlet, NLP Modell: $sub_id, Keyword: $comment_key_word",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null
+          "color": {
+            "mode": "palette-classic"
           },
+          "custom": {
+            "axisLabel": "Sentiment",
+            "axisPlacement": "left",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 3,
+            "pointSize": 7,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": true
+          },
+          "decimals": 2,
           "mappings": [],
+          "max": 1,
+          "min": -1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
                 "value": null
-              },
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "# Comments"
+            },
+            "properties": [
               {
-                "color": "red",
-                "value": 80
+                "id": "custom.drawStyle",
+                "value": "bars"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sentiment1 Error Weighted"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sentiment2 Simple Average"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sentiment Simple Average"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#37d5d6",
+                  "mode": "fixed"
+                }
               }
             ]
           }
-        },
-        "overrides": []
+        ]
       },
       "gridPos": {
-        "h": 7,
-        "w": 9,
-        "x": 10,
-        "y": 6
+        "h": 9,
+        "w": 21,
+        "x": 0,
+        "y": 1
       },
-      "id": 4,
+      "hideTimeOverride": true,
+      "id": 2,
+      "interval": "1d",
+      "maxDataPoints": 60,
       "options": {
-        "showHeader": true
+        "graph": {},
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
       },
-      "pluginVersion": "7.1.5",
+      "pluginVersion": "7.4.3",
       "targets": [
         {
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "select\n'articles in database' as type_of_item,\nto_char(count(id), '999G999G999G999') as number_of_items\nfrom news_meta_data.article_header\nunion\nselect\n'articles added in last 24 hours' as type_of_item,\nto_char(count(id), '999G999G999G999') as number_of_items\nfrom news_meta_data.article_header\nwhere source_date > now() + INTERVAL '-1 day'\nunion\nselect\n'comments in database' as type_of_item,\nto_char(count(id), '999G999G999G999') as number_of_items\nfrom news_meta_data.comment\nunion\nselect\n'comments analyzed' as type_of_item,\nto_char(count(al.comment_id), '999G999G999G999') as number_of_items\nfrom (select distinct comment_id\n\t  from news_meta_data.analyzer1_result) al\nunion\nselect\n'number of sources' as type_of_item,\nto_char(count(id), '999G999G999G999') as  number_of_items\nfrom news_meta_data.source_header\norder by type_of_item",
+          "rawSql": "SELECT\n  ah.source_date AS Time,\n  --SUM(a1r.sentiment_value/ (a1r.error_value * a1r.error_value )) / SUM(1 / (a1r.error_value * a1r.error_value)) AS \"Sentiment Error Weighted\",\n  AVG(a1r.sentiment_value) AS \"Sentiment Simple Average\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id \n  AND ct.body ILIKE '% $comment_key_word%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
           "refId": "A",
           "select": [
             [
@@ -194,15 +286,40 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "What's going on?",
-      "type": "table"
+      "title": "Comment Sentiment",
+      "type": "timeseries"
     },
     {
       "datasource": null,
+      "description": "For News Outlets: : $news_outlet, NLP Modell: $sub_id, Keyword: $comment_key_word",
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
-            "align": null
+            "axisLabel": "# Comments",
+            "axisPlacement": "left",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true
           },
           "mappings": [],
           "thresholds": {
@@ -211,34 +328,62 @@
               {
                 "color": "green",
                 "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "# Comments"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
               },
               {
-                "color": "red",
-                "value": 80
+                "id": "color",
+                "value": {
+                  "fixedColor": "#37d5d6",
+                  "mode": "fixed"
+                }
               }
             ]
           }
-        },
-        "overrides": []
+        ]
       },
       "gridPos": {
-        "h": 7,
-        "w": 5,
-        "x": 19,
-        "y": 6
+        "h": 9,
+        "w": 21,
+        "x": 0,
+        "y": 10
       },
-      "id": 6,
+      "hideTimeOverride": true,
+      "id": 7,
+      "interval": "1d",
+      "maxDataPoints": 60,
       "options": {
-        "showHeader": true
+        "graph": {},
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
       },
-      "pluginVersion": "7.1.5",
+      "pluginVersion": "7.4.3",
       "targets": [
         {
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "select\nsource\nfrom news_meta_data.source_header",
+          "rawSql": "SELECT\n  ah.source_date AS Time,\n  COUNT(DISTINCT ct.id) AS \"# Comments\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id \n  AND ct.body ILIKE '% $comment_key_word%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
           "refId": "A",
           "select": [
             [
@@ -262,36 +407,106 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "What are we looking at?",
-      "type": "table"
+      "title": "# Comments",
+      "type": "timeseries"
     }
   ],
-  "schemaVersion": 26,
+  "schemaVersion": 27,
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
-  },
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
-  "timepicker": {
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "Tesla",
+          "value": "Tesla"
+        },
+        "description": "Aggregate data so that only comments with keywords are considered",
+        "error": null,
+        "hide": 0,
+        "label": "Comment Search",
+        "name": "comment_key_word",
+        "options": [
+          {
+            "selected": true,
+            "text": "Tesla",
+            "value": "Tesla"
+          }
+        ],
+        "query": "Tesla",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": null,
+        "definition": "SELECT source FROM news_meta_data.source_header",
+        "description": "Select News Outlet you want to see data for",
+        "error": null,
+        "hide": 0,
+        "includeAll": true,
+        "label": "News Outlet",
+        "multi": true,
+        "name": "news_outlet",
+        "options": [],
+        "query": "SELECT source FROM news_meta_data.source_header",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "2",
+          "value": "2"
+        },
+        "datasource": null,
+        "definition": "SELECT DISTINCT sub_id FROM news_meta_data.analyzer1_result",
+        "description": "Choose the NLP Modell you want to see in sentiment visualization",
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "NLP Modell",
+        "multi": false,
+        "name": "sub_id",
+        "options": [],
+        "query": "SELECT DISTINCT sub_id FROM news_meta_data.analyzer1_result",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 3,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
     ]
   },
+  "time": {
+    "from": "now-30d",
+    "to": "now-1d"
+  },
+  "timepicker": {},
   "timezone": "",
-  "title": "Overview",
-  "uid": "AVQxavEGz",
-  "version": 11
+  "title": "Welcome to OpAna!",
+  "uid": "v1ES4tsMk",
+  "version": 1
 }
