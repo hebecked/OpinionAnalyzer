@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -34,7 +34,7 @@
       },
       "id": 2,
       "options": {
-        "content": "# FAQ\n\nHere we will list all the questions + answers to the tools you have\n         ",
+        "content": "Here we will list all the questions + answers to the tools you have\n         ",
         "mode": "markdown"
       },
       "pluginVersion": "7.4.3",
@@ -85,6 +85,6 @@
   "timepicker": {},
   "timezone": "",
   "title": "FAQ",
-  "uid": null,
-  "version": 0
+  "uid": "Bu7wUpyMz",
+  "version": 1
 }

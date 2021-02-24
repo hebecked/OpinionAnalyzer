@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 4,
-  "iteration": 1614193858070,
+  "iteration": 1614203643152,
   "links": [],
   "panels": [
     {
@@ -156,7 +156,7 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "always",
+            "showPoints": "auto",
             "spanNulls": true
           },
           "decimals": 2,
@@ -473,7 +473,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "2",
           "value": "2"
         },
@@ -502,7 +502,7 @@
   },
   "time": {
     "from": "now-30d",
-    "to": "now-1d"
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "",

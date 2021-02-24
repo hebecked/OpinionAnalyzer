@@ -16,9 +16,88 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 3,
-  "iteration": 1614195570284,
+  "iteration": 1614203807433,
   "links": [],
   "panels": [
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#37d5d6",
+                "value": null
+              },
+              {
+                "color": "#37d5d6",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      },
+      "id": 19,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  AVG(a1r.sentiment_value) AS \"Sentiment Simple Average\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id ",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "AVG Sentiment",
+      "type": "stat"
+    },
     {
       "datasource": null,
       "description": "",
@@ -48,7 +127,7 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "always",
+            "showPoints": "auto",
             "spanNulls": true
           },
           "decimals": 2,
@@ -118,7 +197,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "super-light-blue",
+                  "fixedColor": "#37d5d6",
                   "mode": "fixed"
                 }
               }
@@ -130,7 +209,7 @@
         "h": 9,
         "w": 21,
         "x": 0,
-        "y": 0
+        "y": 2
       },
       "hideTimeOverride": true,
       "id": 18,
@@ -195,7 +274,7 @@
                 "value": null
               },
               {
-                "color": "super-light-blue",
+                "color": "#37d5d6",
                 "value": 80
               }
             ]
@@ -207,7 +286,7 @@
         "h": 2,
         "w": 3,
         "x": 0,
-        "y": 9
+        "y": 11
       },
       "id": 16,
       "options": {
@@ -271,7 +350,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "bars",
-            "fillOpacity": 70,
+            "fillOpacity": 100,
             "gradientMode": "hue",
             "hideFrom": {
               "graph": false,
@@ -328,7 +407,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "super-light-blue",
+                  "fixedColor": "#37d5d6",
                   "mode": "fixed"
                 }
               }
@@ -340,7 +419,7 @@
         "h": 9,
         "w": 21,
         "x": 0,
-        "y": 11
+        "y": 13
       },
       "id": 7,
       "options": {
@@ -402,7 +481,7 @@
                 "value": null
               },
               {
-                "color": "super-light-blue",
+                "color": "#37d5d6",
                 "value": 80
               }
             ]
@@ -414,7 +493,7 @@
         "h": 2,
         "w": 3,
         "x": 0,
-        "y": 20
+        "y": 22
       },
       "id": 14,
       "options": {
@@ -478,7 +557,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "bars",
-            "fillOpacity": 70,
+            "fillOpacity": 100,
             "gradientMode": "hue",
             "hideFrom": {
               "graph": false,
@@ -535,7 +614,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "super-light-blue",
+                  "fixedColor": "#37d5d6",
                   "mode": "fixed"
                 }
               }
@@ -547,7 +626,7 @@
         "h": 10,
         "w": 21,
         "x": 0,
-        "y": 22
+        "y": 24
       },
       "id": 2,
       "options": {
