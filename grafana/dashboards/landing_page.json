@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 4,
-  "iteration": 1614206300837,
+  "iteration": 1614210130475,
   "links": [],
   "panels": [
     {
@@ -89,7 +89,7 @@
       },
       "id": 4,
       "options": {
-        "content": "<style type=\"text/css\">\n.dashlist {\n  padding-top: 10px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(5, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist a {\n  background-color: #361ba1;\n  background-image: linear-gradient(315deg, #361ba1 0%, #37d5d6 74%);\n  color: white;\n  text-decoration: none;\n  padding: 10px  15px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n.dashlist-expert {\n  padding-top: 31px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(1, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist-expert a {\n  background-color: #36096d;\n  background-image: linear-gradient(315deg, #36096d 0%, #37d5d6 74%);\n  color: white;\n  text-decoration: none;\n  padding: 10px  15px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist-expert a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n</style>\n<div class=\"dashlist-expert\">\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Expert Dashboards\n</a>\n</div>\n<div class=\"dashlist\">\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    FAQ\n</a>\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Git\n</a>\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Who are we?\n</a>\n</div>",
+        "content": "<style type=\"text/css\">\n.dashlist {\n  padding-top: 10px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(5, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist a {\n  background-color: #361ba1;\n  background-image: linear-gradient(315deg, #361ba1 0%, #37d5d6 74%);\n  color: white;\n  text-decoration: none;\n  padding: 10px  15px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n.dashlist-expert {\n  padding-top: 31px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(1, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist-expert a {\n  background-color: #36096d;\n  background-image: linear-gradient(315deg, #36096d 0%, #37d5d6 74%);\n  color: white;\n  text-decoration: none;\n  padding: 10px  15px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist-expert a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n</style>\n<div class=\"dashlist-expert\">\n<a href=\"/d/HC0LutsMk/expert-dashboards?orgId=1\">\n    Expert Dashboards\n</a>\n</div>\n<div class=\"dashlist\">\n<a href=\"/d/Bu7wUpyMz/faq?orgId=1\">\n    FAQ\n</a>\n<a target=_blank href=\"https://github.com/hebecked/OpinionAnalyzer\">\n    Git\n</a>\n<a href=\"/d/b0ckbtyMk/who-are-we?orgId=1\">\n    Who are we?\n</a>\n</div>",
         "mode": "html"
       },
       "pluginVersion": "7.4.3",
@@ -506,7 +506,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Welcome to OpAna!",
+  "title": "Welcome to MoodMeter!",
   "uid": "v1ES4tsMk",
   "version": 1
 }

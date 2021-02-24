@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 7,
+  "id": 4,
   "links": [],
   "panels": [
     {
@@ -34,7 +34,7 @@
       },
       "id": 2,
       "options": {
-        "content": "<style type=\"text/css\">\n.dashlist {\n  padding-top: 31px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(5, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist a {\n  background-color: #37d5d6;\n  background-image: linear-gradient(315deg, #37d5d6 0%, #361ba1 74%);\n  color: white;\n  text-decoration: none;\n  padding: 40px  60px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n</style>\n<div class=\"dashlist\">\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Sentiment Comperative Analysis\n</a>\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    News Outlet Statistics\n</a>\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Covid-19 Statistics\n</a>\n</div>",
+        "content": "<style type=\"text/css\">\n.dashlist {\n  padding-top: 31px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(5, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist a {\n  background-color: #37d5d6;\n  background-image: linear-gradient(315deg, #37d5d6 0%, #361ba1 74%);\n  color: white;\n  text-decoration: none;\n  padding: 40px  60px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n</style>\n<div class=\"dashlist\">\n<a href=\"/d/B0vg-cYGk/sentiment-comperative-analysis?orgId=1\">\n    Sentiment Comperative Analysis\n</a>\n<a href=\"/d/Nt8IWX1Mk/news-outlet-statistics?orgId=1\">\n    News Outlet Statistics\n</a>\n<a href=\"/d/d9f_qpyGz/covid-19-statistics?orgId=1\">\n    Covid-19 Statistics\n</a>\n</div>",
         "mode": "html"
       },
       "pluginVersion": "7.4.3",
@@ -401,7 +401,7 @@
       },
       "id": 3,
       "options": {
-        "content": "<style type=\"text/css\">\n.dashlist {\n  padding-top: 10px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(1, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist a {\n  background-color: #37d5d6;\n  background-image: linear-gradient(315deg, #37d5d6 0%, #361ba1 74%);\n  color: white;\n  text-decoration: none;\n  padding: 40px  20px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n</style>\n<div class=\"dashlist\">\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    VM System Status\n</a>\n</div>",
+        "content": "<style type=\"text/css\">\n.dashlist {\n  padding-top: 10px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(1, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist a {\n  background-color: #37d5d6;\n  background-image: linear-gradient(315deg, #37d5d6 0%, #361ba1 74%);\n  color: white;\n  text-decoration: none;\n  padding: 40px  20px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n</style>\n<div class=\"dashlist\">\n<a target=_blank href=\"/d/rYdddlPWk/vm-system-status?orgId=1&refresh=1m\">\n    VM System Status\n</a>\n</div>",
         "mode": "html"
       },
       "pluginVersion": "7.4.3",
