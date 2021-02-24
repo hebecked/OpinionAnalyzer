@@ -279,6 +279,7 @@ def run_all():
             _ = [p.get() for p in result]
         db.log_scraper_end(False)
         logger.info("full run step - duration = " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
+    db.run_comment_update_dates()
     db.close()
 
 
@@ -316,6 +317,7 @@ def run_regular():
     welt_scraper.get_write_articles_details(db, todo_list)
     db.log_scraper_end(not welt_scraper.has_errors)
     logger.info("regular run - duration = " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
+    db.run_comment_update_dates()
     db.close()
 
 

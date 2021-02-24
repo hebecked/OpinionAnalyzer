@@ -204,6 +204,10 @@ class DatabaseExchange(connectDb.Database):
                                   AND article_body_id IN %s;
                              """
 
+    __SQL_COMMENT_UPDATE_DATE_CREATED = """
+                                        CALL news_meta_data.update_comment_date_created();
+                                    """
+
     # todo get recent comments from view (by source_id and proc_timestamp)
 
     # analyzer related database queries
@@ -282,6 +286,9 @@ class DatabaseExchange(connectDb.Database):
                                         news_meta_data.{} {} 
                                       VALUES %s;
                                    """  # {} needed to add data not wrapped in ''
+    __SQL_ANALYZER_CLEAN_UP = """
+                                    CALL news_meta_data.analyzer_log_cleanup(%s);
+                                """
 
     __SQL_TOPICIZER_FETCH_TODO = """
                                     SELECT 
@@ -572,6 +579,22 @@ class DatabaseExchange(connectDb.Database):
             return dt.timedelta(1000)
         except IndexError:
             return dt.timedelta(1000)
+
+    def run_analyzer_log_cleanup(self, analyzer_id: int) -> bool:
+        """
+        calling analyzer log cleanup task to free empty (lost) entries
+
+        :param analyzer_id:
+        :return: True if run
+        """
+
+        cur = self.conn.cursor()
+        cur.execute(
+            DatabaseExchange.__SQL_ANALYZER_CLEAN_UP,
+            (analyzer_id,)
+        )
+        cur.close
+        return True
 
     def fetch_scraper_todo_list(self, source_id: int) -> list:
         """
@@ -1193,6 +1216,17 @@ class DatabaseExchange(connectDb.Database):
             start += DatabaseExchange.SUBSET_LENGTH
         return return_value
 
+    def run_comment_update_dates(self) -> bool:
+        """
+        calling comment creation date update task to fill column
+
+        :return: True if run
+        """
+
+        cur = self.conn.cursor()
+        cur.execute(DatabaseExchange.__SQL_COMMENT_UPDATE_DATE_CREATED)
+        cur.close
+        return True
 
 def test():
     """
