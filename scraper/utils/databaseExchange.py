@@ -593,6 +593,7 @@ class DatabaseExchange(connectDb.Database):
             DatabaseExchange.__SQL_ANALYZER_CLEAN_UP,
             (analyzer_id,)
         )
+        self.conn.commit()
         cur.close
         return True
 
@@ -1225,6 +1226,7 @@ class DatabaseExchange(connectDb.Database):
 
         cur = self.conn.cursor()
         cur.execute(DatabaseExchange.__SQL_COMMENT_UPDATE_DATE_CREATED)
+        self.conn.commit()
         cur.close
         return True
 
