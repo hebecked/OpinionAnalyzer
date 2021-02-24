@@ -16,17 +16,10 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 12,
-  "iteration": 1614184192657,
+  "iteration": 1614184403497,
   "links": [],
   "panels": [
     {
-      "aliasColors": {
-        "Sentiment1 Error Weighted": "semi-dark-blue",
-        "Sentiment2 Simple Average": "super-light-blue"
-      },
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
       "datasource": null,
       "fieldConfig": {
         "defaults": {
@@ -34,47 +27,25 @@
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
-        "h": 9,
-        "w": 24,
+        "h": 1,
+        "w": 21,
         "x": 0,
         "y": 0
       },
-      "hiddenSeries": false,
-      "id": 2,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
+      "id": 6,
       "options": {
-        "alertThreshold": false
+        "content": "",
+        "mode": "markdown"
       },
-      "percentage": false,
       "pluginVersion": "7.4.3",
-      "pointradius": 1,
-      "points": true,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
       "targets": [
         {
-          "format": "table",
+          "format": "time_series",
           "group": [],
           "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  ah.source_date AS time,\n  SUM(a1r.sentiment_value/ (a1r.error_value * a1r.error_value )) / SUM(1 / (a1r.error_value * a1r.error_value)) AS \"Sentiment1 Error Weighted\",\n  AVG(a1r.sentiment_value) AS \"Sentiment2 Simple Average\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id \n  AND ct.body ILIKE '% $comment_key_word%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__time(time_column),\n  value1\nFROM\n  metric_table\nWHERE\n  $__timeFilter(time_column)\n",
           "refId": "A",
           "select": [
             [
@@ -96,46 +67,331 @@
           ]
         }
       ],
-      "thresholds": [],
       "timeFrom": null,
-      "timeRegions": [],
       "timeShift": null,
-      "title": "Comment Sentiment over Time for: $news_outlet",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": "Sentiment",
-          "logBase": 1,
-          "max": "1",
-          "min": "-1",
-          "show": true
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
         },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 3,
+        "x": 21,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "content": "<style type=\"text/css\">\n.dashlist {\n  padding-top: 10px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(5, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist a {\n  background-color: #63a4ff;\n  background-image: linear-gradient(315deg, #63a4ff 0%, #83eaf1 74%);\n  color: white;\n  text-decoration: none;\n  padding: 10px  15px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n.dashlist-expert {\n  padding-top: 31px;\n  display: grid;\n  grid-template-columns: repeat(1, 1fr);\n  grid-template-rows: repeat(1, 1fr);\n  grid-column-gap: 10px;\n  grid-row-gap: 10px;\n}\n.dashlist-expert a {\n  background-color: #045de9;\n  background-image: linear-gradient(315deg, #045de9 0%, #09c6f9 74%);\n  color: white;\n  text-decoration: none;\n  padding: 10px  15px;\n  border-radius: 5px;\n  text-align: center;\n}\n.dashlist-expert a:hover {\n  background-color: #6a93cb;\n  background-image: linear-gradient(315deg, #6a93cb 0%, #a4bfef 74%);\n  color: white;\n  text-decoration: none;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n</style>\n<div class=\"dashlist-expert\">\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Expert Dashboards\n</a>\n</div>\n<div class=\"dashlist\">\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    FAQ\n</a>\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Git\n</a>\n<a target=_blank href=\"/d/Nt8IWX1Mk/new-poc-dashboard?orgId=1\">\n    Who are we?\n</a>\n</div>",
+        "mode": "html"
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
         {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__time(time_column),\n  value1\nFROM\n  metric_table\nWHERE\n  $__timeFilter(time_column)\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
         }
       ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "left",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": true
+          },
+          "decimals": 2,
+          "mappings": [],
+          "max": 1,
+          "min": -1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "# Comments"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sentiment1 Error Weighted"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sentiment2 Simple Average"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 21,
+        "x": 0,
+        "y": 1
+      },
+      "hideTimeOverride": true,
+      "id": 2,
+      "interval": "1d",
+      "maxDataPoints": 60,
+      "options": {
+        "graph": {},
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  ah.source_date AS Time,\n  SUM(a1r.sentiment_value/ (a1r.error_value * a1r.error_value )) / SUM(1 / (a1r.error_value * a1r.error_value)) AS \"Sentiment1 Error Weighted\",\n  AVG(a1r.sentiment_value) AS \"Sentiment2 Simple Average\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id \n  AND ct.body ILIKE '% $comment_key_word%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Comment Sentiment for: $news_outlet, modell: $sub_id, keyword: $comment_key_word",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "# Comments",
+            "axisPlacement": "left",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "# Comments"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 21,
+        "x": 0,
+        "y": 10
+      },
+      "hideTimeOverride": true,
+      "id": 7,
+      "interval": "1d",
+      "maxDataPoints": 60,
+      "options": {
+        "graph": {},
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  ah.source_date AS Time,\n  COUNT(DISTINCT ct.id) AS \"# Comments\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id \n  AND ct.body ILIKE '% $comment_key_word%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "# Comment for: $news_outlet and modell: $sub_id with keyword: $comment_key_word",
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 27,
@@ -169,7 +425,6 @@
         "allValue": null,
         "current": {
           "selected": true,
-          "tags": [],
           "text": [
             "All"
           ],
@@ -186,30 +441,9 @@
         "label": "News Outlet",
         "multi": true,
         "name": "news_outlet",
-        "options": [
-          {
-            "selected": true,
-            "text": "All",
-            "value": "$__all"
-          },
-          {
-            "selected": false,
-            "text": "FAZ",
-            "value": "FAZ"
-          },
-          {
-            "selected": false,
-            "text": "Spiegel",
-            "value": "Spiegel"
-          },
-          {
-            "selected": false,
-            "text": "Welt",
-            "value": "Welt"
-          }
-        ],
+        "options": [],
         "query": "SELECT source FROM news_meta_data.source_header",
-        "refresh": 0,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
@@ -222,7 +456,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "2",
           "value": "2"
         },
@@ -235,25 +469,9 @@
         "label": "NLP Modell",
         "multi": false,
         "name": "sub_id",
-        "options": [
-          {
-            "selected": false,
-            "text": "1",
-            "value": "1"
-          },
-          {
-            "selected": true,
-            "text": "2",
-            "value": "2"
-          },
-          {
-            "selected": false,
-            "text": "3",
-            "value": "3"
-          }
-        ],
+        "options": [],
         "query": "SELECT DISTINCT sub_id FROM news_meta_data.analyzer1_result",
-        "refresh": 0,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 3,
@@ -266,8 +484,8 @@
     ]
   },
   "time": {
-    "from": "now-7d",
-    "to": "now"
+    "from": "now-30d",
+    "to": "now-1d"
   },
   "timepicker": {},
   "timezone": "",
