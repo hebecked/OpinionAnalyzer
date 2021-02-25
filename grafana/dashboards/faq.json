@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 1,
+  "id": 5,
   "links": [],
   "panels": [
     {
@@ -34,7 +34,7 @@
       },
       "id": 2,
       "options": {
-        "content": "Here we will list all the questions + answers to the tools you have\n         ",
+        "content": "\n\n<br>\n<br>\nHere we will list all the questions + answers to the tool you have\n         ",
         "mode": "markdown"
       },
       "pluginVersion": "7.4.3",
