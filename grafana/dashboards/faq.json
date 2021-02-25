@@ -34,7 +34,7 @@
       },
       "id": 2,
       "options": {
-        "content": "\n\n<br>\n<br>\nHere we will list all the questions + answers to the tool you have\n         ",
+        "content": "<br>\n<h2><u>How high is the accuracy of your models?</u></h2><br>\nThe model multilang_bert_sentiment has an accuracy of 0.64 <br>\nThe model multilang_bert_sentiment has an individual class accuracy of [0.        0.91176471 1.       ]<br><br>\nThe model german_bert_sentiment has an accuracy of 0.64<br>\nThe model german_bert_sentiment has an individual class accuracy of [0.93939394 0.02941176 0.96969697]<br><br>\nThe model EnsembleSentiment has an accuracy of 0.64<br>\nThe model EnsembleSentiment has an individual class accuracy of [0.93939394 0.02941176 0.96969697]<br><br>\nThe model baselineSentiment has an accuracy of 0.08<br>\nThe model baselineSentiment has an individual class accuracy of [0.        0.23529412 0.       ]<br><br>\nThe model baselineFastTextSentiment has an accuracy of 0.35<br>\nThe model baselineFastTextSentiment has an individual class accuracy of [0.        1.02941176 0.       ]<br><br>\nThe model TextblobSentiment has an accuracy of 0.67<br>\nThe model TextblobSentiment has an individual class accuracy of [0. 1. 1.]<br><br>\nThe model custom_model_sentiment has an accuracy of 0.95<br>\nThe model custom_model_sentiment has an individual class accuracy of [0.96969697 0.91176471 0.96969697]<br><br>\nThis is based on a sample size of 100.0 Split according to: [33. 34. 33.]<br>\n",
         "mode": "markdown"
       },
       "pluginVersion": "7.4.3",
