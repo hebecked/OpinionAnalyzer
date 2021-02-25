@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 4,
-  "iteration": 1614210130475,
+  "iteration": 1614210748704,
   "links": [],
   "panels": [
     {
@@ -262,7 +262,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ah.source_date AS Time,\n  --SUM(a1r.sentiment_value/ (a1r.error_value * a1r.error_value )) / SUM(1 / (a1r.error_value * a1r.error_value)) AS \"Sentiment Error Weighted\",\n  AVG(a1r.sentiment_value) AS \"Sentiment Simple Average\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id \n  AND ct.body ILIKE '% $comment_key_word%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
+          "rawSql": "SELECT\n  ah.source_date AS Time,\n  --SUM(a1r.sentiment_value/ (a1r.error_value * a1r.error_value )) / SUM(1 / (a1r.error_value * a1r.error_value)) AS \"Sentiment Error Weighted\",\n  AVG(a1r.sentiment_value) AS \"Sentiment Simple Average\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\n  LEFT JOIN \n    (\n    SELECT\n      1 AS id,\n      'Ensemble' AS nlp_model\n    UNION ALL\n    SELECT\n      2 AS id,\n      'Multilanguage Bert' AS nlp_model\n    UNION ALL\n    SELECT\n      3 AS id,\n      'German Bert' AS nlp_model\n    ) nlp ON a1r.sub_id = nlp.id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND nlp.nlp_model = '$nlp_model'\n  AND ct.body ILIKE '% $comment_key_word%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
           "refId": "A",
           "select": [
             [
@@ -383,7 +383,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ah.source_date AS Time,\n  COUNT(DISTINCT ct.id) AS \"# Comments\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND a1r.sub_id = $sub_id \n  AND ct.body ILIKE '% $comment_key_word%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
+          "rawSql": "SELECT\n  ah.source_date AS Time,\n  COUNT(DISTINCT ct.id) AS \"# Comments\"\nFROM\n  news_meta_data.article_header ah\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  INNER JOIN news_meta_data.comment ct ON ab.id = ct.article_body_id\n  INNER JOIN news_meta_data.analyzer1_result a1r ON ct.id = a1r.comment_id\n    LEFT JOIN \n    (\n    SELECT\n      1 AS id,\n      'Ensemble' AS nlp_model\n    UNION ALL\n    SELECT\n      2 AS id,\n      'Multilanguage Bert' AS nlp_model\n    UNION ALL\n    SELECT\n      3 AS id,\n      'German Bert' AS nlp_model\n    ) nlp ON a1r.sub_id = nlp.id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND nlp.nlp_model = '$nlp_model'\n  AND ct.body ILIKE '% $comment_key_word%'\nGROUP BY\n  ah.source_date\nORDER BY\n  1",
           "refId": "A",
           "select": [
             [
@@ -473,25 +473,25 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
-          "text": "2",
-          "value": "2"
+          "selected": true,
+          "text": "Multilanguage Bert",
+          "value": "Multilanguage Bert"
         },
         "datasource": null,
-        "definition": "SELECT DISTINCT sub_id FROM news_meta_data.analyzer1_result",
+        "definition": "    SELECT\n      'Ensemble' AS nlp_model\n    UNION ALL\n    SELECT\n      'Multilanguage Bert' AS nlp_model\n    UNION ALL\n    SELECT\n      'German Bert' AS nlp_model",
         "description": "Choose the NLP Modell you want to see in sentiment visualization",
         "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "NLP Model",
         "multi": false,
-        "name": "sub_id",
+        "name": "nlp_model",
         "options": [],
-        "query": "SELECT DISTINCT sub_id FROM news_meta_data.analyzer1_result",
+        "query": "    SELECT\n      'Ensemble' AS nlp_model\n    UNION ALL\n    SELECT\n      'Multilanguage Bert' AS nlp_model\n    UNION ALL\n    SELECT\n      'German Bert' AS nlp_model",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 3,
+        "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
         "tagsQuery": "",
