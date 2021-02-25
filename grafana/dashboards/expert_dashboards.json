@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 6,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -80,6 +80,86 @@
           },
           "custom": {},
           "mappings": [],
+          "max": 10,
+          "min": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#37d5d6",
+                "value": null
+              },
+              {
+                "color": "#361ba1",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 3,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.4.3",
+      "targets": [
+        {
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "WITH article_headers AS (\n  SELECT\n    0 AS id,\n    COUNT(ah.id) AS \"# Article Headers\"\n  FROM \n    news_meta_data.article_header ah\n),\narticle_bodies AS (\n  SELECT\n    0 AS id,\n    COUNT(ab.id) AS \"# Article Bodies\"\n  FROM \n    news_meta_data.article_body ab\n),\ncomments AS (\n  SELECT\n    0 AS id,\n    COUNT(c.id) AS \"# Comments\"\n  FROM \n    news_meta_data.comment c\n),\nanalyzer AS (\n  SELECT\n    0 AS id,\n    COUNT(a1r.id) AS \"# Analyzed Comments\"\n  FROM \n    news_meta_data.analyzer1_result a1r\n  WHERE\n    sub_id = 1\n)\n\nSELECT \n  ah.\"# Article Headers\",\n  ab.\"# Article Bodies\",\n  c.\"# Comments\",\n  a1.\"# Analyzed Comments\"\nFROM \n  article_headers ah\n  LEFT JOIN article_bodies ab ON ah.id = ab.id\n  LEFT JOIN comments c ON ah.id = c.id\n  LEFT JOIN analyzer a1 ON ah.id = a1.id\n",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "General Database Statistics",
+      "type": "gauge"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -97,7 +177,7 @@
         "h": 2,
         "w": 4,
         "x": 3,
-        "y": 0
+        "y": 10
       },
       "id": 7,
       "options": {
@@ -175,7 +255,7 @@
         "h": 2,
         "w": 4,
         "x": 7,
-        "y": 0
+        "y": 10
       },
       "id": 9,
       "options": {
@@ -253,7 +333,7 @@
         "h": 2,
         "w": 4,
         "x": 11,
-        "y": 0
+        "y": 10
       },
       "id": 8,
       "options": {
@@ -304,86 +384,6 @@
       "timeShift": null,
       "title": "Latest Article Date",
       "type": "stat"
-    },
-    {
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {},
-          "mappings": [],
-          "max": 10,
-          "min": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#37d5d6",
-                "value": null
-              },
-              {
-                "color": "#361ba1",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": 3,
-        "y": 2
-      },
-      "id": 5,
-      "options": {
-        "displayMode": "gradient",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "last"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "text": {}
-      },
-      "pluginVersion": "7.4.3",
-      "targets": [
-        {
-          "format": "table",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "WITH article_headers AS (\n  SELECT\n    0 AS id,\n    COUNT(ah.id) AS \"# Article Headers\"\n  FROM \n    news_meta_data.article_header ah\n),\narticle_bodies AS (\n  SELECT\n    0 AS id,\n    COUNT(ab.id) AS \"# Article Bodies\"\n  FROM \n    news_meta_data.article_body ab\n),\ncomments AS (\n  SELECT\n    0 AS id,\n    COUNT(c.id) AS \"# Comments\"\n  FROM \n    news_meta_data.comment c\n),\nanalyzer AS (\n  SELECT\n    0 AS id,\n    COUNT(a1r.id) AS \"# Analyzed Comments\"\n  FROM \n    news_meta_data.analyzer1_result a1r\n  WHERE\n    sub_id = 1\n)\n\nSELECT \n  ah.\"# Article Headers\",\n  ab.\"# Article Bodies\",\n  c.\"# Comments\",\n  a1.\"# Analyzed Comments\"\nFROM \n  article_headers ah\n  LEFT JOIN article_bodies ab ON ah.id = ab.id\n  LEFT JOIN comments c ON ah.id = c.id\n  LEFT JOIN analyzer a1 ON ah.id = a1.id\n",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "timeColumn": "time",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "macro"
-            }
-          ]
-        }
-      ],
-      "title": "General Database Statistics",
-      "type": "bargauge"
     },
     {
       "datasource": null,

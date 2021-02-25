@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 3,
-  "iteration": 1614212649467,
+  "id": 8,
+  "iteration": 1614214793392,
   "links": [],
   "panels": [
     {
@@ -976,7 +976,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT \n  COUNT(DISTINCT ah.id)\nFROM  \n  news_meta_data.article_header ah\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND (ab.body ILIKE '% covid%' OR ab.body ILIKE '% coronavirus%' OR ab.body ILIKE '% covid19%' OR ab.body ILIKE '% sars-cov-2%'  OR ab.body ILIKE '% corona%')\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n",
+          "rawSql": "SELECT \n  COUNT(DISTINCT ah.id)\nFROM  \n  news_meta_data.article_header ah\n  INNER JOIN news_meta_data.article_body ab ON ah.id = ab.article_id\n  LEFT JOIN news_meta_data.source_header sh ON ah.source_id = sh.id\nWHERE\n  $__timeFilter(ah.source_date) \n  AND sh.source IN ($news_outlet)\n  AND (ab.body ILIKE '% covid%' OR ab.body ILIKE '% coronavirus%' OR ab.body ILIKE '% covid19%' OR ab.body ILIKE '% sars-cov-2%'  OR ab.body ILIKE '% corona%')\n",
           "refId": "A",
           "select": [
             [
@@ -1339,7 +1339,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Comments Per Day",
+      "title": "Article-Comments Per Day",
       "type": "timeseries"
     }
   ],
