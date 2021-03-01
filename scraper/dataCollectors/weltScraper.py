@@ -103,7 +103,8 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
             art.set_obsolete(True)
             return False
         return_keys = welt_api_return.keys()
-        if 'headline' in return_keys and 'articleBody' in return_keys:
+        if 'headline' in return_keys and 'articleBody' in return_keys\
+                and type(welt_api_return['headline']) == str and type(welt_api_return['articleBody']) == str:
             if not art.set_body(
                 {'headline': unicodedata.normalize('NFKD', welt_api_return['headline'].replace("\n", ' ').replace("\t", ' ')),
                     'body': unicodedata.normalize('NFKD', welt_api_return['articleBody'].replace("\n", ' ').replace("\t", ' ')),
@@ -207,7 +208,11 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
         for cmt in raw_comment_list:
             if type(cmt) != dict:
                 continue
-            if cmt['contents'] is not None and cmt['user'] is not None and cmt['created'] is not None:
+            if 'contents' in cmt.keys() and cmt['contents'] is not None and type(cmt['contents']) == str\
+                    and 'user' in cmt.keys() and cmt['user'] is not None\
+                    and cmt['created'] is not None\
+                    and cmt['user']['displayName'] is not None\
+                    and type(cmt['user']['displayName']) == str:
                 cmt_ext_id = calculate_comment_external_id(
                     art.get_article()["header"]["url"], cmt['user']['displayName'], cmt['contents']
                 )
@@ -218,8 +223,7 @@ class WeltScraper(dataCollectors.templateScraper.Scraper):
                                                                     cmt['contents'].replace("\n", ' ').replace("\t", ' ')),
                                       "proc_timestamp": datetime.now(pytz.timezone('Europe/Berlin')), "external_id": cmt_ext_id}):
                     continue
-                if 'user' in cmt.keys():
-                    tmp_comment.add_udf("author", unicodedata.normalize('NFKD', cmt['user']['displayName']))
+                tmp_comment.add_udf("author", unicodedata.normalize('NFKD', cmt['user']['displayName']))
                 tmp_comment.add_udf("date_created", cmt['created'])
                 if start_date <= date.fromisoformat(cmt['created'][0:10]) <= end_date:
                     comment_return_list += [tmp_comment]
