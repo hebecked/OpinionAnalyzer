@@ -329,9 +329,9 @@ def run_regular():
     db.set_scraper_date_visited(faz_scraper.id, start, end)
     todo_list = db.fetch_scraper_todo_list(faz_scraper.id)
     faz_scraper.get_write_articles_details(db, todo_list, start - timedelta(1))
+    db.run_comment_update_dates()
     db.log_scraper_end(not faz_scraper.has_errors)
     logger.info("regular run - duration = " + str(datetime.now(pytz.timezone('Europe/Berlin')) - start_time))
-    db.run_comment_update_dates()
     db.close()
 
 
